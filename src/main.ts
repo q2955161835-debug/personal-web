@@ -54,7 +54,6 @@ function bootstrap(): void {
         <h1 class="hero-name">
           <span class="hero-name-en">FAN JUNJIE</span>
         </h1>
-        <p class="hero-title">AI 产品 / 数据分析实习</p>
       </section>
 
       <div class="scroll-hint" id="scroll-hint">

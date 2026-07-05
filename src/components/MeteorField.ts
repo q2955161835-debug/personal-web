@@ -84,14 +84,19 @@ export class MeteorField {
 
     // 沿移动方向发射彗星（速度叠加移动方向）
     const moveAngle = Math.atan2(dy, dx);
-    const count = Math.min(3, Math.floor(dist / 30) + 1);
+    const count = Math.min(2, Math.floor(dist / 40) + 1);
 
     for (let i = 0; i < count; i++) {
       // 在移动方向附近散布
-      const angle = moveAngle + (Math.random() - 0.5) * 0.5;
-      const speed = 2.5 + Math.random() * 4 + dist * 0.05;
-      // 色相：暖橙金 + 偶尔蓝青
-      const hue = Math.random() < 0.75 ? 25 + Math.random() * 35 : 190 + Math.random() * 40;
+      const angle = moveAngle + (Math.random() - 0.5) * 0.4;
+      const speed = 2.0 + Math.random() * 3 + dist * 0.04;
+      // 色相：以蓝紫为主，匹配星空冷色调；少量暖白点缀
+      const r = Math.random();
+      const hue = r < 0.55
+        ? 200 + Math.random() * 60   // 蓝-紫
+        : r < 0.85
+          ? 280 + Math.random() * 40  // 紫-品红
+          : 30 + Math.random() * 25;  // 偶尔暖金点缀
 
       this.comets.push({
         x: x + (Math.random() - 0.5) * 6,
@@ -99,8 +104,8 @@ export class MeteorField {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 0,
-        maxLife: 1.0 + Math.random() * 0.8,
-        size: 1.8 + Math.random() * 2.2,
+        maxLife: 1.2 + Math.random() * 0.9,
+        size: 1.5 + Math.random() * 1.8,
         hue,
         trail: [],
       });
@@ -178,9 +183,9 @@ export class MeteorField {
   private drawHead(x: number, y: number, size: number, hue: number, alpha: number): void {
     // 外层柔光大光环
     const outer = this.ctx.createRadialGradient(x, y, 0, x, y, size * 6);
-    outer.addColorStop(0, `hsla(${hue}, 100%, 90%, ${alpha * 0.5})`);
-    outer.addColorStop(0.3, `hsla(${hue}, 95%, 70%, ${alpha * 0.25})`);
-    outer.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+    outer.addColorStop(0, `hsla(${hue}, 70%, 80%, ${alpha * 0.35})`);
+    outer.addColorStop(0.3, `hsla(${hue}, 60%, 65%, ${alpha * 0.18})`);
+    outer.addColorStop(1, `hsla(${hue}, 50%, 55%, 0)`);
     this.ctx.fillStyle = outer;
     this.ctx.beginPath();
     this.ctx.arc(x, y, size * 6, 0, Math.PI * 2);
@@ -188,18 +193,18 @@ export class MeteorField {
 
     // 中层亮核
     const mid = this.ctx.createRadialGradient(x, y, 0, x, y, size * 2.5);
-    mid.addColorStop(0, `hsla(${hue}, 100%, 95%, ${alpha})`);
-    mid.addColorStop(0.5, `hsla(${hue}, 100%, 80%, ${alpha * 0.6})`);
-    mid.addColorStop(1, `hsla(${hue}, 95%, 65%, 0)`);
+    mid.addColorStop(0, `hsla(${hue}, 80%, 90%, ${alpha * 0.85})`);
+    mid.addColorStop(0.5, `hsla(${hue}, 70%, 75%, ${alpha * 0.45})`);
+    mid.addColorStop(1, `hsla(${hue}, 60%, 60%, 0)`);
     this.ctx.fillStyle = mid;
     this.ctx.beginPath();
     this.ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // 最亮中心点
-    this.ctx.fillStyle = `hsla(${hue}, 100%, 98%, ${alpha})`;
+    // 最亮中心点（接近白）
+    this.ctx.fillStyle = `hsla(${hue}, 50%, 95%, ${alpha * 0.9})`;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
@@ -210,11 +215,11 @@ export class MeteorField {
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
 
-    // 三层叠加：外光晕 + 中层 + 内亮线
+    // 三层叠加：外光晕 + 中层 + 内亮线（降低饱和度与亮度融入星空）
     const layers = [
-      { widthMul: 4.0, alphaMul: 0.12, hueOffset: 0 },
-      { widthMul: 2.0, alphaMul: 0.3, hueOffset: 0 },
-      { widthMul: 0.8, alphaMul: 0.7, hueOffset: -5 },
+      { widthMul: 4.0, alphaMul: 0.08, hueOffset: 0, sat: 50, light: 65 },
+      { widthMul: 2.0, alphaMul: 0.22, hueOffset: 0, sat: 65, light: 75 },
+      { widthMul: 0.8, alphaMul: 0.55, hueOffset: -5, sat: 75, light: 88 },
     ];
 
     for (const layer of layers) {
@@ -237,9 +242,9 @@ export class MeteorField {
         c.x,
         c.y
       );
-      grad.addColorStop(0, `hsla(${c.hue + layer.hueOffset}, 100%, 70%, 0)`);
-      grad.addColorStop(0.6, `hsla(${c.hue + layer.hueOffset}, 100%, 80%, ${alpha * layer.alphaMul * 0.6})`);
-      grad.addColorStop(1, `hsla(${c.hue + layer.hueOffset}, 100%, 92%, ${alpha * layer.alphaMul})`);
+      grad.addColorStop(0, `hsla(${c.hue + layer.hueOffset}, ${layer.sat}%, ${layer.light}%, 0)`);
+      grad.addColorStop(0.6, `hsla(${c.hue + layer.hueOffset}, ${layer.sat}%, ${layer.light}%, ${alpha * layer.alphaMul * 0.5})`);
+      grad.addColorStop(1, `hsla(${c.hue + layer.hueOffset}, ${layer.sat}%, ${layer.light + 5}%, ${alpha * layer.alphaMul})`);
 
       this.ctx.strokeStyle = grad;
       this.ctx.lineWidth = c.size * layer.widthMul;
