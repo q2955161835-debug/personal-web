@@ -6,6 +6,8 @@ import * as THREE from "three";
 
 import ParticleField from "./ParticleField";
 import PostProcessing from "./PostProcessing";
+import ProjectScene from "./ProjectScene";
+import { useProjectScene } from "./SceneContext";
 
 interface SceneProps {
   className?: string;
@@ -40,6 +42,7 @@ function CanvasResizer() {
 export default function Scene({ className }: SceneProps) {
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const [scrollProgress, setScrollProgress] = useState(0);
+  const { activeProjectScene } = useProjectScene();
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -69,6 +72,7 @@ export default function Scene({ className }: SceneProps) {
       <CanvasResizer />
       <ScrollTracker onScroll={setScrollProgress} />
       <ParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
+      <ProjectScene activeScene={activeProjectScene} visible={activeProjectScene != null} />
       <PostProcessing />
     </Canvas>
   );
