@@ -25,7 +25,7 @@ const xAxisTicks = Array.from({ length: 620 }, (_, index) => {
   return {
     id: index,
     ratio,
-    baseHeight: 3 + normalizedPseudo(index, 3.4) * 5,
+    baseHeight: 4 + normalizedPseudo(index, 3.4) * 2,
     color:
       index % 13 === 0
         ? "#00d4ff"
@@ -37,11 +37,11 @@ const xAxisTicks = Array.from({ length: 620 }, (_, index) => {
   };
 });
 
-const yAxisTicks = Array.from({ length: 180 }, (_, index) => ({
+const yAxisTicks = Array.from({ length: 22 }, (_, index) => ({
   id: index,
-  ratio: index / 179,
-  height: 4 + normalizedPseudo(index, 13.4) * 7,
-  offset: (normalizedPseudo(index, 14.9) - 0.5) * 11,
+  ratio: index / 21,
+  height: 10 + normalizedPseudo(index, 13.4) * 18,
+  offset: 0,
   color: index % 10 === 0 ? "#49c5b6" : index % 7 === 0 ? "#8b5cf6" : "rgba(255,255,255,0.42)",
 }));
 
@@ -67,7 +67,9 @@ const methodPosition = (index: number, total: number) => {
 
 const METHOD_ALIASES: Record<string, string[]> = {
   "GARCH-MIDAS": ["GARCH-MIDAS", "GARCH(1,1)", "GARCH/TGARCH/EGARCH"],
+  "DCC-GARCH": ["DCC-GARCH", "动态条件相关"],
   VAR: ["VAR 模型", "VECM", "向量自回归"],
+  "VAR/VECM": ["VAR 模型", "VECM", "向量自回归"],
   "Logistic 回归": ["Logistic 回归", "二元 Logistic 回归", "多因素 Logistic 回归"],
   "双向固定效应": ["双向固定效应", "Two-way FE", "固定效应"],
   结构方程: ["ACSI 结构方程", "验证性因子分析", "AMOS", "模型拟合"],
@@ -85,37 +87,67 @@ const METHOD_ALIASES: Record<string, string[]> = {
   数据质量审计: ["数据质量审计", "异常逻辑校验", "字段映射", "单位标准化"],
   "WPS/Word": ["WPS", "Word", "Word COM", "IMRAD"],
   Bootstrap: ["Bootstrap"],
+  DID: ["DID", "PSM-DID", "双重差分"],
+  Heckman: ["Heckman 两阶段"],
+  "Fama-French": ["Fama-French 五因子", "Carhart 四因子", "Jensen Alpha"],
+  "空间计量": ["空间杜宾模型", "SAR/SEM 对照", "空间权重矩阵"],
+  PROCESS: ["PROCESS", "调节效应", "有调节的中介"],
+  LPA: ["潜在剖面分析", "BCH 后效分析", "Entropy"],
+  Hadoop: ["Hadoop", "MapReduce", "HDFS", "User-CF", "Item-CF"],
 };
 
 const COMPACT_TITLE: Record<string, string> = {
   "GARCH-MIDAS 混频波动率预测模型": "GARCH-MIDAS 混频波动",
+  "沪深300 GARCH族节假日效应": "GARCH节假日效应",
   "数字经济驱动乡村产业融合面板实证": "数字经济乡村融合",
+  "黄金石油美元指数联动性研究": "黄金石油美元联动",
   "A股财务与城市宏观数据批量采集": "A股与城市数据采集",
+  "出口信用保险贸易引力模型": "出口信用保险引力",
+  "绿色基金多因子绩效归因": "绿色基金绩效归因",
   "社区老年人睡眠障碍现状及影响因素": "老年睡眠障碍",
   "均衡饮食与睡眠自我效能相关性分析": "饮食与睡眠效能",
   "2型糖尿病体力活动现状及影响因素": "糖尿病体力活动",
   "青刺尖抗氧化活性谱效关系分析": "青刺尖谱效关系",
   "无人机物流侵权问卷编码清洗": "无人机物流编码",
+  "社交电商种草消费 SEM 模型": "社交电商SEM",
+  "平台经济就业结构空间计量": "平台经济就业空间",
+  "旅游景点 Hadoop 推荐系统": "Hadoop景点推荐",
+  "AI 技术压力潜在剖面分析": "AI压力LPA",
   "脑出血 IRE1α 通路论文结构规范化": "IRE1α 论文结构",
 };
 
 function methodIsActive(project: DataAnalysisProject, methodName: string) {
   const aliases = METHOD_ALIASES[methodName] ?? [methodName];
   const tokens = [...project.method, ...project.tools];
-  return tokens.some((token) =>
-    aliases.some((alias) => token.includes(alias) || alias.includes(token) || methodName.includes(token))
-  );
+  return tokens.some((token) => {
+    const normalizedToken = token.trim().toLowerCase();
+    if (!normalizedToken) return false;
+
+    return aliases.some((alias) => {
+      const normalizedAlias = alias.toLowerCase();
+      const normalizedMethod = methodName.toLowerCase();
+      if (normalizedToken.length <= 2) {
+        return normalizedAlias === normalizedToken || normalizedMethod === normalizedToken;
+      }
+
+      return (
+        normalizedToken.includes(normalizedAlias) ||
+        normalizedAlias.includes(normalizedToken) ||
+        normalizedMethod.includes(normalizedToken)
+      );
+    });
+  });
 }
 
 function normalBarHeight(index: number, total: number) {
   const center = (total - 1) / 2;
-  const sigma = Math.max(1, total / 5.1);
+  const sigma = Math.max(1, total / 4.75);
   const z = (index - center) / sigma;
   const gaussian = Math.exp(-0.5 * z * z);
-  const shoulder = 0.2 * Math.exp(-0.5 * Math.pow((Math.abs(index - center) - total * 0.23) / (total / 8.5), 2));
-  const localVariance = (normalizedPseudo(index, 88.2) - 0.5) * 46;
+  const shoulder = 0.24 * Math.exp(-0.5 * Math.pow((Math.abs(index - center) - total * 0.24) / (total / 8.5), 2));
+  const localVariance = (normalizedPseudo(index, 88.2) - 0.5) * 58;
 
-  return 132 + (gaussian + shoulder) * 365 + localVariance;
+  return Math.max(88, Math.min(382, 92 + gaussian * 252 + shoulder * 92 + localVariance));
 }
 
 function MethodNebula({ project }: { project: DataAnalysisProject }) {
@@ -134,6 +166,7 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
             className="analysis-method-orbit cursor-target pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
             style={{
               ...position,
+              color,
               "--method-color": color,
               "--drift-x": `${((normalizedPseudo(index, 72.4) - 0.5) * 18).toFixed(4)}px`,
               "--drift-y": `${((normalizedPseudo(index, 74.8) - 0.5) * 16).toFixed(4)}px`,
@@ -170,28 +203,28 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
 
 function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
   return (
-    <div className="analysis-reveal pointer-events-none absolute left-6 top-16 z-20 max-w-[min(620px,54vw)] md:left-12">
+    <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,45vw)] md:left-12">
       <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/34">
         93 Cases / Ranked By Practical Value
       </p>
-      <h2 className="iridescent-text mt-3 text-5xl font-bold leading-none md:text-7xl">
+      <h2 className="iridescent-text mt-3 text-5xl font-bold leading-none md:text-6xl">
         Data Analysis
       </h2>
-      <p className="mt-6 max-w-2xl text-sm leading-7 text-white/58">
+      <p className="mt-5 max-w-xl text-sm leading-7 text-white/58">
         每根玻璃柱代表一个精选项目。进入本区后页面固定，滚轮推动柱状图横向移动，当前详情与方法星云同步切换。
       </p>
 
-      <div className="mt-12">
+      <div className="mt-9">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
           Selected Case
         </p>
-        <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight text-white md:text-4xl">
+        <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight text-white">
           {project.title}
         </h3>
         <p className="mt-5 max-w-xl text-sm leading-7 text-white/62">{project.description}</p>
       </div>
 
-      <div className="mt-7 grid max-w-xl grid-cols-3 gap-6">
+      <div className="mt-6 grid max-w-xl grid-cols-3 gap-6">
         <div>
           <p className="text-2xl font-bold text-white">{project.valueLabel}</p>
           <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">核心</p>
@@ -206,7 +239,7 @@ function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
         </div>
       </div>
 
-      <p className="mt-6 max-w-xl text-sm font-medium leading-7" style={{ color: project.color }}>
+      <p className="mt-5 max-w-xl text-sm font-medium leading-7" style={{ color: project.color }}>
         {project.sampleSize}
       </p>
       <ul className="mt-4 grid max-w-3xl gap-2 text-sm leading-6 text-white/58 md:grid-cols-3">
@@ -229,7 +262,7 @@ export default function AnalysisSection() {
   const [selectedProject, setSelectedProject] = useState<DataAnalysisProject>(analysisProjects[0]);
   const { setActiveSection, setDnaDissolveProgress } = useProjectScene();
 
-  const activeRatio = analysisProjects.length <= 0 ? 0 : (activeIndex + 0.5) / analysisProjects.length;
+  const activeRatio = analysisProjects.length <= 1 ? 0.5 : activeIndex / (analysisProjects.length - 1);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -280,16 +313,17 @@ export default function AnalysisSection() {
           invalidateOnRefresh: true,
           onEnter: () => {
             setActiveSection("data-analysis");
-            setDnaDissolveProgress(0.08);
+            setDnaDissolveProgress(1);
           },
           onEnterBack: () => {
             setActiveSection("data-analysis");
+            setDnaDissolveProgress(1);
           },
           onLeave: () => setDnaDissolveProgress(1),
           onLeaveBack: () => setDnaDissolveProgress(0),
           onUpdate: (self) => {
             setActiveSection("data-analysis");
-            setDnaDissolveProgress(Math.min(1, 0.08 + self.progress * 11.5));
+            setDnaDissolveProgress(1);
             setProjectByProgress(self.progress);
           },
         },
@@ -326,24 +360,25 @@ export default function AnalysisSection() {
         ))}
       </div>
 
-      <FloatingProjectDetail project={selectedProject} />
-      <MethodNebula project={selectedProject} />
-
       <div className="analysis-stage relative z-10 h-screen min-h-[760px] overflow-hidden">
-        <div
-          ref={trackRef}
-          className="analysis-chart-track absolute bottom-8 left-[8vw] flex h-[55vh] min-h-[440px] min-w-max items-end gap-11 pr-[38vw] pt-12 md:left-[40vw]"
-        >
-          <div className="pointer-events-none absolute bottom-[136px] left-0 h-[112px] w-full">
+        <FloatingProjectDetail project={selectedProject} />
+        <MethodNebula project={selectedProject} />
+
+        <div className="pointer-events-none absolute inset-x-[5vw] bottom-[6vh] z-20 h-[42vh] min-h-[320px]">
+          <div className="absolute bottom-[92px] left-16 right-0 h-[116px]">
             <span className="analysis-axis-baseline absolute bottom-0 left-0 w-full" />
             {xAxisTicks.map((tick) => {
               const distance = tick.ratio - activeRatio;
-              const primaryWave = Math.exp(-Math.pow(distance * 38, 2));
-              const trailingWave = Math.exp(-Math.pow((distance + 0.042) * 48, 2)) * 0.34;
-              const leadingWave = Math.exp(-Math.pow((distance - 0.032) * 54, 2)) * 0.22;
-              const rhythm = 0.5 + Math.sin(tick.id * 0.44 + activeIndex * 1.1) * 0.5;
+              const primaryWave = Math.exp(-Math.pow(distance * 34, 2));
+              const trailingWave = Math.exp(-Math.pow((distance + 0.038) * 44, 2)) * 0.34;
+              const leadingWave = Math.exp(-Math.pow((distance - 0.026) * 48, 2)) * 0.22;
+              const rhythm = 0.5 + Math.sin(tick.id * 0.35 + activeIndex * 1.18) * 0.5;
               const wave = Math.min(1, primaryWave + trailingWave + leadingWave);
-              const height = tick.baseHeight + rhythm * 9 + primaryWave * (42 + rhythm * 42) + trailingWave * 32 + leadingWave * 20;
+              const height =
+                tick.baseHeight +
+                primaryWave * (46 + rhythm * 48) +
+                trailingWave * 28 +
+                leadingWave * 18;
 
               return (
                 <span
@@ -361,28 +396,30 @@ export default function AnalysisSection() {
               );
             })}
           </div>
-          <div className="pointer-events-none absolute bottom-[136px] left-0 h-[calc(100%-144px)] w-14">
-            <span className="analysis-axis-vertical absolute bottom-0 left-0 h-full" />
-            {yAxisTicks.map((tick) => {
-              const wave = Math.exp(-Math.pow((tick.ratio - (1 - activeRatio * 0.78)) * 11, 2));
-              return (
-                <span
-                  key={tick.id}
-                  className="analysis-y-tick absolute h-px rounded-full"
-                  style={{
-                    bottom: `${(tick.ratio * 100).toFixed(4)}%`,
-                    left: `${tick.offset.toFixed(2)}px`,
-                    width: `${(tick.height + wave * 18).toFixed(4)}px`,
-                    "--tick-color": tick.color,
-                    background: "var(--tick-color)",
-                    opacity: (0.34 + wave * 0.46).toFixed(4),
-                    boxShadow: wave > 0.45 ? `0 0 ${(10 + wave * 18).toFixed(3)}px var(--tick-color)` : "none",
-                  } as CSSProperties}
-                />
-              );
-            })}
-          </div>
 
+          <div className="absolute bottom-[92px] left-16 h-[170px] md:h-[190px]">
+            <span className="analysis-axis-vertical absolute bottom-0 left-0 h-full" />
+            {yAxisTicks.map((tick) => (
+              <span
+                key={tick.id}
+                className="analysis-y-tick absolute h-px rounded-full"
+                style={{
+                  bottom: `${(tick.ratio * 100).toFixed(4)}%`,
+                  left: `${tick.offset.toFixed(2)}px`,
+                  width: `${tick.height.toFixed(4)}px`,
+                  "--tick-color": tick.color,
+                  background: "var(--tick-color)",
+                  opacity: 0.42,
+                } as CSSProperties}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div
+          ref={trackRef}
+          className="analysis-chart-track absolute bottom-[calc(6vh+92px)] left-[calc(5vw+110px)] z-10 flex h-[calc(42vh-126px)] min-h-[214px] min-w-max items-end gap-12 pr-[42vw] md:left-[40vw]"
+        >
           {analysisProjects.map((project, index) => {
             const isActive = activeIndex === index;
             const height = normalBarHeight(index, analysisProjects.length);
@@ -391,7 +428,7 @@ export default function AnalysisSection() {
             return (
               <div
                 key={project.id}
-                className="analysis-drift"
+                className="analysis-drift relative h-full w-[154px] shrink-0"
                 style={{
                   "--drift-x": `${((normalizedPseudo(index, 60.1) - 0.5) * 16).toFixed(4)}px`,
                   "--drift-y": `${((normalizedPseudo(index, 61.2) - 0.5) * 18).toFixed(4)}px`,
@@ -413,13 +450,18 @@ export default function AnalysisSection() {
                   style={{
                     height,
                     opacity: isActive ? 1 : 0.74,
-                    transform: isActive ? "scale(1.14) translateY(-18px)" : "scale(1)",
+                    transform: isActive ? "scale(1.17) translateY(-16px)" : "scale(1)",
                     filter: isActive ? `drop-shadow(0 0 42px ${project.color}a8)` : "none",
+                    position: "absolute",
+                    bottom: 0,
+                    left: "50%",
+                    marginLeft: "-46px",
                   }}
                 >
-                  <span className="absolute bottom-5 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/72" />
+                  <span className="sr-only">{project.title}</span>
                 </FluidGlassButton>
-                <div className="mt-4 min-h-24 w-[168px] text-center">
+                {isActive && <span className="analysis-active-underbar" style={{ "--active-color": project.color } as CSSProperties} />}
+                <div className="absolute left-1/2 top-[calc(100%+14px)] min-h-24 w-[164px] -translate-x-1/2 text-center">
                   <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-semibold leading-5 text-white/78">
                     {compactTitle}
                   </p>

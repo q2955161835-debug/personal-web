@@ -7,8 +7,8 @@ import { useProjectScene } from "@/components/three/SceneContext";
 import type { Project } from "@/types";
 
 const STATION_COUNT = projects.length;
-const STATION_SCROLL_SLOTS = STATION_COUNT;
-const PROJECT_INTRO_PROGRESS = 0.12;
+const VIRTUAL_SCROLL_SLOTS = STATION_COUNT + 1;
+const PROJECT_INTRO_PROGRESS = 0.16;
 
 const STATION_HEX_COLORS = [
   "#49c5b6",
@@ -28,8 +28,19 @@ function normalizeProjectProgress(progress: number) {
 }
 
 function rawProgressForStation(index: number) {
-  const stationProgress = STATION_COUNT <= 0 ? 0 : index / STATION_SCROLL_SLOTS;
+  const stationProgress = STATION_COUNT <= 0 ? 0 : (index + 1) / VIRTUAL_SCROLL_SLOTS;
   return PROJECT_INTRO_PROGRESS + stationProgress * (1 - PROJECT_INTRO_PROGRESS);
+}
+
+function getActiveProjectIndex(rawProgress: number) {
+  const stationProgress = normalizeProjectProgress(rawProgress);
+  const virtualSlot = stationProgress * VIRTUAL_SCROLL_SLOTS;
+  return Math.max(0, Math.min(STATION_COUNT - 1, Math.round(virtualSlot - 1)));
+}
+
+function getDnaDissolveForProgress(rawProgress: number) {
+  const exitStart = PROJECT_INTRO_PROGRESS + ((STATION_COUNT + 0.5) / VIRTUAL_SCROLL_SLOTS) * (1 - PROJECT_INTRO_PROGRESS);
+  return Math.max(0, Math.min(1, (rawProgress - exitStart) / Math.max(0.0001, 1 - exitStart)));
 }
 
 function getSectionDocumentTop(section: HTMLElement) {
@@ -97,6 +108,7 @@ export default function ProjectsSection() {
     setActiveSection,
     carouselActiveIndex,
     setCarouselActiveIndex,
+    projectProgress,
     setProjectProgress,
     setDnaDissolveProgress,
   } = useProjectScene();
@@ -104,6 +116,7 @@ export default function ProjectsSection() {
   const lastIndexRef = useRef(-1);
   const visibleProjects = useMemo(() => projects.slice(0, STATION_COUNT), []);
   const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
+  const showProjectContent = normalizeProjectProgress(projectProgress) > 0.045;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -120,7 +133,6 @@ export default function ProjectsSection() {
 
       if (mainProjectsView) {
         setActiveSection("projects");
-        setDnaDissolveProgress(0);
       } else if (upperTransitionView) {
         const gatherProgress = Math.max(0, Math.min(1, (upperTransitionDistance - sectionTop) / upperTransitionDistance));
         setDnaDissolveProgress(1 - gatherProgress);
@@ -137,12 +149,14 @@ export default function ProjectsSection() {
       if (sectionTop < viewportHeight && sectionBottom > 0) {
         const scrollable = Math.max(1, section.offsetHeight - viewportHeight);
         const rawProgress = Math.max(0, Math.min(1, -sectionTop / scrollable));
-        const stationProgress = normalizeProjectProgress(rawProgress);
-        const index = Math.min(STATION_COUNT - 1, Math.floor(stationProgress * STATION_SCROLL_SLOTS + 0.0001));
+        const index = getActiveProjectIndex(rawProgress);
 
         if (Math.abs(rawProgress - lastProgressRef.current) > 0.002) {
           lastProgressRef.current = rawProgress;
           setProjectProgress(rawProgress);
+          if (mainProjectsView) {
+            setDnaDissolveProgress(getDnaDissolveForProgress(rawProgress));
+          }
         }
         if (index !== lastIndexRef.current) {
           lastIndexRef.current = index;
@@ -205,19 +219,24 @@ export default function ProjectsSection() {
             Projects
           </h2>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
-            {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
-          </p>
-          <p className="mt-5 max-w-64 text-xs leading-6 text-white/35">
-            粒子先聚成 DNA，键位居中后右侧说明再同步切换，末端留出消散缓冲。
+            {showProjectContent ? String(carouselActiveIndex + 1).padStart(2, "0") : "--"} / {String(STATION_COUNT).padStart(2, "0")}
           </p>
         </div>
 
-        <ProjectNarrative
-          key={activeProject.id}
-          project={activeProject}
-          index={carouselActiveIndex}
-          count={STATION_COUNT}
-        />
+        <div
+          style={{
+            opacity: showProjectContent ? 1 : 0,
+            transform: showProjectContent ? "translateY(0)" : "translateY(22px)",
+            transition: "opacity 420ms ease, transform 420ms ease",
+          }}
+        >
+          <ProjectNarrative
+            key={activeProject.id}
+            project={activeProject}
+            index={carouselActiveIndex}
+            count={STATION_COUNT}
+          />
+        </div>
       </div>
 
       <div

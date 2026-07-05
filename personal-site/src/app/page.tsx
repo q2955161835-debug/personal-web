@@ -17,7 +17,7 @@ export default function Home() {
         <SectionCursor />
         <HeroSection />
         <AboutSection />
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-x-clip">
           <CosmicBackdrop />
           <ProjectsSection />
           <AnalysisSection />

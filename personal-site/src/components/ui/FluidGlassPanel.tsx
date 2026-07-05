@@ -40,8 +40,8 @@ function applyFluidTilt(element: HTMLElement | null, event: { clientX: number; c
   const ny = THREE.MathUtils.clamp(((event.clientY - rect.top) / rect.height) * 2 - 1, -1, 1);
   const falloff = Math.min(1, Math.sqrt(nx * nx + ny * ny));
 
-  element.style.setProperty("--fluid-tilt-x", `${(-ny * intensity * 0.32).toFixed(3)}deg`);
-  element.style.setProperty("--fluid-tilt-y", `${(nx * intensity * 0.38).toFixed(3)}deg`);
+  element.style.setProperty("--fluid-tilt-x", `${(-ny * intensity * 0.48).toFixed(3)}deg`);
+  element.style.setProperty("--fluid-tilt-y", `${(nx * intensity * 0.56).toFixed(3)}deg`);
   element.style.setProperty("--fluid-glare-x", `${((nx + 1) * 50).toFixed(2)}%`);
   element.style.setProperty("--fluid-glare-y", `${((ny + 1) * 50).toFixed(2)}%`);
   element.style.setProperty("--fluid-falloff", falloff.toFixed(3));

@@ -160,7 +160,7 @@ function Planet({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
-  const labelRef = useRef<THREE.Mesh>(null);
+  const labelRef = useRef<THREE.Object3D>(null);
   const { camera } = useThree();
   const [primary, secondary] = PLANET_COLORS[index % PLANET_COLORS.length];
   const texture = useMemo(() => createPlanetTexture(primary, secondary, index + 1), [primary, secondary, index]);
@@ -252,11 +252,17 @@ function CameraFlight({
 }) {
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3());
+  const smoothIndexRef = useRef(activeIndex);
+  const smoothTravelRef = useRef(scrollProgress);
 
   useFrame((state, delta) => {
-    const travel = THREE.MathUtils.clamp(scrollProgress, 0, 1);
-    const orbitRadius = 7.2 + activeIndex * 4.6;
-    const angle = -0.8 + activeIndex * 0.88 + state.clock.elapsedTime * (0.035 + activeIndex * 0.008);
+    smoothIndexRef.current = THREE.MathUtils.lerp(smoothIndexRef.current, activeIndex, 1 - Math.exp(-delta * 3.1));
+    smoothTravelRef.current = THREE.MathUtils.lerp(smoothTravelRef.current, scrollProgress, 1 - Math.exp(-delta * 2.6));
+
+    const travel = THREE.MathUtils.clamp(smoothTravelRef.current, 0, 1);
+    const smoothIndex = smoothIndexRef.current;
+    const orbitRadius = 7.2 + smoothIndex * 4.6;
+    const angle = -0.8 + smoothIndex * 0.88 + state.clock.elapsedTime * (0.022 + smoothIndex * 0.004);
     const focus = new THREE.Vector3(
       Math.cos(angle) * orbitRadius,
       0,
@@ -265,11 +271,11 @@ function CameraFlight({
     targetRef.current.lerp(focus, 1 - Math.exp(-delta * 4.2));
 
     const cameraPath = new THREE.Vector3(
-      16 - travel * 12 + Math.sin(travel * Math.PI * 1.2) * 1.2,
-      7.2 + Math.sin(travel * Math.PI) * 1.6,
-      28 - travel * 16
+      15 - travel * 5.2 + Math.sin(travel * Math.PI * 0.9) * 1.1,
+      7.4 + Math.sin(travel * Math.PI) * 1.1,
+      29 - travel * 7.5
     );
-    camera.position.lerp(cameraPath, 1 - Math.exp(-delta * 2.4));
+    camera.position.lerp(cameraPath, 1 - Math.exp(-delta * 1.9));
     camera.lookAt(targetRef.current);
   });
 

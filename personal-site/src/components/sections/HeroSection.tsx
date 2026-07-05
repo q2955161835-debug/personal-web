@@ -10,6 +10,16 @@ const Scene = dynamic(() => import("../three/Scene"), { ssr: false });
 export default function HeroSection() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [opacity, setOpacity] = useState(1);
+  const heroGradientStyle = {
+    backgroundImage:
+      "linear-gradient(92deg, #55d8c8 0%, #00d4ff 20%, #ff8f9b 42%, #a78bfa 63%, #ffca7a 82%, #55d8c8 100%)",
+    backgroundSize: "240% 100%",
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    animation: "gradient-flow 2.7s linear infinite",
+    willChange: "background-position",
+  } as const;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,6 +63,7 @@ export default function HeroSection() {
         <h1
           className="hero-iridescent-text text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl"
           style={{
+            ...heroGradientStyle,
             filter: "drop-shadow(0 0 20px rgba(73, 197, 182, 0.4)) drop-shadow(0 0 40px rgba(255, 147, 152, 0.2))",
           }}
         >
@@ -61,6 +72,7 @@ export default function HeroSection() {
         <p
           className="hero-iridescent-text mt-4 text-lg"
           style={{
+            ...heroGradientStyle,
             filter: "drop-shadow(0 0 8px rgba(73, 197, 182, 0.3))",
           }}
         >
@@ -69,6 +81,7 @@ export default function HeroSection() {
         <p
           className="hero-iridescent-text mt-2 text-sm"
           style={{
+            ...heroGradientStyle,
             filter: "drop-shadow(0 0 6px rgba(255, 147, 152, 0.25))",
           }}
         >

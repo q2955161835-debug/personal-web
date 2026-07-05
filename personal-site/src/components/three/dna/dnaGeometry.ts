@@ -1,16 +1,16 @@
 import * as THREE from "three";
 
 export const HELIX_PARAMS = {
-  height: 96, // total helix height
-  turns: 10.2, // number of full helix turns
-  radius: 2.55, // helix strand radius
-  particleSpacing: 0.02, // distance between particles along strand
+  height: 118, // total helix height
+  turns: 12.4, // number of full helix turns
+  radius: 3.05, // helix strand radius
+  particleSpacing: 0.023, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 10,
-  stationSlots: 11,
-  cameraRadius: 8.6, // fixed camera distance
+  stationSlots: 12,
+  cameraRadius: 8.15, // fixed camera distance
   particlesPerBasePair: 480, // particles forming each station rung
-  fineBasePairCount: 190,
+  fineBasePairCount: 232,
   fineParticlesPerBasePair: 52,
   ambientParticleCount: 230, // floating ambient particles
   scatterRadius: 0.24, // pointer scatter radius in screen space
@@ -34,7 +34,7 @@ function localDensity(t: number, salt: number) {
   const broad = Math.sin(t * 32.7 + salt) * 0.5 + 0.5;
   const fine = Math.sin(t * 91.3 + salt * 1.7) * 0.5 + 0.5;
   const pocket = Math.sin(t * 19.3 + salt * 2.1) * Math.sin(t * 47.5 + salt * 0.73);
-  return THREE.MathUtils.clamp(0.73 + broad * 0.14 + fine * 0.07 - Math.max(0, pocket) * 0.08, 0.68, 0.94);
+  return THREE.MathUtils.clamp(0.69 + broad * 0.13 + fine * 0.06 - Math.max(0, pocket) * 0.15, 0.58, 0.9);
 }
 
 interface DNABuffers {
@@ -124,7 +124,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
 
   // ─── Fine filler base pair rungs (type 4) ─────────────────────
   for (let r = 0; r < HELIX_PARAMS.fineBasePairCount; r++) {
-    const fineT = (r + 0.5) / HELIX_PARAMS.fineBasePairCount;
+    const fineT = (r + 0.5 + (Math.random() - 0.5) * 0.32) / HELIX_PARAMS.fineBasePairCount;
     const rungDensity = localDensity(fineT, 5.9);
     const y = halfHeight - fineT * HELIX_PARAMS.height;
     const angle = fineT * omega;
@@ -147,14 +147,14 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const pz = z1 + (z2 - z1) * pT + Math.sin(angle + Math.PI / 2) * widthJitter;
       const py = y + (Math.random() - 0.5) * 0.12;
 
-      pushParticle(px, py, pz, stationBlend, 0.34 + Math.random() * 0.28, -1, 4);
+      pushParticle(px, py, pz, stationBlend, 0.44 + Math.random() * 0.34, -1, 4);
     }
   }
 
   // ─── Station base pair rung particles (type 1) ─────────────────
   for (let s = 0; s < HELIX_PARAMS.stationCount; s++) {
-    const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationSlots);
-    const stationT = (s + 0.5) / HELIX_PARAMS.stationSlots;
+    const stationY = halfHeight - (s + 1.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationSlots);
+    const stationT = (s + 1.5) / HELIX_PARAMS.stationSlots;
     const stationAngle = stationT * omega;
     const stationColor = STATION_COLORS[s % STATION_COLORS.length];
 

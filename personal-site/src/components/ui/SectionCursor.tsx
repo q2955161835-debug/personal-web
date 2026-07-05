@@ -12,7 +12,21 @@ export default function SectionCursor() {
 
   useEffect(() => {
     const media = window.matchMedia("(pointer: coarse)");
-    if (media.matches) return;
+
+    const hideNextDevPortal = () => {
+      document.querySelectorAll<HTMLElement>("nextjs-portal").forEach((portal) => {
+        portal.style.setProperty("display", "none", "important");
+        portal.style.setProperty("opacity", "0", "important");
+        portal.style.setProperty("pointer-events", "none", "important");
+      });
+    };
+    hideNextDevPortal();
+    const portalObserver = new MutationObserver(hideNextDevPortal);
+    portalObserver.observe(document.body, { childList: true, subtree: true });
+
+    if (media.matches) {
+      return () => portalObserver.disconnect();
+    }
 
     const handlePointerMove = (event: PointerEvent) => {
       if (!hasPointerRef.current) {
@@ -54,6 +68,7 @@ export default function SectionCursor() {
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current);
+      portalObserver.disconnect();
     };
   }, []);
 

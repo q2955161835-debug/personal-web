@@ -30,7 +30,7 @@ const STATION_HEX_COLORS = [
   "#86efac",
 ];
 
-const PROJECT_INTRO_PROGRESS = 0.12;
+const PROJECT_INTRO_PROGRESS = 0.16;
 const FIXED_CAMERA_POSITION = new THREE.Vector3(0, 0, HELIX_PARAMS.cameraRadius);
 const FIXED_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
@@ -41,28 +41,42 @@ function normalizeProjectProgress(progress: number) {
 function useViewportPointer() {
   const pointerRef = useRef(new THREE.Vector2(10, 10));
   const activeRef = useRef(0);
+  const timeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const handlePointerMove = (event: PointerEvent) => {
+    const handlePointerMove = (event: MouseEvent | PointerEvent) => {
       pointerRef.current.set(
         (event.clientX / window.innerWidth) * 2 - 1,
         -(event.clientY / window.innerHeight) * 2 + 1
       );
       activeRef.current = 1;
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = window.setTimeout(() => {
+        activeRef.current = 0;
+      }, 420);
     };
     const handlePointerLeave = () => {
       activeRef.current = 0;
       pointerRef.current.set(10, 10);
+      if (timeoutRef.current !== null) {
+        window.clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
 
+    window.addEventListener("mousemove", handlePointerMove, { passive: true });
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     window.addEventListener("pointerleave", handlePointerLeave);
     window.addEventListener("blur", handlePointerLeave);
 
     return () => {
+      window.removeEventListener("mousemove", handlePointerMove);
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerleave", handlePointerLeave);
       window.removeEventListener("blur", handlePointerLeave);
+      if (timeoutRef.current !== null) window.clearTimeout(timeoutRef.current);
     };
   }, []);
 
@@ -70,18 +84,24 @@ function useViewportPointer() {
 }
 
 function getStationY(index: number) {
+  return getVirtualSlotY(index + 1);
+}
+
+function getVirtualSlotY(slot: number) {
   const halfHeight = HELIX_PARAMS.height / 2;
-  const t = (index + 0.5) / HELIX_PARAMS.stationSlots;
+  const boundedSlot = THREE.MathUtils.clamp(slot, 0, HELIX_PARAMS.stationSlots - 1);
+  const t = (boundedSlot + 0.5) / HELIX_PARAMS.stationSlots;
   return halfHeight - t * HELIX_PARAMS.height;
 }
 
 function getFocusY(progress: number) {
   const clamped = THREE.MathUtils.clamp(progress, 0, 1);
-  const scaled = clamped * HELIX_PARAMS.stationCount;
-  const lowerIndex = Math.min(HELIX_PARAMS.stationCount, Math.floor(scaled));
-  const upperIndex = Math.min(HELIX_PARAMS.stationCount, lowerIndex + 1);
-  const mix = scaled - lowerIndex;
-  return THREE.MathUtils.lerp(getStationY(lowerIndex), getStationY(upperIndex), mix);
+  const maxVirtualSlot = HELIX_PARAMS.stationCount + 1;
+  const scaled = clamped * maxVirtualSlot;
+  const lowerSlot = Math.min(maxVirtualSlot, Math.floor(scaled));
+  const upperSlot = Math.min(maxVirtualSlot, lowerSlot + 1);
+  const mix = scaled - lowerSlot;
+  return THREE.MathUtils.lerp(getVirtualSlotY(lowerSlot), getVirtualSlotY(upperSlot), mix);
 }
 
 function getScrollAngle(progress: number, time = 0) {
@@ -106,7 +126,7 @@ function DNAHelixParticles({
   const pointsRef = useRef<THREE.Points>(null);
   const sceneOpacityRef = useRef(0);
   const zoomProgressRef = useRef(0);
-  const { projectProgress } = useProjectScene();
+  const { carouselActiveIndex, projectProgress } = useProjectScene();
 
   const { geometry, material } = useMemo(() => {
     const buffers = generateDNAHelixBuffers();
@@ -171,10 +191,7 @@ function DNAHelixParticles({
     material.uniforms.uStationProgress.value = stationProgress;
     material.uniforms.uDissolveProgress.value = THREE.MathUtils.clamp(dissolveProgress, 0, 1);
     material.uniforms.uFocusY.value = getFocusY(stationProgress);
-    material.uniforms.uActiveStation.value = Math.min(
-      HELIX_PARAMS.stationCount - 1,
-      stationProgress * HELIX_PARAMS.stationCount
-    );
+    material.uniforms.uActiveStation.value = Math.min(HELIX_PARAMS.stationCount - 1, carouselActiveIndex);
     material.uniforms.uHoveredStation.value = hoveredStationRef.current;
     material.uniforms.uZoomedStation.value = zoomedStation ?? -1;
     material.uniforms.uZoomProgress.value = zoomProgressRef.current;
@@ -226,9 +243,9 @@ function DNAStationLabels({
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
 
     return projects.slice(0, HELIX_PARAMS.stationCount).map((_, index) => {
-      const stationT = (index + 0.5) / HELIX_PARAMS.stationSlots;
+      const stationSlotT = (index + 1.5) / HELIX_PARAMS.stationSlots;
       const stationY = getStationY(index);
-      const stationAngle = stationT * omega;
+      const stationAngle = stationSlotT * omega;
       const midpointOffset = 0.08;
 
       return new THREE.Vector3(
@@ -248,7 +265,7 @@ function DNAStationLabels({
       visible &&
       activeSection === "projects" &&
       dnaDissolveProgress < 0.04 &&
-      projectProgress > PROJECT_INTRO_PROGRESS * 0.48;
+      normalizeProjectProgress(projectProgress) > 0.045;
     group.rotation.y = getScrollAngle(stationProgress, state.clock.elapsedTime);
     group.position.y = -getFocusY(stationProgress) + (0.5 - stationProgress) * 1.2;
   });
@@ -281,7 +298,7 @@ function DNAStationLabels({
               intensity={18}
               className={`outline-none transition-all duration-300 ${
                 isActive
-                  ? "w-[min(17rem,66vw)] px-4 py-3 text-left"
+                  ? "flex h-14 w-28 items-center justify-center rounded-[22px] px-3 py-2 text-center"
                   : "flex h-9 w-9 items-center justify-center rounded-full text-center"
               }`}
               style={{
@@ -290,19 +307,9 @@ function DNAStationLabels({
                 color,
               }}
             >
-              <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-white/52">
-                {String(index + 1).padStart(2, "0")} / {String(HELIX_PARAMS.stationCount).padStart(2, "0")}
+              <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-white/68">
+                Key {String(index + 1).padStart(2, "0")}
               </span>
-              {isActive && (
-                <>
-                  <span className="mt-2 block text-base font-bold leading-tight text-white">
-                    {project.name}
-                  </span>
-                  <span className="mt-1 block text-xs leading-5 text-white/58">
-                    {project.subtitle}
-                  </span>
-                </>
-              )}
             </FluidGlassButton>
           </Html>
         );
@@ -320,8 +327,8 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
   const stationPositions = useMemo(() => {
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
     return Array.from({ length: HELIX_PARAMS.stationCount }, (_, index) => {
-      const stationT = (index + 0.5) / HELIX_PARAMS.stationSlots;
-      const stationAngle = stationT * omega;
+      const stationSlotT = (index + 1.5) / HELIX_PARAMS.stationSlots;
+      const stationAngle = stationSlotT * omega;
       return new THREE.Vector3(
         HELIX_PARAMS.radius * Math.cos(stationAngle),
         getStationY(index),

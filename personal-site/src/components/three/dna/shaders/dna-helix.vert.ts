@@ -117,11 +117,11 @@ void main() {
   vAlpha *= 1.0 - exitScatter * 0.92;
 
   if (aParticleType > 0.5 && aParticleType < 1.5) {
-    vAlpha *= 0.56;
+    vAlpha *= 0.62;
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
     vAlpha *= 0.7;
   } else if (aParticleType > 3.5 && aParticleType < 4.5) {
-    vAlpha *= 0.34;
+    vAlpha *= 0.46;
   } else if (aParticleType > 2.5) {
     vAlpha *= 0.1;
   }
@@ -138,7 +138,7 @@ void main() {
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
     baseSize *= 1.25 + keyWeight * 0.95;
   } else if (aParticleType > 3.5 && aParticleType < 4.5) {
-    baseSize *= 1.18;
+    baseSize *= 1.38;
   } else if (aParticleType > 2.5) {
     baseSize *= 0.36;
   }

@@ -1,13 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { timelineEntries } from "@/data/timeline";
 import SolarTimelineScene from "@/components/three/timeline/SolarTimelineScene";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const typeLabel = {
   education: "教育",
@@ -17,15 +13,13 @@ const typeLabel = {
 
 export default function TimelineSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const pinRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const activeEntry = timelineEntries[activeIndex] ?? timelineEntries[0];
 
   useEffect(() => {
     const section = sectionRef.current;
-    const pin = pinRef.current;
-    if (!section || !pin) return;
+    if (!section) return;
 
     const syncProgress = (progress: number) => {
       const nextIndex = Math.min(timelineEntries.length - 1, Math.floor(progress * timelineEntries.length));
@@ -34,22 +28,27 @@ export default function TimelineSection() {
       setActiveIndex((current) => (current === nextIndex ? current : nextIndex));
     };
 
-    const ctx = gsap.context(() => {
-      ScrollTrigger.create({
-        trigger: section,
-        start: "top top",
-        end: "bottom bottom",
-        pin,
-        pinSpacing: false,
-        scrub: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        onRefresh: (self) => syncProgress(self.progress),
-        onUpdate: (self) => syncProgress(self.progress),
-      });
-    }, section);
+    let rafId: number | null = null;
+    const update = () => {
+      rafId = null;
+      const rect = section.getBoundingClientRect();
+      const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      syncProgress(progress);
+    };
+    const schedule = () => {
+      if (rafId === null) rafId = window.requestAnimationFrame(update);
+    };
 
-    return () => ctx.revert();
+    update();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return (
@@ -59,8 +58,8 @@ export default function TimelineSection() {
       className="relative z-10 bg-transparent"
       style={{ height: `${Math.max(360, timelineEntries.length * 115)}vh` }}
     >
-      <div ref={pinRef} className="timeline-pin h-screen overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(255,202,122,0.12),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(73,197,182,0.08),transparent_30%),#02050b]" />
+      <div className="timeline-pin sticky top-0 h-screen overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(255,202,122,0.12),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(73,197,182,0.08),transparent_30%)]" />
         <SolarTimelineScene
           entries={timelineEntries}
           activeIndex={activeIndex}
