@@ -11,7 +11,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 首页需要提供沉浸式视觉体验：Hero 粒子、个人简介、项目 DNA 螺旋浏览、项目详情主题视觉。
 - 项目展示必须兼顾视觉冲击与可读性，不能出现文字重叠、空白失衡、纯黑无信息详情页或 3D 粒子遮挡主要内容。
 - Data Analysis、Experience Timeline、Contact 需要作为完整作品集闭环展示，不做营销落地页式空段。
-- 当前交互目标：Projects 使用 DNA 键位 `fluid-glass` 项目入口；Data Analysis 使用固定横向滚动的粒子坐标轴 `fluid-glass` 柱状图与方法星云；Experience 使用 R3F 太阳系穿梭时间线；不同 section 的鼠标反馈不能重复。
+- 当前交互目标：Projects 使用 DNA 键位 `fluid-glass` 项目入口；Data Analysis 使用固定横向滚动的粒子坐标轴 `fluid-glass` 柱状图与方法星云；Experience 使用 R3F 太阳系穿梭时间线；全站鼠标视觉统一为淡彩虹折射环，粒子系统保留实时鼠标驱散与复原。
 
 ## 技术栈与关键依赖
 - Next.js 16 App Router，入口为 `src/app/layout.tsx` 与 `src/app/page.tsx`。
@@ -29,7 +29,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `src/components/three/`：全局 Canvas、粒子场、项目 3D 主题场景、后处理。
 - `src/components/three/dna/`：DNA 项目螺旋、几何数据、专用 shader。
 - `src/components/three/timeline/`：Experience 太阳系时间线 3D 场景。
-- `src/components/ui/`：项目详情、主题背景、动画文字、技能网格等可复用 UI。
+- `src/components/ui/`：项目详情、流体玻璃、全站鼠标、动画文字、技能网格等可复用 UI。
 - `src/data/`：个人资料、项目、技能、精选数据分析案例、经历时间线等可展示数据。
 - `src/hooks/`：鼠标、滚动等交互 hooks。
 - `src/lib/`：通用工具函数。
@@ -64,10 +64,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Canvas 必须非空，主要视觉对象必须在视口内；文字不能重叠、不能被 Canvas 或遮罩遮挡；关键按钮必须可点击。
 - Projects 段必须验证：Hero 粒子与 DNA 粒子分离、项目标签固定在 DNA 对应键位附近并使用 `fluid-glass`，滚动切换节奏跟随滚轮速度，后景粒子不干扰 DNA。
 - Projects 段相机角度必须保持稳定；滚动只能驱动 DNA 自身旋转、向下移动、聚合与项目键缩放，不允许用相机绕场景转圈掩盖定位问题。
-- 详情页必须验证：背景不能是纯黑空白；不同项目需要展示与 `project.scene` 匹配的主题视觉，例如数据分析主线图、量化交易 K 线图、视觉识别路径或波形。
+- 项目详情必须验证：详情层使用半透明轻遮罩，不允许恢复 `ProjectVisualBackdrop` 或其他遮挡 DNA/转场的旧项目背景；正文、技术栈、标签和链接必须可读，不能退化成纯黑大空白。
 - Data Analysis 必须验证：滚动到该区后页面 pin 固定，`fluid-glass` 柱状图随滚轮横向移动；柱体按含金量从左到右排序；柱体上不显示含金量数字；点击柱体或滚动进度切换详情；粒子坐标轴不规则分布且数量充足；方法星云默认不显示文字，只有当前项目使用的方法粒子变大并显示方法名。
 - Timeline 必须验证：经历以 R3F 太阳系呈现，一段经历对应一颗星球；滚动时相机穿梭星际；悬浮/点击星球或底部星球导航能切换详情；所有年份、期间、标签可读，星球不得被首屏明显裁切。
-- 全站鼠标效果必须按 section 区分：Hero、About、Projects、Data Analysis、Timeline、Contact 的粒子涟漪颜色、尺度或反馈不同；所有主要可交互元素需要 hover/鼠标反馈。
+- 全站鼠标效果必须是统一的淡彩虹折射环：仅保留一个轻微彩虹环和外晕，禁止准星、实体暗圈、强涟漪、横向扫光条或放大镜式黑边；DNA/粒子仍必须按实时鼠标位置产生驱散并在离开后复原。所有主要可交互元素需要 hover/鼠标反馈。
 - Contact 必须验证联系信息可读、Email 不硬拆成无意义字符、前端表单提交后出现 toast。
 - 验收时记录浏览器控制台新增错误；若工具无法读取 DOM 快照，需用截图、只读页面评估和控制台日志替代，并在进展记录中说明。
 

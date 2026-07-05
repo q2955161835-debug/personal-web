@@ -48,12 +48,27 @@ function createPlanetTexture(primary: string, secondary: string, seed: number) {
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, size, size);
 
-  for (let band = 0; band < 12; band += 1) {
-    const y = (band / 12) * size + Math.sin(seed + band * 1.7) * 18;
-    ctx.globalAlpha = 0.12 + (band % 4) * 0.035;
+  for (let band = 0; band < 18; band += 1) {
+    const y = (band / 18) * size + Math.sin(seed + band * 1.7) * 18;
+    ctx.globalAlpha = 0.08 + (band % 5) * 0.032;
     ctx.fillStyle = band % 2 === 0 ? secondary : primary;
     ctx.beginPath();
-    ctx.ellipse(size / 2, y, size * 0.72, 10 + (band % 5) * 8, Math.sin(seed + band) * 0.08, 0, Math.PI * 2);
+    ctx.ellipse(size / 2, y, size * (0.46 + (band % 4) * 0.08), 8 + (band % 5) * 7, Math.sin(seed + band) * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  for (let crater = 0; crater < 46; crater += 1) {
+    const x = normalizedNoise(seed, crater, 0.37) * size;
+    const y = normalizedNoise(seed, crater, 0.79) * size;
+    const radius = 4 + normalizedNoise(seed, crater, 1.12) * 26;
+    const halo = ctx.createRadialGradient(x, y, radius * 0.12, x, y, radius);
+    halo.addColorStop(0, "rgba(255,255,255,0.16)");
+    halo.addColorStop(0.55, "rgba(0,0,0,0.08)");
+    halo.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalAlpha = 0.2 + normalizedNoise(seed, crater, 1.8) * 0.28;
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -71,6 +86,10 @@ function createPlanetTexture(primary: string, secondary: string, seed: number) {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
   return texture;
+}
+
+function normalizedNoise(seed: number, index: number, salt: number) {
+  return Math.abs(Math.sin(seed * 19.17 + index * 47.31 + salt * 89.41) * 43758.5453) % 1;
 }
 
 function StarField() {
@@ -128,43 +147,6 @@ function Sun() {
   );
 }
 
-function SelectionMarker({ activePosition }: { activePosition: THREE.Vector3 }) {
-  const ref = useRef<THREE.Group>(null);
-  const { camera } = useThree();
-
-  useFrame((_, delta) => {
-    if (!ref.current) return;
-    ref.current.position.lerp(activePosition, 1 - Math.exp(-delta * 8));
-    ref.current.quaternion.copy(camera.quaternion);
-    ref.current.rotation.z += delta * 0.6;
-  });
-
-  return (
-    <group ref={ref}>
-      <Line
-        points={[
-          new THREE.Vector3(-1.3, 0, 0),
-          new THREE.Vector3(1.3, 0, 0),
-        ]}
-        color="#60ddff"
-        transparent
-        opacity={0.72}
-        lineWidth={1}
-      />
-      <Line
-        points={[
-          new THREE.Vector3(0, -1.3, 0),
-          new THREE.Vector3(0, 1.3, 0),
-        ]}
-        color="#60ddff"
-        transparent
-        opacity={0.72}
-        lineWidth={1}
-      />
-    </group>
-  );
-}
-
 function Planet({
   entry,
   index,
@@ -178,6 +160,8 @@ function Planet({
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
+  const labelRef = useRef<THREE.Mesh>(null);
+  const { camera } = useThree();
   const [primary, secondary] = PLANET_COLORS[index % PLANET_COLORS.length];
   const texture = useMemo(() => createPlanetTexture(primary, secondary, index + 1), [primary, secondary, index]);
   const orbitRadius = 7.2 + index * 4.6;
@@ -198,6 +182,7 @@ function Planet({
       groupRef.current.scale.lerp(new THREE.Vector3(active ? 1.22 : 1, active ? 1.22 : 1, active ? 1.22 : 1), 1 - Math.exp(-delta * 6));
     }
     if (meshRef.current) meshRef.current.rotation.y += delta * (0.42 + index * 0.07);
+    if (labelRef.current) labelRef.current.quaternion.copy(camera.quaternion);
   });
 
   return (
@@ -234,10 +219,18 @@ function Planet({
             <meshBasicMaterial color={secondary} transparent opacity={0.42} blending={THREE.AdditiveBlending} depthWrite={false} />
           </mesh>
         )}
+        {active && (
+          <mesh>
+            <sphereGeometry args={[planetRadius * 1.36, 72, 72]} />
+            <meshBasicMaterial color={primary} transparent opacity={0.16} blending={THREE.AdditiveBlending} depthWrite={false} />
+          </mesh>
+        )}
         <Text
+          ref={labelRef}
           position={[planetRadius + 0.55, planetRadius + 0.32, 0]}
           fontSize={0.32}
-          color={active ? "#ffffff" : "rgba(255,255,255,0.48)"}
+          color="#ffffff"
+          fillOpacity={active ? 1 : 0.48}
           anchorX="left"
           anchorY="middle"
           outlineWidth={0.004}
@@ -272,25 +265,16 @@ function CameraFlight({
     targetRef.current.lerp(focus, 1 - Math.exp(-delta * 4.2));
 
     const cameraPath = new THREE.Vector3(
-      13 - travel * 22 + Math.sin(travel * Math.PI * 2) * 3,
-      8 + Math.sin(travel * Math.PI) * 5,
-      28 - travel * 34
+      16 - travel * 12 + Math.sin(travel * Math.PI * 1.2) * 1.2,
+      7.2 + Math.sin(travel * Math.PI) * 1.6,
+      28 - travel * 16
     );
-    camera.position.lerp(cameraPath, 1 - Math.exp(-delta * 3.8));
+    camera.position.lerp(cameraPath, 1 - Math.exp(-delta * 2.4));
     camera.lookAt(targetRef.current);
   });
 
-  const activeOrbitRadius = 7.2 + activeIndex * 4.6;
-  const activeAngle = -0.8 + activeIndex * 0.88;
-  const activePosition = new THREE.Vector3(
-    Math.cos(activeAngle) * activeOrbitRadius,
-    0,
-    Math.sin(activeAngle) * activeOrbitRadius * 0.68
-  );
-
   return (
     <>
-      <SelectionMarker activePosition={activePosition} />
       <ambientLight intensity={0.16} color="#91a7c8" />
       <directionalLight position={[-18, 18, 20]} intensity={0.56} color="#91dcff" />
     </>

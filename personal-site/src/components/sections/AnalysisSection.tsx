@@ -15,61 +15,109 @@ import { FluidGlassButton } from "@/components/ui/FluidGlassPanel";
 
 gsap.registerPlugin(ScrollTrigger);
 
+function pseudo(index: number, salt: number) {
+  return Math.sin(index * 127.1 + salt * 311.7) * 43758.5453 % 1;
+}
+
+function normalizedPseudo(index: number, salt: number) {
+  return Math.abs(pseudo(index, salt));
+}
+
 const xAxisParticles = Array.from({ length: 260 }, (_, index) => ({
   id: index,
-  left: `${(((index / 259) * 100)).toFixed(4)}%`,
-  offset: `${(Math.sin(index * 1.83) * 5 + Math.cos(index * 0.47) * 2.2).toFixed(3)}px`,
-  size: `${(2 + ((index * 17) % 9) * 0.32).toFixed(2)}px`,
-  glow: `${((2 + ((index * 17) % 9) * 0.32) * 5).toFixed(2)}px`,
+  left: `${Math.min(100, Math.max(0, (index / 259) * 100 + (normalizedPseudo(index, 2.3) - 0.5) * 0.68)).toFixed(4)}%`,
+  offset: `${((normalizedPseudo(index, 6.7) - 0.5) * 18 + Math.sin(index * 0.53) * 2.6).toFixed(3)}px`,
+  size: `${(2.1 + normalizedPseudo(index, 8.4) * 2.2).toFixed(2)}px`,
+  glow: `${(9 + normalizedPseudo(index, 3.4) * 12).toFixed(2)}px`,
   hue: index % 11 === 0 ? "#00d4ff" : index % 7 === 0 ? "#ff9398" : "rgba(255,255,255,0.46)",
+  driftX: `${((normalizedPseudo(index, 12.7) - 0.5) * 16).toFixed(3)}px`,
+  driftY: `${((normalizedPseudo(index, 14.2) - 0.5) * 12).toFixed(3)}px`,
+  duration: `${(4.2 + normalizedPseudo(index, 15.6) * 3.2).toFixed(2)}s`,
+  delay: `${(-normalizedPseudo(index, 17.1) * 2.8).toFixed(2)}s`,
 }));
 
 const yAxisParticles = Array.from({ length: 96 }, (_, index) => ({
   id: index,
-  bottom: `${(((index / 95) * 100)).toFixed(4)}%`,
-  offset: `${(Math.sin(index * 1.27) * 6 + Math.cos(index * 0.71) * 2.6).toFixed(3)}px`,
-  size: `${(2 + ((index * 13) % 7) * 0.34).toFixed(2)}px`,
-  glow: `${((2 + ((index * 13) % 7) * 0.34) * 5).toFixed(2)}px`,
+  bottom: `${Math.min(100, Math.max(0, (index / 95) * 100 + (normalizedPseudo(index, 22.8) - 0.5) * 0.9)).toFixed(4)}%`,
+  offset: `${((normalizedPseudo(index, 24.3) - 0.5) * 18 + Math.cos(index * 0.62) * 2.8).toFixed(3)}px`,
+  size: `${(2.1 + normalizedPseudo(index, 27.4) * 2.1).toFixed(2)}px`,
+  glow: `${(9 + normalizedPseudo(index, 29.1) * 12).toFixed(2)}px`,
   hue: index % 8 === 0 ? "#ff9398" : index % 5 === 0 ? "#49c5b6" : "rgba(255,255,255,0.4)",
+  driftX: `${((normalizedPseudo(index, 31.7) - 0.5) * 13).toFixed(3)}px`,
+  driftY: `${((normalizedPseudo(index, 33.2) - 0.5) * 14).toFixed(3)}px`,
+  duration: `${(4.8 + normalizedPseudo(index, 35.6) * 3.4).toFixed(2)}s`,
+  delay: `${(-normalizedPseudo(index, 37.1) * 2.4).toFixed(2)}s`,
 }));
 
 const fieldParticles = Array.from({ length: 190 }, (_, index) => ({
   id: index,
-  left: `${(((index * 37 + Math.sin(index) * 11) % 100 + 100) % 100).toFixed(3)}%`,
-  top: `${(((index * 53 + Math.cos(index * 0.7) * 13) % 100 + 100) % 100).toFixed(3)}%`,
-  size: `${(1 + (index % 5) * 0.45).toFixed(2)}px`,
-  delay: `${((index % 17) * 0.08).toFixed(2)}s`,
-  duration: `${(2.3 + (index % 9) * 0.24).toFixed(2)}s`,
+  left: `${(normalizedPseudo(index, 44.1) * 100).toFixed(3)}%`,
+  top: `${(normalizedPseudo(index, 46.9) * 100).toFixed(3)}%`,
+  size: `${(1 + normalizedPseudo(index, 47.7) * 2.2).toFixed(2)}px`,
+  driftX: `${((normalizedPseudo(index, 48.2) - 0.5) * 28).toFixed(3)}px`,
+  driftY: `${((normalizedPseudo(index, 49.3) - 0.5) * 24).toFixed(3)}px`,
+  delay: `${(-normalizedPseudo(index, 50.4) * 3.2).toFixed(2)}s`,
+  duration: `${(6.2 + normalizedPseudo(index, 51.8) * 4.4).toFixed(2)}s`,
 }));
 
 const methodPosition = (index: number, total: number) => {
   const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
-  const radius = 35 + (index % 3) * 8;
+  const radius = 20 + (index % 4) * 7;
   return {
     left: `${50 + Math.cos(angle) * radius}%`,
-    top: `${50 + Math.sin(angle) * (radius * 0.78)}%`,
+    top: `${50 + Math.sin(angle) * (radius * 0.84)}%`,
   };
 };
 
 const METHOD_ALIASES: Record<string, string[]> = {
   "Logistic 回归": ["多因素 Logistic 回归", "有序 Logit"],
-  面板固定效应: ["面板双向固定效应"],
+  面板固定效应: ["面板双向固定效应", "双向固定效应"],
   "K-means 聚类": ["K-means 聚类"],
   "GARCH-MIDAS": ["GARCH-MIDAS"],
   因子分析: ["因子分析", "探索性因子分析", "验证性因子分析"],
   "Cox 回归": ["Cox 回归"],
-  PCA: ["PCA 降维"],
+  PCA: ["PCA 降维", "主成分分析"],
   TOPSIS: ["TOPSIS"],
   事件研究法: ["事件研究法"],
   "Meta 分析": ["医学文献 Meta 分析", "随机效应模型"],
+  信度效度: ["信度效度检验", "信度检验", "Cronbach alpha", "KMO 检验"],
+  灰色关联: ["灰色关联分析"],
+  异常值检测: ["异常值检测", "Isolation Forest"],
+  Bootstrap: ["Bootstrap"],
 };
 
 function methodIsActive(project: DataAnalysisProject, methodName: string) {
   const aliases = METHOD_ALIASES[methodName] ?? [methodName];
-  return project.method.some((method) =>
+  const tokens = [...project.method, ...project.tools];
+  return tokens.some((method) =>
     aliases.some((alias) => method.includes(alias) || alias.includes(method) || methodName.includes(method))
   );
 }
+
+const METHOD_SPECKS = Array.from({ length: 7 }, (_, index) => ({
+  id: index,
+  x: `${((normalizedPseudo(index, 61.2) - 0.5) * 42).toFixed(3)}px`,
+  y: `${((normalizedPseudo(index, 62.5) - 0.5) * 36).toFixed(3)}px`,
+  size: `${(1.4 + normalizedPseudo(index, 63.8) * 2.2).toFixed(2)}px`,
+}));
+
+const COMPACT_TITLE: Record<string, string> = {
+  "ESG 表现对企业融资约束影响": "ESG 融资约束",
+  "宏观变量与波动率混频建模": "混频波动建模",
+  "治疗方案生存结局比较": "生存结局比较",
+  "区域发展指标综合评价": "区域指标评价",
+  "慢病风险因素筛查模型": "慢病风险筛查",
+  "化学仪器数据聚类与异常识别": "仪器异常识别",
+  "品牌认知人群细分研究": "品牌人群细分",
+  "大学生消费行为与支付偏好研究": "消费支付偏好",
+  "公共服务满意度驱动因素分析": "满意度驱动因素",
+  "政策公告的市场反应事件研究": "政策事件研究",
+  "医学文献 Meta 分析": "医学 Meta 分析",
+  "化学实验响应面优化": "响应面优化",
+  "心理量表结构效度验证": "量表效度验证",
+  "组织协作网络结构分析": "协作网络分析",
+  "多因子选股有效性检验": "多因子检验",
+};
 
 function MethodNebula({ project }: { project: DataAnalysisProject }) {
   return (
@@ -78,7 +126,8 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
       {analysisMethodNodes.map((node, index) => {
         const active = methodIsActive(project, node.name);
         const color = analysisCategorySummary.find((item) => item.category === node.category)?.color ?? "#49c5b6";
-        const size = active ? 18 + node.count * 0.8 : 5 + node.count * 0.24;
+        const weightedCount = Math.min(node.count, 24);
+        const size = active ? 14 + weightedCount * 0.72 : 4 + weightedCount * 0.18;
         const position = methodPosition(index, analysisMethodNodes.length);
 
         return (
@@ -103,6 +152,21 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
                 opacity: active ? 0.95 : 0.42,
               }}
             />
+            {METHOD_SPECKS.map((speck) => (
+              <span
+                key={speck.id}
+                className="analysis-method-speck absolute rounded-full"
+                style={{
+                  left: speck.x,
+                  top: speck.y,
+                  width: speck.size,
+                  height: speck.size,
+                  background: color,
+                  opacity: active ? 0.52 : 0.18,
+                  boxShadow: active ? `0 0 12px ${color}` : "none",
+                } as CSSProperties}
+              />
+            ))}
             <span
               className="mt-2 block whitespace-nowrap text-xs font-semibold text-white transition-all duration-500"
               style={{
@@ -115,29 +179,6 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function CategoryParticles() {
-  return (
-    <div className="pointer-events-none absolute bottom-[12vh] right-[5vw] hidden h-40 w-64 lg:block">
-      {analysisCategorySummary.map((item, index) => (
-        <div
-          key={item.category}
-          className="analysis-category-float absolute text-xs font-semibold text-white/55"
-          style={{
-            left: `${8 + index * 20}%`,
-            top: `${36 + Math.sin(index * 1.4) * 28}%`,
-            color: item.color,
-            "--drift-duration": `${6 + index * 0.35}s`,
-            "--drift-delay": `${index * -0.31}s`,
-          } as CSSProperties}
-        >
-          <span className="mr-2 inline-block h-2 w-2 rounded-full align-middle" style={{ background: item.color }} />
-          {item.category}
-        </div>
-      ))}
     </div>
   );
 }
@@ -231,6 +272,23 @@ export default function AnalysisSection() {
         }
       );
 
+      gsap.fromTo(
+        ".analysis-stage",
+        { opacity: 0.2, scale: 0.92 },
+        {
+          opacity: 1,
+          scale: 1,
+          ease: "none",
+          transformOrigin: "50% 70%",
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: "top top",
+            scrub: true,
+          },
+        }
+      );
+
       const mm = gsap.matchMedia();
       mm.add("(min-width: 768px)", () => {
         const distance = () => Math.max(0, track.scrollWidth - window.innerWidth + window.innerWidth * 0.22);
@@ -271,12 +329,14 @@ export default function AnalysisSection() {
         {fieldParticles.map((particle) => (
           <span
             key={particle.id}
-            className="twinkle-particle absolute rounded-full bg-white/45"
+            className="analysis-field-particle absolute rounded-full bg-white/45"
             style={{
               left: particle.left,
               top: particle.top,
               width: particle.size,
               height: particle.size,
+              "--drift-x": particle.driftX,
+              "--drift-y": particle.driftY,
               "--particle-duration": particle.duration,
               "--particle-delay": particle.delay,
             } as CSSProperties}
@@ -286,9 +346,8 @@ export default function AnalysisSection() {
 
       <FloatingProjectDetail project={selectedProject} />
       <MethodNebula project={selectedProject} />
-      <CategoryParticles />
 
-      <div className="relative z-10 h-[calc(100vh-7rem)] min-h-[700px] overflow-hidden">
+      <div className="analysis-stage relative z-10 h-[calc(100vh-7rem)] min-h-[700px] overflow-hidden">
         <div
           ref={trackRef}
           className="analysis-chart-track absolute bottom-10 left-[7vw] flex h-[54vh] min-h-[420px] min-w-max items-end gap-11 pr-[32vw] pt-12 md:left-[38vw]"
@@ -305,7 +364,11 @@ export default function AnalysisSection() {
                   height: particle.size,
                   background: particle.hue,
                   boxShadow: `0 0 ${particle.glow} ${particle.hue}`,
-                }}
+                  "--drift-x": particle.driftX,
+                  "--drift-y": particle.driftY,
+                  "--particle-duration": particle.duration,
+                  "--particle-delay": particle.delay,
+                } as CSSProperties}
               />
             ))}
           </div>
@@ -321,14 +384,20 @@ export default function AnalysisSection() {
                   height: particle.size,
                   background: particle.hue,
                   boxShadow: `0 0 ${particle.glow} ${particle.hue}`,
-                }}
+                  "--drift-x": particle.driftX,
+                  "--drift-y": particle.driftY,
+                  "--particle-duration": particle.duration,
+                  "--particle-delay": particle.delay,
+                } as CSSProperties}
               />
             ))}
           </div>
 
           {analysisProjects.map((project, index) => {
-            const height = 160 + (project.impactScore / maxScore) * 300;
+            const heightVariation = Math.sin(index * 1.37) * 34 + Math.cos(index * 0.71) * 22;
+            const height = 148 + (project.impactScore / maxScore) * 292 + heightVariation;
             const active = selectedProject.id === project.id;
+            const compactTitle = COMPACT_TITLE[project.title] ?? project.title;
 
             return (
               <div
@@ -350,18 +419,18 @@ export default function AnalysisSection() {
                     activeIndexRef.current = index;
                     setSelectedProject(project);
                   }}
-                  className="analysis-fluid-bar w-[92px] px-0 py-0"
+                  className={`analysis-fluid-bar w-[92px] px-0 py-0 ${active ? "analysis-fluid-bar-active" : ""}`}
                   style={{
                     height,
                     opacity: active ? 1 : 0.78,
-                    transform: active ? "scale(1.04)" : "scale(1)",
-                    filter: active ? `drop-shadow(0 0 28px ${project.color}55)` : "none",
+                    transform: active ? "scale(1.16) translateY(-18px)" : "scale(1)",
+                    filter: active ? `drop-shadow(0 0 42px ${project.color}a8)` : "none",
                   }}
                 >
                   <span className="absolute bottom-4 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/70" />
                 </FluidGlassButton>
-                <div className="mt-4 min-h-28 w-[154px] text-center">
-                  <p className="text-xs font-semibold leading-5 text-white/74">{project.title}</p>
+                <div className="mt-4 min-h-24 w-[154px] text-center">
+                  <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] font-semibold leading-5 text-white/78">{compactTitle}</p>
                   <p className="mt-1 text-[11px] text-white/36">{project.category}</p>
                   <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/28">{String(index + 1).padStart(2, "0")}</p>
                 </div>

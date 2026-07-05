@@ -1,15 +1,15 @@
 import * as THREE from "three";
 
 export const HELIX_PARAMS = {
-  height: 42, // total helix height
-  turns: 4.6, // number of full helix turns
+  height: 54, // total helix height
+  turns: 5.9, // number of full helix turns
   radius: 1.65, // helix strand radius
   particleSpacing: 0.013, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 6,
-  cameraRadius: 10.4, // fixed camera distance
+  cameraRadius: 10.8, // fixed camera distance
   particlesPerBasePair: 520, // particles forming each station rung
-  fineBasePairCount: 82,
+  fineBasePairCount: 102,
   fineParticlesPerBasePair: 76,
   ambientParticleCount: 360, // floating ambient particles
   scatterRadius: 0.24, // pointer scatter radius in screen space
@@ -24,6 +24,12 @@ const STATION_COLORS = [
   new THREE.Color("#ff6b6b"),
   new THREE.Color("#a78bfa"),
 ];
+
+function localDensity(t: number, salt: number) {
+  const broad = Math.sin(t * 32.7 + salt) * 0.5 + 0.5;
+  const fine = Math.sin(t * 91.3 + salt * 1.7) * 0.5 + 0.5;
+  return THREE.MathUtils.clamp(0.84 + broad * 0.1 + fine * 0.04, 0.84, 0.98);
+}
 
 interface DNABuffers {
   positions: Float32Array;
@@ -91,6 +97,8 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const strandAngle = angle + strand * Math.PI;
 
       for (const offset of tubeOffsets) {
+        if (Math.random() > localDensity(t, strand * 2.3 + offset * 19.7)) continue;
+
         const radius = HELIX_PARAMS.radius + offset;
         const jitter = (Math.random() - 0.5) * 0.045;
         const x = radius * Math.cos(strandAngle) + Math.cos(strandAngle + Math.PI / 2) * jitter;
@@ -111,6 +119,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
   // ─── Fine filler base pair rungs (type 4) ─────────────────────
   for (let r = 0; r < HELIX_PARAMS.fineBasePairCount; r++) {
     const fineT = (r + 0.5) / HELIX_PARAMS.fineBasePairCount;
+    const rungDensity = localDensity(fineT, 5.9);
     const y = halfHeight - fineT * HELIX_PARAMS.height;
     const angle = fineT * omega;
     const x1 = HELIX_PARAMS.radius * Math.cos(angle);
@@ -124,13 +133,15 @@ export function generateDNAHelixBuffers(): DNABuffers {
     );
 
     for (let p = 0; p < HELIX_PARAMS.fineParticlesPerBasePair; p++) {
+      if (Math.random() > rungDensity) continue;
+
       const pT = p / Math.max(1, HELIX_PARAMS.fineParticlesPerBasePair - 1);
       const widthJitter = (Math.random() - 0.5) * 0.065;
       const px = x1 + (x2 - x1) * pT + Math.cos(angle + Math.PI / 2) * widthJitter;
       const pz = z1 + (z2 - z1) * pT + Math.sin(angle + Math.PI / 2) * widthJitter;
       const py = y + (Math.random() - 0.5) * 0.12;
 
-      pushParticle(px, py, pz, stationBlend, 0.1 + Math.random() * 0.16, -1, 4);
+      pushParticle(px, py, pz, stationBlend, 0.16 + Math.random() * 0.19, -1, 4);
     }
   }
 

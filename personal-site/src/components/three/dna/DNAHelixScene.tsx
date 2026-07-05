@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { Html } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -29,6 +29,37 @@ const STATION_HEX_COLORS = [
 const FIXED_CAMERA_POSITION = new THREE.Vector3(0, 0, HELIX_PARAMS.cameraRadius);
 const FIXED_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
+function useViewportPointer() {
+  const pointerRef = useRef(new THREE.Vector2(10, 10));
+  const activeRef = useRef(0);
+
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      pointerRef.current.set(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+      );
+      activeRef.current = 1;
+    };
+    const handlePointerLeave = () => {
+      activeRef.current = 0;
+      pointerRef.current.set(10, 10);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    window.addEventListener("pointerleave", handlePointerLeave);
+    window.addEventListener("blur", handlePointerLeave);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerleave", handlePointerLeave);
+      window.removeEventListener("blur", handlePointerLeave);
+    };
+  }, []);
+
+  return { pointerRef, activeRef };
+}
+
 function getStationY(index: number) {
   const halfHeight = HELIX_PARAMS.height / 2;
   const t = (index + 0.5) / HELIX_PARAMS.stationCount;
@@ -45,17 +76,21 @@ function getFocusY(progress: number) {
 }
 
 function getScrollAngle(progress: number, time = 0) {
-  return progress * 5.6 + time * 0.045;
+  return progress * 6.25 + time * 0.045;
 }
 
 function DNAHelixParticles({
   visible,
   hoveredStationRef,
   zoomedStation,
+  pointerRef,
+  pointerActiveRef,
 }: {
   visible: boolean;
   hoveredStationRef: MutableRefObject<number>;
   zoomedStation: number | null;
+  pointerRef: MutableRefObject<THREE.Vector2>;
+  pointerActiveRef: MutableRefObject<number>;
 }) {
   const pointsRef = useRef<THREE.Points>(null);
   const sceneOpacityRef = useRef(0);
@@ -115,8 +150,8 @@ function DNAHelixParticles({
     );
 
     material.uniforms.uTime.value = state.clock.elapsedTime;
-    material.uniforms.uPointer.value.set(state.pointer.x, state.pointer.y);
-    material.uniforms.uMouseActive.value = visible ? 1 : 0;
+    material.uniforms.uPointer.value.copy(pointerRef.current);
+    material.uniforms.uMouseActive.value = visible ? pointerActiveRef.current : 0;
     material.uniforms.uScrollProgress.value = THREE.MathUtils.clamp(projectProgress, 0, 1);
     material.uniforms.uFocusY.value = getFocusY(projectProgress);
     material.uniforms.uActiveStation.value = projectProgress * (HELIX_PARAMS.stationCount - 1);
@@ -250,9 +285,10 @@ function DNAStationLabels({
 }
 
 export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
-  const { camera, pointer } = useThree();
+  const { camera } = useThree();
   const { helixZoomedStation, projectProgress } = useProjectScene();
   const hoveredStationRef = useRef(-1);
+  const { pointerRef, activeRef: pointerActiveRef } = useViewportPointer();
 
   const stationPositions = useMemo(() => {
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
@@ -273,6 +309,12 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
       return;
     }
 
+    if (pointerActiveRef.current < 0.5) {
+      hoveredStationRef.current = -1;
+      return;
+    }
+
+    const pointer = pointerRef.current;
     const angle = getScrollAngle(projectProgress, state.clock.elapsedTime);
     const focusY = getFocusY(projectProgress);
     let closestStation = -1;
@@ -304,6 +346,8 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
         visible={visible}
         hoveredStationRef={hoveredStationRef}
         zoomedStation={helixZoomedStation}
+        pointerRef={pointerRef}
+        pointerActiveRef={pointerActiveRef}
       />
       <DNAStationLabels visible={visible} />
       <DNAHelixCamera visible={visible} />

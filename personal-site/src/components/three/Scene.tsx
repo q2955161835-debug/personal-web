@@ -6,7 +6,6 @@ import * as THREE from "three";
 
 import ParticleField from "./ParticleField";
 import PostProcessing from "./PostProcessing";
-import ProjectScene from "./ProjectScene";
 import DNAHelixScene from "./dna/DNAHelixScene";
 import { useProjectScene } from "./SceneContext";
 
@@ -91,7 +90,7 @@ function FadeableParticleField({
 export default function Scene({ className }: SceneProps) {
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const [scrollProgress, setScrollProgress] = useState(0);
-  const { activeProjectScene, activeSection } = useProjectScene();
+  const { activeSection } = useProjectScene();
   const isProjectsActive = activeSection === "projects";
 
   const handlePointerMove = useCallback(
@@ -123,7 +122,6 @@ export default function Scene({ className }: SceneProps) {
       <ScrollTracker onScroll={setScrollProgress} />
       <CameraHomeController enabled={!isProjectsActive} />
       <FadeableParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
-      <ProjectScene activeScene={activeProjectScene} visible={activeProjectScene != null} />
       <DNAHelixScene visible={isProjectsActive} />
       <PostProcessing />
     </Canvas>

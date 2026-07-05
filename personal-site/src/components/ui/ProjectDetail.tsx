@@ -3,7 +3,6 @@
 import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import type { Project } from "@/types";
-import ProjectVisualBackdrop from "./ProjectVisualBackdrop";
 import { FluidGlassPanel } from "./FluidGlassPanel";
 
 interface ProjectDetailProps {
@@ -111,15 +110,13 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        background:
-          "linear-gradient(120deg, rgba(2, 6, 18, 0.72), rgba(5, 18, 26, 0.58) 42%, rgba(18, 7, 20, 0.68))",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
+        background: "rgba(0, 0, 0, 0.38)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         opacity: 0,
       }}
       onClick={handleBackdropClick}
     >
-      <ProjectVisualBackdrop project={project} />
       <div
         ref={contentRef}
         className="relative z-10 w-full max-w-4xl px-4"

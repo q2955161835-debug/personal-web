@@ -30,7 +30,6 @@ export default function ProjectsSection() {
     setProjectProgress,
     helixZoomedStation,
     setHelixZoomedStation,
-    setActiveProjectScene,
   } = useProjectScene();
   const lastProgressRef = useRef(-1);
   const lastIndexRef = useRef(-1);
@@ -96,7 +95,6 @@ export default function ProjectsSection() {
     if (helixZoomedStation !== null) {
       const project = projects[helixZoomedStation];
       if (project) {
-        setActiveProjectScene(project.scene);
         const timer = window.setTimeout(() => {
           setSelectedProject(project);
         }, 420);
@@ -104,14 +102,13 @@ export default function ProjectsSection() {
         return () => window.clearTimeout(timer);
       }
     }
-  }, [helixZoomedStation, setActiveProjectScene]);
+  }, [helixZoomedStation]);
 
   // ─── Close detail overlay ──────────────────────────────────────
   const handleCloseDetail = useCallback(() => {
     setSelectedProject(null);
     setHelixZoomedStation(null);
-    setActiveProjectScene(null);
-  }, [setHelixZoomedStation, setActiveProjectScene]);
+  }, [setHelixZoomedStation]);
 
   const gradientTextStyle = {
     background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
@@ -141,11 +138,10 @@ export default function ProjectsSection() {
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 185}vh` }}
+      style={{ height: `${STATION_COUNT * 220}vh` }}
     >
       <div className="pointer-events-none sticky top-0 h-screen overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(73,197,182,0.08),transparent_28%,rgba(255,147,152,0.06)_72%,transparent)]" />
-        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:84px_84px]" />
+        <div className="absolute inset-0 bg-black/15" />
       </div>
 
       {/* ─── Compact project status (fixed while in view) ───────── */}
@@ -162,9 +158,6 @@ export default function ProjectsSection() {
           </h2>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
             {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
-          </p>
-          <p className="mt-5 hidden max-w-48 text-sm leading-relaxed text-white/45 sm:block">
-            当前 DNA 键位 {String(carouselActiveIndex + 1).padStart(2, "0")}
           </p>
         </div>
         <button

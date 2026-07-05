@@ -1,56 +1,26 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
-
-type CursorMode = "hero" | "about" | "projects" | "analysis" | "timeline" | "contact";
-
-const SECTION_BY_ID: Array<{ id: string; mode: CursorMode }> = [
-  { id: "hero", mode: "hero" },
-  { id: "about", mode: "about" },
-  { id: "projects", mode: "projects" },
-  { id: "data-analysis", mode: "analysis" },
-  { id: "experience", mode: "timeline" },
-  { id: "contact", mode: "contact" },
-];
-
-function getCurrentMode(): CursorMode {
-  const viewportCenter = window.innerHeight / 2;
-  let bestMode: CursorMode = "hero";
-  let bestDistance = Number.POSITIVE_INFINITY;
-
-  for (const item of SECTION_BY_ID) {
-    const element = document.getElementById(item.id);
-    if (!element) continue;
-
-    const rect = element.getBoundingClientRect();
-    if (rect.bottom < 0 || rect.top > window.innerHeight) continue;
-
-    const sectionCenter = rect.top + rect.height / 2;
-    const distance = Math.abs(sectionCenter - viewportCenter);
-    if (distance < bestDistance) {
-      bestDistance = distance;
-      bestMode = item.mode;
-    }
-  }
-
-  return bestMode;
-}
+import { useEffect, useRef } from "react";
 
 export default function SectionCursor() {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const trailRef = useRef<HTMLDivElement>(null);
+  const lensRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+  const hasPointerRef = useRef(false);
   const targetRef = useRef({ x: 0, y: 0 });
-  const trailRefPosition = useRef({ x: 0, y: 0 });
-  const [mode, setMode] = useState<CursorMode>("hero");
+  const positionRef = useRef({ x: -240, y: -240 });
+  const velocityRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const media = window.matchMedia("(pointer: coarse)");
     if (media.matches) return;
 
-    const updateMode = () => setMode(getCurrentMode());
     const handlePointerMove = (event: PointerEvent) => {
+      if (!hasPointerRef.current) {
+        hasPointerRef.current = true;
+        positionRef.current.x = event.clientX;
+        positionRef.current.y = event.clientY;
+        lensRef.current?.setAttribute("data-ready", "true");
+      }
       targetRef.current.x = event.clientX;
       targetRef.current.y = event.clientY;
       document.documentElement.style.setProperty("--cursor-x", `${event.clientX}px`);
@@ -58,46 +28,34 @@ export default function SectionCursor() {
     };
 
     const animate = () => {
-      const cursor = cursorRef.current;
-      const trail = trailRef.current;
-      const target = targetRef.current;
-      const trailPosition = trailRefPosition.current;
+      const previousX = positionRef.current.x;
+      const previousY = positionRef.current.y;
 
-      if (cursor) {
-        cursor.style.transform = `translate3d(${target.x}px, ${target.y}px, 0) translate(-50%, -50%)`;
-      }
+      positionRef.current.x += (targetRef.current.x - positionRef.current.x) * 0.28;
+      positionRef.current.y += (targetRef.current.y - positionRef.current.y) * 0.28;
+      velocityRef.current.x = positionRef.current.x - previousX;
+      velocityRef.current.y = positionRef.current.y - previousY;
 
-      if (trail) {
-        trailPosition.x += (target.x - trailPosition.x) * 0.16;
-        trailPosition.y += (target.y - trailPosition.y) * 0.16;
-        trail.style.transform = `translate3d(${trailPosition.x}px, ${trailPosition.y}px, 0) translate(-50%, -50%)`;
+      const lens = lensRef.current;
+      if (lens) {
+        const speed = Math.min(1, Math.hypot(velocityRef.current.x, velocityRef.current.y) / 28);
+        const angle = Math.atan2(velocityRef.current.y, velocityRef.current.x || 0.001);
+        lens.style.setProperty("--cursor-speed", speed.toFixed(3));
+        lens.style.setProperty("--cursor-angle", `${angle}rad`);
+        lens.style.transform = `translate3d(${positionRef.current.x}px, ${positionRef.current.y}px, 0) translate(-50%, -50%)`;
       }
 
       rafRef.current = window.requestAnimationFrame(animate);
     };
 
-    updateMode();
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("scroll", updateMode, { passive: true });
-    window.addEventListener("resize", updateMode);
     rafRef.current = window.requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("scroll", updateMode);
-      window.removeEventListener("resize", updateMode);
       if (rafRef.current !== null) window.cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
-  return (
-    <>
-      <div ref={trailRef} className={`section-cursor-trail section-cursor-${mode}`} aria-hidden="true" />
-      <div ref={cursorRef} className={`section-cursor section-cursor-${mode}`} aria-hidden="true">
-        {Array.from({ length: 12 }, (_, index) => (
-          <span key={index} style={{ "--ripple-index": index } as CSSProperties} />
-        ))}
-      </div>
-    </>
-  );
+  return <div ref={lensRef} className="rainbow-cursor-lens" aria-hidden="true" />;
 }
