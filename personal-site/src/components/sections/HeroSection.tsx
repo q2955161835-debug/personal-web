@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import dynamic from "next/dynamic";
+import AnimatedText from "@/components/ui/AnimatedText";
 
 // Dynamic import for R3F Scene to avoid SSR issues
 const Scene = dynamic(() => import("../three/Scene"), { ssr: false });
@@ -67,7 +68,7 @@ export default function HeroSection() {
             filter: "drop-shadow(0 0 20px rgba(73, 197, 182, 0.4)) drop-shadow(0 0 40px rgba(255, 147, 152, 0.2))",
           }}
         >
-          FAN JUN JIE
+          <AnimatedText text="FAN JUN JIE" duration={820} />
         </h1>
         <p
           className="hero-iridescent-text mt-4 text-lg"

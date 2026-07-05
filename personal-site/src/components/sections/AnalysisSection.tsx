@@ -13,6 +13,7 @@ import {
 import type { DataAnalysisProject } from "@/types";
 import { FluidGlassButton } from "@/components/ui/FluidGlassPanel";
 import { useProjectScene } from "@/components/three/SceneContext";
+import AnimatedText from "@/components/ui/AnimatedText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,8 +21,10 @@ function normalizedPseudo(index: number, salt: number) {
   return Math.abs(Math.sin(index * 127.1 + salt * 311.7) * 43758.5453) % 1;
 }
 
-const xAxisTicks = Array.from({ length: 620 }, (_, index) => {
-  const ratio = index / 619;
+const X_AXIS_TICK_COUNT = 124;
+
+const xAxisTicks = Array.from({ length: X_AXIS_TICK_COUNT }, (_, index) => {
+  const ratio = index / (X_AXIS_TICK_COUNT - 1);
   return {
     id: index,
     ratio,
@@ -45,7 +48,7 @@ const yAxisTicks = Array.from({ length: 22 }, (_, index) => ({
   color: index % 10 === 0 ? "#49c5b6" : index % 7 === 0 ? "#8b5cf6" : "rgba(255,255,255,0.42)",
 }));
 
-const fieldParticles = Array.from({ length: 120 }, (_, index) => ({
+const fieldParticles = Array.from({ length: 82 }, (_, index) => ({
   id: index,
   left: `${(normalizedPseudo(index, 44.1) * 100).toFixed(3)}%`,
   top: `${(normalizedPseudo(index, 46.9) * 100).toFixed(3)}%`,
@@ -219,7 +222,7 @@ function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
           Selected Case
         </p>
         <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight text-white">
-          {project.title}
+          <AnimatedText text={project.title} />
         </h3>
         <p className="mt-5 max-w-xl text-sm leading-7 text-white/62">{project.description}</p>
       </div>
@@ -259,10 +262,10 @@ export default function AnalysisSection() {
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [selectedProject, setSelectedProject] = useState<DataAnalysisProject>(analysisProjects[0]);
   const { setActiveSection, setDnaDissolveProgress } = useProjectScene();
 
   const activeRatio = analysisProjects.length <= 1 ? 0.5 : activeIndex / (analysisProjects.length - 1);
+  const selectedProject = analysisProjects[activeIndex] ?? analysisProjects[0];
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -277,7 +280,6 @@ export default function AnalysisSection() {
       if (nextIndex === activeIndexRef.current) return;
       activeIndexRef.current = nextIndex;
       setActiveIndex(nextIndex);
-      setSelectedProject(analysisProjects[nextIndex]);
     };
 
     const ctx = gsap.context(() => {
@@ -364,8 +366,8 @@ export default function AnalysisSection() {
         <FloatingProjectDetail project={selectedProject} />
         <MethodNebula project={selectedProject} />
 
-        <div className="pointer-events-none absolute inset-x-[5vw] bottom-[6vh] z-20 h-[42vh] min-h-[320px]">
-          <div className="absolute bottom-[92px] left-16 right-0 h-[116px]">
+        <div className="pointer-events-none absolute inset-x-[2.4vw] bottom-[1.5vh] z-20 h-[38vh] min-h-[300px]">
+          <div className="absolute bottom-[46px] left-0 right-0 h-[116px]">
             <span className="analysis-axis-baseline absolute bottom-0 left-0 w-full" />
             {xAxisTicks.map((tick) => {
               const distance = tick.ratio - activeRatio;
@@ -397,7 +399,7 @@ export default function AnalysisSection() {
             })}
           </div>
 
-          <div className="absolute bottom-[92px] left-16 h-[170px] md:h-[190px]">
+          <div className="absolute bottom-[46px] left-0 h-[200px] md:h-[224px]">
             <span className="analysis-axis-vertical absolute bottom-0 left-0 h-full" />
             {yAxisTicks.map((tick) => (
               <span
@@ -418,7 +420,7 @@ export default function AnalysisSection() {
 
         <div
           ref={trackRef}
-          className="analysis-chart-track absolute bottom-[calc(6vh+92px)] left-[calc(5vw+110px)] z-10 flex h-[calc(42vh-126px)] min-h-[214px] min-w-max items-end gap-12 pr-[42vw] md:left-[40vw]"
+          className="analysis-chart-track absolute bottom-[calc(1.5vh+46px)] left-[calc(2.4vw+92px)] z-10 flex h-[calc(43vh-70px)] min-h-[252px] min-w-max items-end gap-12 pr-[42vw] md:left-[36vw]"
         >
           {analysisProjects.map((project, index) => {
             const isActive = activeIndex === index;
@@ -444,7 +446,6 @@ export default function AnalysisSection() {
                   onClick={() => {
                     activeIndexRef.current = index;
                     setActiveIndex(index);
-                    setSelectedProject(project);
                   }}
                   className={`analysis-fluid-bar w-[92px] px-0 py-0 ${isActive ? "analysis-fluid-bar-active" : ""}`}
                   style={{

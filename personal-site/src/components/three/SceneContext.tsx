@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useMemo, useState } from "react";
 
 interface SceneContextValue {
   activeProjectScene: string | null;
@@ -45,25 +45,36 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [carouselSelectedIndex, setCarouselSelectedIndex] = useState<number | null>(null);
   const [helixZoomedStation, setHelixZoomedStation] = useState<number | null>(null);
 
+  const value = useMemo(
+    () => ({
+      activeProjectScene,
+      setActiveProjectScene,
+      activeSection,
+      setActiveSection,
+      carouselActiveIndex,
+      setCarouselActiveIndex,
+      projectProgress,
+      setProjectProgress,
+      dnaDissolveProgress,
+      setDnaDissolveProgress,
+      carouselSelectedIndex,
+      setCarouselSelectedIndex,
+      helixZoomedStation,
+      setHelixZoomedStation,
+    }),
+    [
+      activeProjectScene,
+      activeSection,
+      carouselActiveIndex,
+      carouselSelectedIndex,
+      dnaDissolveProgress,
+      helixZoomedStation,
+      projectProgress,
+    ]
+  );
+
   return (
-    <SceneContext.Provider
-      value={{
-        activeProjectScene,
-        setActiveProjectScene,
-        activeSection,
-        setActiveSection,
-        carouselActiveIndex,
-        setCarouselActiveIndex,
-        projectProgress,
-        setProjectProgress,
-        dnaDissolveProgress,
-        setDnaDissolveProgress,
-        carouselSelectedIndex,
-        setCarouselSelectedIndex,
-        helixZoomedStation,
-        setHelixZoomedStation,
-      }}
-    >
+    <SceneContext.Provider value={value}>
       {children}
     </SceneContext.Provider>
   );

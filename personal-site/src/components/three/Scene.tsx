@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -22,10 +22,17 @@ function ScrollTracker({
 }: {
   onScroll: (progress: number) => void;
 }) {
+  const lastProgressRef = useRef(-1);
+
   useFrame(() => {
     const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
     const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
-    onScroll(Math.min(Math.max(progress, 0), 1));
+    const clampedProgress = Math.min(Math.max(progress, 0), 1);
+
+    if (Math.abs(clampedProgress - lastProgressRef.current) > 0.003) {
+      lastProgressRef.current = clampedProgress;
+      onScroll(clampedProgress);
+    }
   });
 
   return null;
@@ -35,9 +42,19 @@ function ScrollTracker({
 function CanvasResizer() {
   const { gl } = useThree();
 
-  useFrame(() => {
-    gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  });
+  useEffect(() => {
+    let currentPixelRatio = 0;
+    const syncPixelRatio = () => {
+      const nextPixelRatio = Math.min(window.devicePixelRatio, 1.55);
+      if (Math.abs(nextPixelRatio - currentPixelRatio) < 0.01) return;
+      currentPixelRatio = nextPixelRatio;
+      gl.setPixelRatio(nextPixelRatio);
+    };
+
+    syncPixelRatio();
+    window.addEventListener("resize", syncPixelRatio, { passive: true });
+    return () => window.removeEventListener("resize", syncPixelRatio);
+  }, [gl]);
 
   return null;
 }
@@ -105,7 +122,7 @@ export default function Scene({ className }: SceneProps) {
     <Canvas
       className={className}
       camera={{ position: [0, 0, 5], fov: 75 }}
-      dpr={[1, 2]}
+      dpr={[1, 1.55]}
       frameloop="always"
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       style={{

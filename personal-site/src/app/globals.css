@@ -466,6 +466,10 @@ html.lenis body {
   animation-delay: -2.6s;
 }
 
+[data-fluid-variant="bar"] .fluid-glass-css-field i {
+  display: none;
+}
+
 [data-fluid-variant="bar"].fluid-glass-shell::after,
 [data-fluid-variant="chip"].fluid-glass-shell::after {
   box-shadow:

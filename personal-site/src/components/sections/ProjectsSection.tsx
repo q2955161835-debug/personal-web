@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
 import { useProjectScene } from "@/components/three/SceneContext";
+import AnimatedText from "@/components/ui/AnimatedText";
 import type { Project } from "@/types";
 
 const STATION_COUNT = projects.length;
 const VIRTUAL_SCROLL_SLOTS = STATION_COUNT + 1;
-const PROJECT_INTRO_PROGRESS = 0.16;
+const PROJECT_INTRO_PROGRESS = 0.025;
 
 const STATION_HEX_COLORS = [
   "#49c5b6",
@@ -64,7 +65,7 @@ function ProjectNarrative({
         {String(index + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
       </p>
       <h3 className="mt-4 text-3xl font-bold leading-tight text-white md:text-5xl">
-        {project.name}
+        <AnimatedText text={project.name} />
       </h3>
       <p className="mt-4 text-base font-medium leading-7" style={{ color }}>
         {project.subtitle}
@@ -109,6 +110,7 @@ export default function ProjectsSection() {
     carouselActiveIndex,
     setCarouselActiveIndex,
     projectProgress,
+    dnaDissolveProgress,
     setProjectProgress,
     setDnaDissolveProgress,
   } = useProjectScene();
@@ -117,6 +119,7 @@ export default function ProjectsSection() {
   const visibleProjects = useMemo(() => projects.slice(0, STATION_COUNT), []);
   const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
   const showProjectContent = normalizeProjectProgress(projectProgress) > 0.045;
+  const projectContentOpacity = showProjectContent ? Math.max(0, 1 - dnaDissolveProgress * 1.45) : 0;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -225,8 +228,8 @@ export default function ProjectsSection() {
 
         <div
           style={{
-            opacity: showProjectContent ? 1 : 0,
-            transform: showProjectContent ? "translateY(0)" : "translateY(22px)",
+            opacity: projectContentOpacity,
+            transform: projectContentOpacity > 0.02 ? "translateY(0)" : "translateY(22px)",
             transition: "opacity 420ms ease, transform 420ms ease",
           }}
         >

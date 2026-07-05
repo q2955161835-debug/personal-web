@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { timelineEntries } from "@/data/timeline";
 import SolarTimelineScene from "@/components/three/timeline/SolarTimelineScene";
+import AnimatedText from "@/components/ui/AnimatedText";
 
 const typeLabel = {
   education: "教育",
@@ -84,7 +85,7 @@ export default function TimelineSection() {
             <span>{activeEntry.organization}</span>
           </div>
           <h3 className="text-3xl font-bold leading-tight text-white md:text-4xl">
-            {activeEntry.title}
+            <AnimatedText text={activeEntry.title} />
           </h3>
           <p className="mt-5 text-sm leading-7 text-white/62">{activeEntry.description}</p>
           <div className="mt-6 flex flex-wrap justify-end gap-3">

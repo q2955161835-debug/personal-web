@@ -22,6 +22,18 @@ const PLANET_COLORS = [
   ["#00d4ff", "#def7ff"],
 ] as const;
 
+function getPlanetOrbitPosition(index: number, time: number, target = new THREE.Vector3()) {
+  const orbitRadius = 7.2 + index * 4.6;
+  const initialAngle = -0.8 + index * 0.88;
+  const angle = initialAngle + time * (0.035 + index * 0.008);
+
+  return target.set(
+    Math.cos(angle) * orbitRadius * (1 + index * 0.018),
+    Math.sin(time * 0.52 + index) * 0.18,
+    Math.sin(angle) * orbitRadius * 0.68
+  );
+}
+
 function createOrbitPoints(radius: number, eccentricity: number) {
   return Array.from({ length: 385 }, (_, index) => {
     const angle = (index / 384) * Math.PI * 2;
@@ -94,7 +106,7 @@ function normalizedNoise(seed: number, index: number, salt: number) {
 
 function StarField() {
   const geometry = useMemo(() => {
-    const count = 2600;
+    const count = 1900;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const color = new THREE.Color();
@@ -161,22 +173,17 @@ function Planet({
   const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const labelRef = useRef<THREE.Object3D>(null);
+  const orbitTargetRef = useRef(new THREE.Vector3());
   const { camera } = useThree();
   const [primary, secondary] = PLANET_COLORS[index % PLANET_COLORS.length];
   const texture = useMemo(() => createPlanetTexture(primary, secondary, index + 1), [primary, secondary, index]);
   const orbitRadius = 7.2 + index * 4.6;
   const planetRadius = 0.58 + (index % 3) * 0.18;
-  const initialAngle = -0.8 + index * 0.88;
   const orbitPoints = useMemo(() => createOrbitPoints(orbitRadius, 0.08 + index * 0.02), [orbitRadius, index]);
 
   useFrame((state, delta) => {
     const time = state.clock.elapsedTime;
-    const angle = initialAngle + time * (0.035 + index * 0.008);
-    const target = new THREE.Vector3(
-      Math.cos(angle) * orbitRadius * (1 + index * 0.018),
-      Math.sin(time * 0.52 + index) * 0.18,
-      Math.sin(angle) * orbitRadius * 0.68
-    );
+    const target = getPlanetOrbitPosition(index, time, orbitTargetRef.current);
     if (groupRef.current) {
       groupRef.current.position.lerp(target, 1 - Math.exp(-delta * 5.5));
       groupRef.current.scale.lerp(new THREE.Vector3(active ? 1.22 : 1, active ? 1.22 : 1, active ? 1.22 : 1), 1 - Math.exp(-delta * 6));
@@ -252,22 +259,14 @@ function CameraFlight({
 }) {
   const { camera } = useThree();
   const targetRef = useRef(new THREE.Vector3());
-  const smoothIndexRef = useRef(activeIndex);
+  const focusRef = useRef(new THREE.Vector3());
   const smoothTravelRef = useRef(scrollProgress);
 
   useFrame((state, delta) => {
-    smoothIndexRef.current = THREE.MathUtils.lerp(smoothIndexRef.current, activeIndex, 1 - Math.exp(-delta * 3.1));
     smoothTravelRef.current = THREE.MathUtils.lerp(smoothTravelRef.current, scrollProgress, 1 - Math.exp(-delta * 2.6));
 
     const travel = THREE.MathUtils.clamp(smoothTravelRef.current, 0, 1);
-    const smoothIndex = smoothIndexRef.current;
-    const orbitRadius = 7.2 + smoothIndex * 4.6;
-    const angle = -0.8 + smoothIndex * 0.88 + state.clock.elapsedTime * (0.022 + smoothIndex * 0.004);
-    const focus = new THREE.Vector3(
-      Math.cos(angle) * orbitRadius,
-      0,
-      Math.sin(angle) * orbitRadius * 0.68
-    );
+    const focus = getPlanetOrbitPosition(activeIndex, state.clock.elapsedTime, focusRef.current);
     targetRef.current.lerp(focus, 1 - Math.exp(-delta * 4.2));
 
     const cameraPath = new THREE.Vector3(

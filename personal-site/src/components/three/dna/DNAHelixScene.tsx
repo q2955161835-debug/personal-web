@@ -30,7 +30,7 @@ const STATION_HEX_COLORS = [
   "#86efac",
 ];
 
-const PROJECT_INTRO_PROGRESS = 0.16;
+const PROJECT_INTRO_PROGRESS = 0.025;
 const FIXED_CAMERA_POSITION = new THREE.Vector3(0, 0, HELIX_PARAMS.cameraRadius);
 const FIXED_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
 
