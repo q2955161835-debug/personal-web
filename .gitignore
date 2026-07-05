@@ -1,44 +1,37 @@
-# 依赖
-node_modules/
+# Dependencies
+**/node_modules/
+/.pnp
+.pnp.*
 
-# 构建产物
-dist/
-dist-ssr/
+# Next.js
+personal-site/.next/
+personal-site/out/
 
-# 环境变量真账本
-.env
-.env.local
-.env.*.local
+# Build
+personal-site/build
 
-# 编辑器/系统
-.vscode/*
-!.vscode/extensions.json
-.idea/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.swp
-*~
+# Misc
 .DS_Store
-Thumbs.db
+*.pem
 
-# 日志
-*.log
+# Debug logs
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
 
-# 临时文件
-.tmp/
-temp/
-*.tmp
+# Env files
+.env*
+!.env.example
 
-# 测试产物
-try/
-coverage/
+# Vercel
+.vercel
 
-# 大资源（按需取消注释）
-# public/assets/models/*.glb
-# public/assets/textures/*.ktx2
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+
+# Trae/uploads
+.uploads/
