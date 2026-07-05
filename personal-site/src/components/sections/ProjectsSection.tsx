@@ -27,8 +27,8 @@ export default function ProjectsSection() {
     setActiveSection,
     carouselActiveIndex,
     setCarouselActiveIndex,
-    carouselSelectedIndex,
-    setCarouselSelectedIndex,
+    helixZoomedStation,
+    setHelixZoomedStation,
     setActiveProjectScene,
   } = useProjectScene();
 
@@ -82,23 +82,23 @@ export default function ProjectsSection() {
     };
   }, [activeSection, setActiveSection, setCarouselActiveIndex]);
 
-  // ─── Handle project selection from 3D carousel ──────────────────
+  // ─── Handle project selection from DNA helix zoom ──────────────
   useEffect(() => {
-    if (carouselSelectedIndex !== null) {
-      const project = projects[carouselSelectedIndex];
+    if (helixZoomedStation !== null) {
+      const project = projects[helixZoomedStation];
       if (project) {
         setSelectedProject(project);
         setActiveProjectScene(project.scene);
       }
     }
-  }, [carouselSelectedIndex, setActiveProjectScene]);
+  }, [helixZoomedStation, setActiveProjectScene]);
 
   // ─── Close detail overlay ──────────────────────────────────────
   const handleCloseDetail = useCallback(() => {
     setSelectedProject(null);
-    setCarouselSelectedIndex(null);
+    setHelixZoomedStation(null);
     setActiveProjectScene(null);
-  }, [setCarouselSelectedIndex, setActiveProjectScene]);
+  }, [setHelixZoomedStation, setActiveProjectScene]);
 
   const gradientTextStyle = {
     background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
@@ -157,7 +157,7 @@ export default function ProjectsSection() {
               pointerEvents: isActive && selectedProject ? "none" : isActive ? "auto" : "none",
             }}
             onClick={() => {
-              setCarouselSelectedIndex(index);
+              setHelixZoomedStation(index);
             }}
           >
             <div className="mb-[20vh] w-full max-w-lg px-6 text-center">

@@ -11,6 +11,8 @@ interface SceneContextValue {
   setCarouselActiveIndex: (index: number) => void;
   carouselSelectedIndex: number | null;
   setCarouselSelectedIndex: (index: number | null) => void;
+  helixZoomedStation: number | null;
+  setHelixZoomedStation: (index: number | null) => void;
 }
 
 const SceneContext = createContext<SceneContextValue>({
@@ -22,6 +24,8 @@ const SceneContext = createContext<SceneContextValue>({
   setCarouselActiveIndex: () => {},
   carouselSelectedIndex: null,
   setCarouselSelectedIndex: () => {},
+  helixZoomedStation: null,
+  setHelixZoomedStation: () => {},
 });
 
 export function SceneProvider({ children }: { children: React.ReactNode }) {
@@ -29,6 +33,7 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [carouselSelectedIndex, setCarouselSelectedIndex] = useState<number | null>(null);
+  const [helixZoomedStation, setHelixZoomedStation] = useState<number | null>(null);
 
   return (
     <SceneContext.Provider
@@ -41,6 +46,8 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
         setCarouselActiveIndex,
         carouselSelectedIndex,
         setCarouselSelectedIndex,
+        helixZoomedStation,
+        setHelixZoomedStation,
       }}
     >
       {children}
