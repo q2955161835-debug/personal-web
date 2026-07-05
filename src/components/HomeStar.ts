@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { sunVertexShader, sunFragmentShader, coronaVertexShader, coronaFragmentShader, refractionVertexShader, refractionFragmentShader } from '../shaders/sun';
+import { sunVertexShader, sunFragmentShader, coronaVertexShader, coronaFragmentShader } from '../shaders/sun';
 
 /**
  * 入口恒星 - 增强版太阳
@@ -8,10 +8,9 @@ import { sunVertexShader, sunFragmentShader, coronaVertexShader, coronaFragmentS
  *      - 多尺度湍流（颗粒 + 超颗粒 + 大尺度）
  *      - 黑子本影/半影 + 光斑 + 临边昏暗 + 日珥位移 + 溅射喷发
  *      - Fresnel 多层辉光
- *   2. 内日冕：1.25x 半径，BackSide + 流光条纹 + Fresnel
+ *   2. 内日冕：1.25x 半径，BackSide + 流光条纹 + 双层 Fresnel
  *   3. 外日冕：1.55x 半径，更柔和
  *   4. 远场辉光：1.95x 半径，强辉光
- *   5. 空间折射层：2.3x 半径，色散 Fresnel，模拟引力透镜
  */
 export class HomeStar {
   public readonly group: THREE.Group;
@@ -19,12 +18,10 @@ export class HomeStar {
   private readonly innerCorona: THREE.Mesh;
   private readonly outerCorona: THREE.Mesh;
   private readonly farGlow: THREE.Mesh;
-  private readonly refractionLayer: THREE.Mesh;
   private readonly coreMaterial: THREE.ShaderMaterial;
   private readonly innerCoronaMaterial: THREE.ShaderMaterial;
   private readonly outerCoronaMaterial: THREE.ShaderMaterial;
   private readonly farGlowMaterial: THREE.ShaderMaterial;
-  private readonly refractionMaterial: THREE.ShaderMaterial;
 
   constructor(radius = 8) {
     this.group = new THREE.Group();
@@ -95,25 +92,6 @@ export class HomeStar {
     });
     this.farGlow = new THREE.Mesh(farGlowGeo, this.farGlowMaterial);
     this.group.add(this.farGlow);
-
-    // 5. 空间折射层（2.3x，色散引力透镜）
-    const refractionGeo = new THREE.IcosahedronGeometry(radius * 2.3, 20);
-    this.refractionMaterial = new THREE.ShaderMaterial({
-      vertexShader: refractionVertexShader,
-      fragmentShader: refractionFragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uColorA: { value: new THREE.Color(0xff6a3a) }, // 暖红橙
-        uColorB: { value: new THREE.Color(0x4af0ff) }, // 冷青
-        uColorC: { value: new THREE.Color(0x9d6bff) }, // 紫
-      },
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      side: THREE.BackSide,
-      depthWrite: false,
-    });
-    this.refractionLayer = new THREE.Mesh(refractionGeo, this.refractionMaterial);
-    this.group.add(this.refractionLayer);
   }
 
   update(elapsed: number, delta: number): void {
@@ -122,7 +100,6 @@ export class HomeStar {
     this.innerCoronaMaterial.uniforms.uTime.value = elapsed;
     this.outerCoronaMaterial.uniforms.uTime.value = elapsed;
     this.farGlowMaterial.uniforms.uTime.value = elapsed;
-    this.refractionMaterial.uniforms.uTime.value = elapsed;
 
     // 光球层缓慢自转（不同轴轻微倾斜，更生动）
     this.core.rotation.y += delta * 0.06;
@@ -131,10 +108,6 @@ export class HomeStar {
     // 日冕反向极慢旋转
     this.innerCorona.rotation.y -= delta * 0.02;
     this.outerCorona.rotation.z += delta * 0.015;
-
-    // 折射层反向旋转
-    this.refractionLayer.rotation.y -= delta * 0.01;
-    this.refractionLayer.rotation.x += delta * 0.008;
   }
 
   dispose(): void {
@@ -146,7 +119,5 @@ export class HomeStar {
     this.outerCoronaMaterial.dispose();
     this.farGlow.geometry.dispose();
     this.farGlowMaterial.dispose();
-    this.refractionLayer.geometry.dispose();
-    this.refractionMaterial.dispose();
   }
 }
