@@ -71,15 +71,15 @@ function useViewportPointer() {
 
 function getStationY(index: number) {
   const halfHeight = HELIX_PARAMS.height / 2;
-  const t = (index + 0.5) / HELIX_PARAMS.stationCount;
+  const t = (index + 0.5) / HELIX_PARAMS.stationSlots;
   return halfHeight - t * HELIX_PARAMS.height;
 }
 
 function getFocusY(progress: number) {
   const clamped = THREE.MathUtils.clamp(progress, 0, 1);
-  const scaled = clamped * (HELIX_PARAMS.stationCount - 1);
-  const lowerIndex = Math.floor(scaled);
-  const upperIndex = Math.min(HELIX_PARAMS.stationCount - 1, lowerIndex + 1);
+  const scaled = clamped * HELIX_PARAMS.stationCount;
+  const lowerIndex = Math.min(HELIX_PARAMS.stationCount, Math.floor(scaled));
+  const upperIndex = Math.min(HELIX_PARAMS.stationCount, lowerIndex + 1);
   const mix = scaled - lowerIndex;
   return THREE.MathUtils.lerp(getStationY(lowerIndex), getStationY(upperIndex), mix);
 }
@@ -171,7 +171,10 @@ function DNAHelixParticles({
     material.uniforms.uStationProgress.value = stationProgress;
     material.uniforms.uDissolveProgress.value = THREE.MathUtils.clamp(dissolveProgress, 0, 1);
     material.uniforms.uFocusY.value = getFocusY(stationProgress);
-    material.uniforms.uActiveStation.value = stationProgress * (HELIX_PARAMS.stationCount - 1);
+    material.uniforms.uActiveStation.value = Math.min(
+      HELIX_PARAMS.stationCount - 1,
+      stationProgress * HELIX_PARAMS.stationCount
+    );
     material.uniforms.uHoveredStation.value = hoveredStationRef.current;
     material.uniforms.uZoomedStation.value = zoomedStation ?? -1;
     material.uniforms.uZoomProgress.value = zoomProgressRef.current;
@@ -223,7 +226,7 @@ function DNAStationLabels({
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
 
     return projects.slice(0, HELIX_PARAMS.stationCount).map((_, index) => {
-      const stationT = (index + 0.5) / HELIX_PARAMS.stationCount;
+      const stationT = (index + 0.5) / HELIX_PARAMS.stationSlots;
       const stationY = getStationY(index);
       const stationAngle = stationT * omega;
       const midpointOffset = 0.08;
@@ -317,7 +320,7 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
   const stationPositions = useMemo(() => {
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
     return Array.from({ length: HELIX_PARAMS.stationCount }, (_, index) => {
-      const stationT = (index + 0.5) / HELIX_PARAMS.stationCount;
+      const stationT = (index + 0.5) / HELIX_PARAMS.stationSlots;
       const stationAngle = stationT * omega;
       return new THREE.Vector3(
         HELIX_PARAMS.radius * Math.cos(stationAngle),

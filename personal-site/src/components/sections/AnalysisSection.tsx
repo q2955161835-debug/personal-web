@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -25,8 +25,7 @@ const xAxisTicks = Array.from({ length: 620 }, (_, index) => {
   return {
     id: index,
     ratio,
-    baseHeight: 4 + normalizedPseudo(index, 3.4) * 8,
-    jitter: (normalizedPseudo(index, 7.1) - 0.5) * 13,
+    baseHeight: 3 + normalizedPseudo(index, 3.4) * 5,
     color:
       index % 13 === 0
         ? "#00d4ff"
@@ -106,6 +105,17 @@ function methodIsActive(project: DataAnalysisProject, methodName: string) {
   return tokens.some((token) =>
     aliases.some((alias) => token.includes(alias) || alias.includes(token) || methodName.includes(token))
   );
+}
+
+function normalBarHeight(index: number, total: number) {
+  const center = (total - 1) / 2;
+  const sigma = Math.max(1, total / 5.1);
+  const z = (index - center) / sigma;
+  const gaussian = Math.exp(-0.5 * z * z);
+  const shoulder = 0.2 * Math.exp(-0.5 * Math.pow((Math.abs(index - center) - total * 0.23) / (total / 8.5), 2));
+  const localVariance = (normalizedPseudo(index, 88.2) - 0.5) * 46;
+
+  return 132 + (gaussian + shoulder) * 365 + localVariance;
 }
 
 function MethodNebula({ project }: { project: DataAnalysisProject }) {
@@ -219,8 +229,7 @@ export default function AnalysisSection() {
   const [selectedProject, setSelectedProject] = useState<DataAnalysisProject>(analysisProjects[0]);
   const { setActiveSection, setDnaDissolveProgress } = useProjectScene();
 
-  const maxScore = useMemo(() => Math.max(...analysisProjects.map((project) => project.impactScore)), []);
-  const activeRatio = analysisProjects.length <= 1 ? 0 : activeIndex / (analysisProjects.length - 1);
+  const activeRatio = analysisProjects.length <= 0 ? 0 : (activeIndex + 0.5) / analysisProjects.length;
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -271,7 +280,7 @@ export default function AnalysisSection() {
           invalidateOnRefresh: true,
           onEnter: () => {
             setActiveSection("data-analysis");
-            setDnaDissolveProgress(0);
+            setDnaDissolveProgress(0.08);
           },
           onEnterBack: () => {
             setActiveSection("data-analysis");
@@ -280,7 +289,7 @@ export default function AnalysisSection() {
           onLeaveBack: () => setDnaDissolveProgress(0),
           onUpdate: (self) => {
             setActiveSection("data-analysis");
-            setDnaDissolveProgress(Math.min(1, self.progress * 3.8));
+            setDnaDissolveProgress(Math.min(1, 0.08 + self.progress * 11.5));
             setProjectByProgress(self.progress);
           },
         },
@@ -325,10 +334,16 @@ export default function AnalysisSection() {
           ref={trackRef}
           className="analysis-chart-track absolute bottom-8 left-[8vw] flex h-[55vh] min-h-[440px] min-w-max items-end gap-11 pr-[38vw] pt-12 md:left-[40vw]"
         >
-          <div className="pointer-events-none absolute bottom-[136px] left-0 h-16 w-full">
+          <div className="pointer-events-none absolute bottom-[136px] left-0 h-[112px] w-full">
+            <span className="analysis-axis-baseline absolute bottom-0 left-0 w-full" />
             {xAxisTicks.map((tick) => {
-              const wave = Math.exp(-Math.pow((tick.ratio - activeRatio) * 16, 2));
-              const height = tick.baseHeight + wave * 38 + Math.sin(tick.ratio * Math.PI * 28 + activeIndex * 0.6) * wave * 5;
+              const distance = tick.ratio - activeRatio;
+              const primaryWave = Math.exp(-Math.pow(distance * 38, 2));
+              const trailingWave = Math.exp(-Math.pow((distance + 0.042) * 48, 2)) * 0.34;
+              const leadingWave = Math.exp(-Math.pow((distance - 0.032) * 54, 2)) * 0.22;
+              const rhythm = 0.5 + Math.sin(tick.id * 0.44 + activeIndex * 1.1) * 0.5;
+              const wave = Math.min(1, primaryWave + trailingWave + leadingWave);
+              const height = tick.baseHeight + rhythm * 9 + primaryWave * (42 + rhythm * 42) + trailingWave * 32 + leadingWave * 20;
 
               return (
                 <span
@@ -337,17 +352,17 @@ export default function AnalysisSection() {
                   style={{
                     left: `${(tick.ratio * 100).toFixed(4)}%`,
                     height: `${Math.max(2, height).toFixed(2)}px`,
-                    transform: `translate3d(0, ${tick.jitter.toFixed(2)}px, 0)`,
                     "--tick-color": tick.color,
                     background: "var(--tick-color)",
-                    boxShadow: wave > 0.3 ? `0 0 ${(8 + wave * 20).toFixed(3)}px var(--tick-color)` : "none",
-                    opacity: (0.42 + wave * 0.5).toFixed(4),
+                    boxShadow: wave > 0.28 ? `0 0 ${(7 + wave * 22).toFixed(3)}px var(--tick-color)` : "none",
+                    opacity: (0.34 + wave * 0.58).toFixed(4),
                   } as CSSProperties}
                 />
               );
             })}
           </div>
           <div className="pointer-events-none absolute bottom-[136px] left-0 h-[calc(100%-144px)] w-14">
+            <span className="analysis-axis-vertical absolute bottom-0 left-0 h-full" />
             {yAxisTicks.map((tick) => {
               const wave = Math.exp(-Math.pow((tick.ratio - (1 - activeRatio * 0.78)) * 11, 2));
               return (
@@ -356,7 +371,7 @@ export default function AnalysisSection() {
                   className="analysis-y-tick absolute h-px rounded-full"
                   style={{
                     bottom: `${(tick.ratio * 100).toFixed(4)}%`,
-                  left: `${tick.offset.toFixed(2)}px`,
+                    left: `${tick.offset.toFixed(2)}px`,
                     width: `${(tick.height + wave * 18).toFixed(4)}px`,
                     "--tick-color": tick.color,
                     background: "var(--tick-color)",
@@ -370,8 +385,7 @@ export default function AnalysisSection() {
 
           {analysisProjects.map((project, index) => {
             const isActive = activeIndex === index;
-            const scoreRatio = project.impactScore / maxScore;
-            const height = 170 + scoreRatio * 330 + Math.sin(index * 1.37) * 22;
+            const height = normalBarHeight(index, analysisProjects.length);
             const compactTitle = COMPACT_TITLE[project.title] ?? project.title;
 
             return (

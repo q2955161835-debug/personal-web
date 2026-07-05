@@ -7,6 +7,7 @@ import { useProjectScene } from "@/components/three/SceneContext";
 import type { Project } from "@/types";
 
 const STATION_COUNT = projects.length;
+const STATION_SCROLL_SLOTS = STATION_COUNT;
 const PROJECT_INTRO_PROGRESS = 0.12;
 
 const STATION_HEX_COLORS = [
@@ -27,8 +28,12 @@ function normalizeProjectProgress(progress: number) {
 }
 
 function rawProgressForStation(index: number) {
-  const stationProgress = STATION_COUNT <= 1 ? 0 : index / (STATION_COUNT - 1);
+  const stationProgress = STATION_COUNT <= 0 ? 0 : index / STATION_SCROLL_SLOTS;
   return PROJECT_INTRO_PROGRESS + stationProgress * (1 - PROJECT_INTRO_PROGRESS);
+}
+
+function getSectionDocumentTop(section: HTMLElement) {
+  return section.getBoundingClientRect().top + window.scrollY;
 }
 
 function ProjectNarrative({
@@ -109,12 +114,23 @@ export default function ProjectsSection() {
       const viewportHeight = window.innerHeight;
       const sectionTop = rect.top;
       const sectionBottom = rect.bottom;
-      const inView = sectionTop < viewportHeight * 0.92 && sectionBottom > viewportHeight * 0.2;
+      const upperTransitionDistance = viewportHeight * 1.08;
+      const mainProjectsView = sectionTop <= viewportHeight * 0.05 && sectionBottom > viewportHeight * 0.18;
+      const upperTransitionView = sectionTop > 0 && sectionTop < upperTransitionDistance && sectionBottom > 0;
 
-      if (inView) {
+      if (mainProjectsView) {
         setActiveSection("projects");
         setDnaDissolveProgress(0);
-      } else if (activeSection === "projects") {
+      } else if (upperTransitionView) {
+        const gatherProgress = Math.max(0, Math.min(1, (upperTransitionDistance - sectionTop) / upperTransitionDistance));
+        setDnaDissolveProgress(1 - gatherProgress);
+        if (activeSection === "projects") setActiveSection(null);
+      } else {
+        if (sectionTop >= upperTransitionDistance || sectionBottom <= 0) setDnaDissolveProgress(1);
+        if (activeSection === "projects") setActiveSection(null);
+      }
+
+      if (!mainProjectsView && activeSection === "projects") {
         setActiveSection(null);
       }
 
@@ -122,7 +138,7 @@ export default function ProjectsSection() {
         const scrollable = Math.max(1, section.offsetHeight - viewportHeight);
         const rawProgress = Math.max(0, Math.min(1, -sectionTop / scrollable));
         const stationProgress = normalizeProjectProgress(rawProgress);
-        const index = Math.min(STATION_COUNT - 1, Math.floor(stationProgress * STATION_COUNT));
+        const index = Math.min(STATION_COUNT - 1, Math.floor(stationProgress * STATION_SCROLL_SLOTS + 0.0001));
 
         if (Math.abs(rawProgress - lastProgressRef.current) > 0.002) {
           lastProgressRef.current = rawProgress;
@@ -151,7 +167,7 @@ export default function ProjectsSection() {
       if (!section) return;
 
       const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
-      const targetScroll = section.offsetTop + scrollable * rawProgressForStation(boundedIndex);
+      const targetScroll = getSectionDocumentTop(section) + scrollable * rawProgressForStation(boundedIndex);
       window.scrollTo({ top: targetScroll, behavior: "smooth" });
       setCarouselActiveIndex(boundedIndex);
     };
@@ -174,7 +190,7 @@ export default function ProjectsSection() {
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${130 + STATION_COUNT * 92}vh` }}
+      style={{ height: `${160 + STATION_COUNT * 108}vh` }}
     >
       <div className="pointer-events-none sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0 bg-transparent" />
@@ -192,7 +208,7 @@ export default function ProjectsSection() {
             {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
           </p>
           <p className="mt-5 max-w-64 text-xs leading-6 text-white/35">
-            粒子先聚成 DNA，再沿键位顺序浏览项目；当前项目说明固定在右侧随滑动淡入淡出。
+            粒子先聚成 DNA，键位居中后右侧说明再同步切换，末端留出消散缓冲。
           </p>
         </div>
 
@@ -219,7 +235,7 @@ export default function ProjectsSection() {
                 const section = sectionRef.current;
                 if (!section) return;
                 const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
-                const targetScroll = section.offsetTop + scrollable * rawProgressForStation(index);
+                const targetScroll = getSectionDocumentTop(section) + scrollable * rawProgressForStation(index);
                 window.scrollTo({ top: targetScroll, behavior: "smooth" });
               }}
               className="cursor-target group flex items-center gap-2"

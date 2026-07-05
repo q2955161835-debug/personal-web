@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { timelineEntries } from "@/data/timeline";
 import SolarTimelineScene from "@/components/three/timeline/SolarTimelineScene";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const typeLabel = {
   education: "教育",
@@ -14,26 +17,39 @@ const typeLabel = {
 
 export default function TimelineSection() {
   const sectionRef = useRef<HTMLElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
   const activeEntry = timelineEntries[activeIndex] ?? timelineEntries[0];
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    const pin = pinRef.current;
+    if (!section || !pin) return;
 
-    const update = () => {
-      const rect = section.getBoundingClientRect();
-      const maxTravel = section.offsetHeight - window.innerHeight;
-      const progress = maxTravel > 0 ? Math.max(0, Math.min(1, -rect.top / maxTravel)) : 0;
+    const syncProgress = (progress: number) => {
       const nextIndex = Math.min(timelineEntries.length - 1, Math.floor(progress * timelineEntries.length));
 
       setScrollProgress(progress);
       setActiveIndex((current) => (current === nextIndex ? current : nextIndex));
     };
 
-    gsap.ticker.add(update);
-    return () => gsap.ticker.remove(update);
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        end: "bottom bottom",
+        pin,
+        pinSpacing: false,
+        scrub: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onRefresh: (self) => syncProgress(self.progress),
+        onUpdate: (self) => syncProgress(self.progress),
+      });
+    }, section);
+
+    return () => ctx.revert();
   }, []);
 
   return (
@@ -41,9 +57,9 @@ export default function TimelineSection() {
       id="experience"
       ref={sectionRef}
       className="relative z-10 bg-transparent"
-      style={{ height: `${Math.max(320, timelineEntries.length * 92)}vh` }}
+      style={{ height: `${Math.max(360, timelineEntries.length * 115)}vh` }}
     >
-      <div className="sticky top-0 h-screen overflow-hidden">
+      <div ref={pinRef} className="timeline-pin h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(255,202,122,0.12),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(73,197,182,0.08),transparent_30%),#02050b]" />
         <SolarTimelineScene
           entries={timelineEntries}

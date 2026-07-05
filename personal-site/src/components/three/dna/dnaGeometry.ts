@@ -1,12 +1,13 @@
 import * as THREE from "three";
 
 export const HELIX_PARAMS = {
-  height: 86, // total helix height
-  turns: 9.1, // number of full helix turns
+  height: 96, // total helix height
+  turns: 10.2, // number of full helix turns
   radius: 2.55, // helix strand radius
   particleSpacing: 0.02, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 10,
+  stationSlots: 11,
   cameraRadius: 8.6, // fixed camera distance
   particlesPerBasePair: 480, // particles forming each station rung
   fineBasePairCount: 190,
@@ -75,7 +76,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
     const seed = Math.random();
     const cloudAngle = seed * Math.PI * 2;
     const cloudRadius = 2.2 + Math.random() * 7.8;
-    const cloudHeight = (Math.random() - 0.5) * 17;
+    const cloudHeight = (Math.random() - 0.5) * 19;
     const cloudDepth = (Math.random() - 0.5) * 6.4;
 
     positions.push(x, y, z);
@@ -146,14 +147,14 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const pz = z1 + (z2 - z1) * pT + Math.sin(angle + Math.PI / 2) * widthJitter;
       const py = y + (Math.random() - 0.5) * 0.12;
 
-      pushParticle(px, py, pz, stationBlend, 0.28 + Math.random() * 0.26, -1, 4);
+      pushParticle(px, py, pz, stationBlend, 0.34 + Math.random() * 0.28, -1, 4);
     }
   }
 
   // ─── Station base pair rung particles (type 1) ─────────────────
   for (let s = 0; s < HELIX_PARAMS.stationCount; s++) {
-    const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationCount);
-    const stationT = (s + 0.5) / HELIX_PARAMS.stationCount;
+    const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationSlots);
+    const stationT = (s + 0.5) / HELIX_PARAMS.stationSlots;
     const stationAngle = stationT * omega;
     const stationColor = STATION_COLORS[s % STATION_COLORS.length];
 

@@ -656,6 +656,25 @@ html.lenis body {
   will-change: height, width, opacity;
 }
 
+.analysis-axis-baseline {
+  height: 1px;
+  background:
+    linear-gradient(90deg, rgba(73, 197, 182, 0), rgba(73, 197, 182, 0.62) 12%, rgba(255, 255, 255, 0.46) 52%, rgba(255, 147, 152, 0.5) 88%, rgba(255, 147, 152, 0));
+  box-shadow: 0 0 16px rgba(73, 197, 182, 0.24);
+}
+
+.analysis-axis-vertical {
+  width: 1px;
+  background:
+    linear-gradient(180deg, rgba(73, 197, 182, 0), rgba(255, 255, 255, 0.45) 18%, rgba(73, 197, 182, 0.62) 100%);
+  box-shadow: 0 0 16px rgba(73, 197, 182, 0.22);
+}
+
+.timeline-pin {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
 .contact-meteor-scene {
   perspective: 1200px;
 }
