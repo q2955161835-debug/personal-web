@@ -129,14 +129,14 @@ export default function ProjectsSection() {
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 110}vh` }}
+      style={{ height: `${STATION_COUNT * 125}vh` }}
     >
       {/* ─── Compact project status (fixed while in view) ───────── */}
       <div
         className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.6s ease" }}
       >
-        <div className="ml-6 w-[min(320px,42vw)] md:ml-12">
+        <div className="ml-6 hidden w-[min(320px,42vw)] sm:block md:ml-12">
           <h2
             className="mb-3 text-2xl font-bold sm:text-3xl"
             style={gradientTextStyle}
@@ -156,7 +156,7 @@ export default function ProjectsSection() {
         <button
           type="button"
           aria-label={`Open project ${activeProject.name}`}
-          className="pointer-events-auto fixed w-56 rounded-lg px-3 py-2 text-left shadow-2xl"
+          className="pointer-events-auto fixed w-[min(17rem,58vw)] rounded-lg px-3 py-2 text-left shadow-2xl"
           style={{
             left: "50%",
             top: "57%",
@@ -186,7 +186,7 @@ export default function ProjectsSection() {
 
       {/* ─── Scroll indicator dots (right side) ────────────────── */}
       <div
-        className="fixed right-6 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3"
+        className="fixed right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 md:right-6"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.5s ease" }}
       >
         {visibleProjects.map((project, index) => {

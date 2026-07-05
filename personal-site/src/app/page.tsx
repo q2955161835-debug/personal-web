@@ -2,11 +2,10 @@ import Navigation from "@/components/layout/Navigation";
 import HeroSection from "@/components/sections/HeroSection";
 import AboutSection from "@/components/sections/AboutSection";
 import ProjectsSection from "@/components/sections/ProjectsSection";
+import AnalysisSection from "@/components/sections/AnalysisSection";
+import TimelineSection from "@/components/sections/TimelineSection";
+import ContactSection from "@/components/sections/ContactSection";
 import { SceneProvider } from "@/components/three/SceneContext";
-
-// Phase 4: DataAnalysisSection - Data analysis portfolio
-// Phase 5: TimelineSection - Experience timeline
-// Phase 6: ContactSection - Contact form and info
 
 export default function Home() {
   return (
@@ -16,6 +15,9 @@ export default function Home() {
         <HeroSection />
         <AboutSection />
         <ProjectsSection />
+        <AnalysisSection />
+        <TimelineSection />
+        <ContactSection />
       </SceneProvider>
     </main>
   );

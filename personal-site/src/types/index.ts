@@ -16,19 +16,41 @@ export interface Project {
 }
 
 /* ── Data Analysis Project ── */
+export type AnalysisCategory = "问卷调查" | "金融实证" | "医学统计" | "化学分析" | "社会科学";
+
 export interface DataAnalysisProject {
-  name: string;
-  domain: string;
-  methods: string[];
-  dataSize?: string;
-  keyFindings?: string;
+  id: string;
+  title: string;
+  category: AnalysisCategory;
+  method: string[];
+  tools: string[];
+  description: string;
   year: number;
+  highlights: string[];
+}
+
+export interface AnalysisMethodNode {
+  name: string;
+  count: number;
+  category: AnalysisCategory;
+}
+
+export interface AnalysisCategorySummary {
+  category: AnalysisCategory;
+  count: number;
+  color: string;
 }
 
 /* ── Timeline Entry ── */
+export type TimelineEntryType = "education" | "work" | "project";
+
 export interface TimelineEntry {
+  id: string;
   year: number;
-  month: number;
+  period: string;
   title: string;
+  organization: string;
   description: string;
+  tags: string[];
+  type: TimelineEntryType;
 }

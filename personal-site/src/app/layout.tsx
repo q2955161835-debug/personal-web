@@ -12,7 +12,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "范俊杰 | AI Product & Data Analysis Portfolio",
   description:
-    "Personal portfolio showcasing AI products, data analysis projects, and creative development work by Fan Junjie",
+    "范俊杰个人作品站，展示 AI 产品、数据分析项目、自动化工具、量化交易与创意工程作品。",
+  keywords: ["范俊杰", "AI 产品", "数据分析", "统计建模", "Next.js", "Three.js", "个人作品集"],
+  authors: [{ name: "范俊杰" }],
+  creator: "范俊杰",
+  openGraph: {
+    title: "范俊杰 | AI Product & Data Analysis Portfolio",
+    description:
+      "沉浸式个人作品站：AI 产品、数据分析、自动化工具、量化交易与创意工程。",
+    type: "website",
+    locale: "zh_CN",
+  },
 };
 
 export default function RootLayout({

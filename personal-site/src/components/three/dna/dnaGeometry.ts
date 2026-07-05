@@ -7,11 +7,11 @@ export const HELIX_PARAMS = {
   particleSpacing: 0.15, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 6,
-  cameraRadius: 8, // camera orbit radius
-  particlesPerBasePair: 32, // particles forming each rung
-  ambientParticleCount: 650, // floating ambient particles
-  scatterRadius: 2.5, // mouse scatter radius
-  scatterStrength: 0.28, // mouse scatter strength
+  cameraRadius: 9.2, // fixed camera distance
+  particlesPerBasePair: 38, // particles forming each rung
+  ambientParticleCount: 760, // floating ambient particles
+  scatterRadius: 0.22, // pointer scatter radius in screen space
+  scatterStrength: 1.35, // pointer scatter strength
 } as const;
 
 const STATION_COLORS = [
@@ -25,6 +25,7 @@ const STATION_COLORS = [
 
 interface DNABuffers {
   positions: Float32Array;
+  initialPositions: Float32Array;
   colors: Float32Array;
   sizes: Float32Array;
   basePairIndices: Float32Array;
@@ -37,6 +38,7 @@ interface DNABuffers {
  */
 export function generateDNAHelixBuffers(): DNABuffers {
   const positions: number[] = [];
+  const initialPositions: number[] = [];
   const colors: number[] = [];
   const sizes: number[] = [];
   const basePairIndices: number[] = [];
@@ -47,6 +49,34 @@ export function generateDNAHelixBuffers(): DNABuffers {
   const omega = HELIX_PARAMS.turns * 2 * Math.PI;
   const step = HELIX_PARAMS.particleSpacing;
   const totalSteps = Math.floor(HELIX_PARAMS.height / step);
+
+  const pushParticle = (
+    x: number,
+    y: number,
+    z: number,
+    color: THREE.Color,
+    size: number,
+    basePairIndex: number,
+    particleType: number
+  ) => {
+    const seed = Math.random();
+    const cloudAngle = seed * Math.PI * 2;
+    const cloudRadius = 2.2 + Math.random() * 7.8;
+    const cloudHeight = (Math.random() - 0.5) * 17;
+    const cloudDepth = (Math.random() - 0.5) * 6.4;
+
+    positions.push(x, y, z);
+    initialPositions.push(
+      Math.cos(cloudAngle) * cloudRadius,
+      cloudHeight,
+      Math.sin(cloudAngle) * cloudRadius + cloudDepth
+    );
+    colors.push(color.r, color.g, color.b);
+    sizes.push(size);
+    basePairIndices.push(basePairIndex);
+    particleTypes.push(particleType);
+    randomSeeds.push(seed);
+  };
 
   // ─── Backbone particles (type 0) ────────────────────────────────
   for (let i = 0; i <= totalSteps; i++) {
@@ -59,8 +89,6 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const x = HELIX_PARAMS.radius * Math.cos(strandAngle);
       const z = HELIX_PARAMS.radius * Math.sin(strandAngle);
 
-      positions.push(x, y, z);
-
       // Color gradient: teal at top, coral at bottom
       const colorT = 1 - t;
       const c = new THREE.Color().lerpColors(
@@ -68,12 +96,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
         new THREE.Color("#49c5b6"),
         colorT
       );
-      colors.push(c.r, c.g, c.b);
-
-      sizes.push(0.6 + Math.random() * 0.8);
-      basePairIndices.push(-1);
-      particleTypes.push(0);
-      randomSeeds.push(Math.random());
+      pushParticle(x, y, z, c, 0.6 + Math.random() * 0.8, -1, 0);
     }
   }
 
@@ -101,20 +124,13 @@ export function generateDNAHelixBuffers(): DNABuffers {
         const pz = bz + (oz - bz) * pT;
         const py = stationY + (Math.random() - 0.5) * 0.2;
 
-        positions.push(px, py, pz);
-
         // Blend between strand color and station color
         const rungColor = new THREE.Color().lerpColors(
           new THREE.Color("#ffffff"),
           stationColor,
           0.6
         );
-        colors.push(rungColor.r, rungColor.g, rungColor.b);
-
-        sizes.push(0.4 + Math.random() * 0.6);
-        basePairIndices.push(s);
-        particleTypes.push(1);
-        randomSeeds.push(Math.random());
+        pushParticle(px, py, pz, rungColor, 0.48 + Math.random() * 0.68, s, 1);
       }
     }
 
@@ -127,15 +143,8 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const dz = dRadius * Math.sin(dAngle);
       const dy = stationY + (Math.random() - 0.5) * 1.0;
 
-      positions.push(dx, dy, dz);
-
       const decorColor = stationColor.clone().multiplyScalar(1.3);
-      colors.push(decorColor.r, decorColor.g, decorColor.b);
-
-      sizes.push(0.3 + Math.random() * 0.5);
-      basePairIndices.push(s);
-      particleTypes.push(2);
-      randomSeeds.push(Math.random());
+      pushParticle(dx, dy, dz, decorColor, 0.3 + Math.random() * 0.5, s, 2);
     }
   }
 
@@ -145,24 +154,18 @@ export function generateDNAHelixBuffers(): DNABuffers {
     const ay = (Math.random() - 0.5) * (HELIX_PARAMS.height + 6);
     const az = (Math.random() - 0.5) * 13;
 
-    positions.push(ax, ay, az);
-
     const ambT = (ay + HELIX_PARAMS.height / 2) / HELIX_PARAMS.height;
     const ambColor = new THREE.Color().lerpColors(
       new THREE.Color("#1a1a3e"),
       new THREE.Color("#2d1b69"),
       Math.abs(ambT)
     );
-    colors.push(ambColor.r, ambColor.g, ambColor.b);
-
-    sizes.push(0.12 + Math.random() * 0.18);
-    basePairIndices.push(-1);
-    particleTypes.push(3);
-    randomSeeds.push(Math.random());
+    pushParticle(ax, ay, az, ambColor, 0.12 + Math.random() * 0.18, -1, 3);
   }
 
   return {
     positions: new Float32Array(positions),
+    initialPositions: new Float32Array(initialPositions),
     colors: new Float32Array(colors),
     sizes: new Float32Array(sizes),
     basePairIndices: new Float32Array(basePairIndices),

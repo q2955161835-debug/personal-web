@@ -49,6 +49,11 @@ function CameraHomeController({ enabled }: { enabled: boolean }) {
   useFrame((_, delta) => {
     if (!enabled) return;
     const lerpFactor = 1 - Math.exp(-delta * 3);
+    const perspectiveCamera = camera as THREE.PerspectiveCamera;
+    if (perspectiveCamera.isPerspectiveCamera && Math.abs(perspectiveCamera.fov - 75) > 0.1) {
+      perspectiveCamera.fov = THREE.MathUtils.lerp(perspectiveCamera.fov, 75, lerpFactor);
+      perspectiveCamera.updateProjectionMatrix();
+    }
     camera.position.lerp(CAMERA_HOME_POSITION, lerpFactor);
     camera.lookAt(CAMERA_HOME_TARGET);
   });
@@ -70,12 +75,15 @@ function FadeableParticleField({
 }) {
   const { activeSection } = useProjectScene();
   const isProjectsActive = activeSection === "projects";
+  const isPastProjectIntro = scrollProgress > 0.38;
+  const upperContentFade = THREE.MathUtils.clamp(scrollProgress / 0.08, 0, 1);
+  const readableUpperOpacity = THREE.MathUtils.lerp(1, 0.28, upperContentFade);
 
   return (
     <ParticleField
       mouse={mouse}
       scrollProgress={scrollProgress}
-      opacity={isProjectsActive ? 0 : 1}
+      opacity={isProjectsActive || isPastProjectIntro ? 0 : readableUpperOpacity}
     />
   );
 }

@@ -1,8 +1,10 @@
 export const dnaVertexShader = /* glsl */ `
 uniform float uTime;
-uniform vec3 uMouseWorld;
+uniform vec2 uPointer;
 uniform float uMouseActive;
 uniform float uScrollProgress;
+uniform float uFocusY;
+uniform float uActiveStation;
 uniform float uHoveredStation;
 uniform float uZoomedStation;
 uniform float uZoomProgress;
@@ -10,6 +12,7 @@ uniform float uScatterRadius;
 uniform float uScatterStrength;
 uniform float uSceneOpacity;
 
+attribute vec3 aInitialPosition;
 attribute vec3 aColor;
 attribute float aSize;
 attribute float aBasePairIndex;
@@ -20,102 +23,105 @@ varying vec3 vColor;
 varying float vAlpha;
 varying float vGlow;
 
+mat2 rotate2d(float angle) {
+  float s = sin(angle);
+  float c = cos(angle);
+  return mat2(c, -s, s, c);
+}
+
 void main() {
   vColor = aColor;
   vAlpha = 1.0;
   vGlow = 0.0;
 
-  vec3 pos = position;
+  vec3 dnaPos = position;
 
-  // --- Global slow Y-axis rotation (0.08 rad/s) ---
-  float globalAngle = uTime * 0.08;
-  float cosA = cos(globalAngle);
-  float sinA = sin(globalAngle);
-  pos = vec3(
-    pos.x * cosA - pos.z * sinA,
-    pos.y,
-    pos.x * sinA + pos.z * cosA
-  );
+  float stationMask = step(0.0, aBasePairIndex);
+  float activeDistance = abs(aBasePairIndex - uActiveStation);
+  float activeWeight = stationMask * (1.0 - smoothstep(0.0, 1.0, activeDistance));
+  float hoveredWeight = stationMask * (1.0 - smoothstep(0.0, 0.7, abs(aBasePairIndex - uHoveredStation)));
+  float zoomWeight = stationMask * (1.0 - smoothstep(0.0, 0.55, abs(aBasePairIndex - uZoomedStation))) * uZoomProgress;
+  float keyWeight = max(activeWeight, max(hoveredWeight, zoomWeight));
 
-  // --- Organic noise displacement ---
-  float noiseT = uTime * 0.3;
-  float noiseAmp = 0.08;
-  pos.x += sin(pos.y * 1.5 + noiseT + aRandomSeed * 6.2831) * noiseAmp;
-  pos.y += cos(pos.x * 1.2 + noiseT * 0.8 + aRandomSeed * 3.1415) * noiseAmp * 0.6;
-  pos.z += sin(pos.z * 1.3 + noiseT * 1.1 + aRandomSeed * 4.7123) * noiseAmp * 0.8;
+  // Scale the active DNA key itself. Camera angle stays fixed.
+  float keyScale = 1.0 + activeWeight * 0.55 + hoveredWeight * 0.45 + zoomWeight * 2.45;
+  if (aParticleType > 0.5 && aParticleType < 2.5) {
+    dnaPos.xz *= keyScale;
+    dnaPos.y += zoomWeight * 0.18 * sin(aRandomSeed * 6.2831);
+  }
 
-  // --- Mouse scatter (world-space repulsion) ---
-  if (uMouseActive > 0.5) {
-    vec3 toParticle = pos - uMouseWorld;
-    float distToMouse = length(toParticle);
-    float falloff = 1.0 - smoothstep(0.0, uScatterRadius, distToMouse);
-    if (falloff > 0.01) {
-      vec3 repelDir = normalize(toParticle);
-      // Spring oscillation effect
-      float spring = sin(uTime * 4.0 + aRandomSeed * 6.2831) * 0.3 + 1.0;
-      pos += repelDir * falloff * uScatterStrength * spring;
+  // Scroll drives object rotation and a vertical journey through the DNA.
+  float scrollAngle = uScrollProgress * 4.8 + uTime * 0.045;
+  dnaPos.xz = rotate2d(scrollAngle) * dnaPos.xz;
+  dnaPos.y -= uFocusY;
+  dnaPos.y += (0.5 - uScrollProgress) * 1.2;
+
+  // Small breathing motion once the helix is formed.
+  float noiseT = uTime * 0.32;
+  float noiseAmp = 0.045 + keyWeight * 0.035;
+  dnaPos.x += sin(dnaPos.y * 1.2 + noiseT + aRandomSeed * 6.2831) * noiseAmp;
+  dnaPos.z += cos(dnaPos.y * 1.4 + noiseT * 1.2 + aRandomSeed * 4.7123) * noiseAmp;
+
+  // Particles start as a loose field and gather into the DNA near the project section.
+  float gather = smoothstep(0.005, 0.11, uScrollProgress) * uSceneOpacity;
+  vec3 pos = mix(aInitialPosition, dnaPos, gather);
+
+  vec4 probeMv = modelViewMatrix * vec4(pos, 1.0);
+  vec4 probeClip = projectionMatrix * probeMv;
+  vec2 screenPos = probeClip.xy / max(probeClip.w, 0.0001);
+
+  // Pointer scatter uses screen-space distance so it works with a fixed camera.
+  if (uMouseActive > 0.5 && gather > 0.2) {
+    float pointerDist = distance(screenPos, uPointer);
+    float falloff = 1.0 - smoothstep(0.0, uScatterRadius, pointerDist);
+    if (falloff > 0.001) {
+      vec3 scatterDir = normalize(vec3(
+        sin(aRandomSeed * 17.31),
+        cos(aRandomSeed * 23.17),
+        sin(aRandomSeed * 31.11)
+      ));
+      float spring = 0.86 + 0.18 * sin(uTime * 6.0 + aRandomSeed * 6.2831);
+      pos += scatterDir * falloff * uScatterStrength * spring;
+      vGlow += falloff * 0.55;
     }
   }
 
-  // --- Base pair highlight ---
-  // aBasePairIndex is -1 for non-station, 0-5 for station particles
-  bool isHoveredMatch = aBasePairIndex >= 0.0 && abs(aBasePairIndex - uHoveredStation) < 0.5;
-  bool isZoomedMatch = aBasePairIndex >= 0.0 && abs(aBasePairIndex - uZoomedStation) < 0.5;
-
-  if (isHoveredMatch) {
-    float pulse = sin(uTime * 3.0) * 0.5 + 0.5;
-    vGlow += pulse * 0.8;
-    vAlpha = 1.0;
+  if (keyWeight > 0.01) {
+    float pulse = sin(uTime * 3.0 + aRandomSeed * 2.0) * 0.5 + 0.5;
+    vGlow += keyWeight * (0.65 + pulse * 0.35);
   }
 
-  if (isZoomedMatch) {
-    float pulse = sin(uTime * 2.5 + 1.0) * 0.5 + 0.5;
-    vGlow += pulse * 1.0;
-    vAlpha = 1.0;
-  }
-
-  // --- Zoom scatter ---
-  // When zooming into a station, non-zoomed particles expand outward and fade
   if (uZoomProgress > 0.01) {
-    bool isZoomedTarget = aBasePairIndex >= 0.0 && abs(aBasePairIndex - uZoomedStation) < 0.5;
-    if (!isZoomedTarget) {
-      // Expand outward from center
-      vec3 outwardDir = normalize(pos);
-      float expandFactor = uZoomProgress * 2.0;
-      pos += outwardDir * expandFactor;
-      // Fade non-target particles
-      vAlpha *= (1.0 - uZoomProgress * 0.85);
+    bool isZoomTarget = stationMask > 0.5 && abs(aBasePairIndex - uZoomedStation) < 0.55;
+    if (!isZoomTarget) {
+      vec3 outwardDir = normalize(vec3(pos.x, pos.y * 0.25, pos.z));
+      pos += outwardDir * uZoomProgress * 1.75;
+      vAlpha *= 1.0 - uZoomProgress * 0.78;
     }
   }
-
-  // --- Scroll-based vertical offset ---
-  pos.y -= uScrollProgress * 2.0;
 
   if (aParticleType > 1.5 && aParticleType < 2.5) {
-    vAlpha *= 0.72;
+    vAlpha *= 0.76;
   } else if (aParticleType > 2.5) {
-    vAlpha *= 0.24;
+    vAlpha *= 0.14;
   }
 
   vAlpha *= uSceneOpacity;
+  vAlpha *= 0.12 + gather * 0.88;
 
-  // --- Compute gl_PointSize based on distance from camera ---
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   float distCam = -mvPosition.z;
-
   float baseSize = aSize * (150.0 / max(distCam, 0.1));
 
-  // Particle type size modifiers
-  if (aParticleType > 1.5 && aParticleType < 2.5) {
-    // Decoration particles: larger
-    baseSize *= 1.8;
+  if (aParticleType > 0.5 && aParticleType < 1.5) {
+    baseSize *= 1.0 + keyWeight * 1.6;
+  } else if (aParticleType > 1.5 && aParticleType < 2.5) {
+    baseSize *= 1.6 + keyWeight * 1.25;
   } else if (aParticleType > 2.5) {
-    // Ambient particles: smaller
-    baseSize *= 0.38;
+    baseSize *= 0.36;
   }
 
-  gl_PointSize = clamp(baseSize, 0.5, 48.0);
-
+  gl_PointSize = clamp(baseSize, 0.45, 58.0);
   gl_Position = projectionMatrix * mvPosition;
 }
 `;
