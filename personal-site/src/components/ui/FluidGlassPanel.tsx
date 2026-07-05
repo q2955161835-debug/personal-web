@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties, MouseEventHandler, ReactNode } from "react";
-import { memo, useMemo, useRef } from "react";
+import type { CSSProperties, MouseEventHandler, PointerEvent, ReactNode } from "react";
+import { memo, useCallback, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { MeshTransmissionMaterial, RoundedBox } from "@react-three/drei";
 import { easing } from "maath";
@@ -31,6 +31,31 @@ const FLOATING_ORBS = Array.from({ length: 9 }, (_, index) => ({
   scale: 0.1 + (index % 5) * 0.035,
   phase: index * 0.74,
 }));
+
+function applyFluidTilt(element: HTMLElement | null, event: { clientX: number; clientY: number }, intensity: number) {
+  if (!element) return;
+
+  const rect = element.getBoundingClientRect();
+  const nx = THREE.MathUtils.clamp(((event.clientX - rect.left) / rect.width) * 2 - 1, -1, 1);
+  const ny = THREE.MathUtils.clamp(((event.clientY - rect.top) / rect.height) * 2 - 1, -1, 1);
+  const falloff = Math.min(1, Math.sqrt(nx * nx + ny * ny));
+
+  element.style.setProperty("--fluid-tilt-x", `${(-ny * intensity * 0.32).toFixed(3)}deg`);
+  element.style.setProperty("--fluid-tilt-y", `${(nx * intensity * 0.38).toFixed(3)}deg`);
+  element.style.setProperty("--fluid-glare-x", `${((nx + 1) * 50).toFixed(2)}%`);
+  element.style.setProperty("--fluid-glare-y", `${((ny + 1) * 50).toFixed(2)}%`);
+  element.style.setProperty("--fluid-falloff", falloff.toFixed(3));
+}
+
+function resetFluidTilt(element: HTMLElement | null) {
+  if (!element) return;
+
+  element.style.setProperty("--fluid-tilt-x", "0deg");
+  element.style.setProperty("--fluid-tilt-y", "0deg");
+  element.style.setProperty("--fluid-glare-x", "50%");
+  element.style.setProperty("--fluid-glare-y", "50%");
+  element.style.setProperty("--fluid-falloff", "0");
+}
 
 function hexToThreeColor(hex: string) {
   return new THREE.Color(hex);
@@ -174,11 +199,21 @@ export function FluidGlassPanel({
   variant = "panel",
   intensity = 16,
 }: FluidGlassBaseProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const handlePointerMove = useCallback(
+    (event: PointerEvent<HTMLDivElement>) => applyFluidTilt(panelRef.current, event, intensity),
+    [intensity]
+  );
+  const handlePointerLeave = useCallback(() => resetFluidTilt(panelRef.current), []);
+
   return (
     <div
+      ref={panelRef}
       className={`fluid-glass-shell cursor-target ${className}`}
       data-fluid-variant={variant}
       style={{ "--fluid-glass-color": color, ...style } as CSSProperties}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
     >
       <FluidGlassCanvas color={color} variant={variant} intensity={intensity} />
       <div className="fluid-glass-content">{children}</div>
@@ -197,8 +232,16 @@ export function FluidGlassButton({
   disabled = false,
   "aria-label": ariaLabel,
 }: FluidGlassButtonProps) {
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const handlePointerMove = useCallback(
+    (event: PointerEvent<HTMLButtonElement>) => applyFluidTilt(buttonRef.current, event, intensity),
+    [intensity]
+  );
+  const handlePointerLeave = useCallback(() => resetFluidTilt(buttonRef.current), []);
+
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-label={ariaLabel}
       disabled={disabled}
@@ -206,6 +249,8 @@ export function FluidGlassButton({
       className={`fluid-glass-shell cursor-target disabled:pointer-events-none disabled:opacity-45 ${className}`}
       data-fluid-variant={variant}
       style={{ "--fluid-glass-color": color, ...style } as CSSProperties}
+      onPointerMove={handlePointerMove}
+      onPointerLeave={handlePointerLeave}
     >
       <FluidGlassCanvas color={color} variant={variant} intensity={intensity} />
       <span className="fluid-glass-content">{children}</span>

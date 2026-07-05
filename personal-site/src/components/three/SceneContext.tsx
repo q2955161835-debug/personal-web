@@ -11,6 +11,8 @@ interface SceneContextValue {
   setCarouselActiveIndex: (index: number) => void;
   projectProgress: number;
   setProjectProgress: (progress: number) => void;
+  dnaDissolveProgress: number;
+  setDnaDissolveProgress: (progress: number) => void;
   carouselSelectedIndex: number | null;
   setCarouselSelectedIndex: (index: number | null) => void;
   helixZoomedStation: number | null;
@@ -26,6 +28,8 @@ const SceneContext = createContext<SceneContextValue>({
   setCarouselActiveIndex: () => {},
   projectProgress: 0,
   setProjectProgress: () => {},
+  dnaDissolveProgress: 1,
+  setDnaDissolveProgress: () => {},
   carouselSelectedIndex: null,
   setCarouselSelectedIndex: () => {},
   helixZoomedStation: null,
@@ -37,6 +41,7 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
   const [projectProgress, setProjectProgress] = useState(0);
+  const [dnaDissolveProgress, setDnaDissolveProgress] = useState(1);
   const [carouselSelectedIndex, setCarouselSelectedIndex] = useState<number | null>(null);
   const [helixZoomedStation, setHelixZoomedStation] = useState<number | null>(null);
 
@@ -51,6 +56,8 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
         setCarouselActiveIndex,
         projectProgress,
         setProjectProgress,
+        dnaDissolveProgress,
+        setDnaDissolveProgress,
         carouselSelectedIndex,
         setCarouselSelectedIndex,
         helixZoomedStation,

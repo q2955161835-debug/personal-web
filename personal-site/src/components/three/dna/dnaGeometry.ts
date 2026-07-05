@@ -1,17 +1,18 @@
 import * as THREE from "three";
 
 export const HELIX_PARAMS = {
-  height: 54, // total helix height
-  turns: 5.9, // number of full helix turns
-  radius: 1.65, // helix strand radius
-  particleSpacing: 0.013, // distance between particles along strand
+  height: 96, // total helix height
+  turns: 10.2, // number of full helix turns
+  radius: 2.55, // helix strand radius
+  particleSpacing: 0.02, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
-  stationCount: 6,
-  cameraRadius: 10.8, // fixed camera distance
-  particlesPerBasePair: 520, // particles forming each station rung
-  fineBasePairCount: 102,
-  fineParticlesPerBasePair: 76,
-  ambientParticleCount: 360, // floating ambient particles
+  stationCount: 10,
+  stationSlots: 11,
+  cameraRadius: 8.6, // fixed camera distance
+  particlesPerBasePair: 480, // particles forming each station rung
+  fineBasePairCount: 190,
+  fineParticlesPerBasePair: 52,
+  ambientParticleCount: 230, // floating ambient particles
   scatterRadius: 0.24, // pointer scatter radius in screen space
   scatterStrength: 1.55, // pointer scatter strength
 } as const;
@@ -23,12 +24,17 @@ const STATION_COLORS = [
   new THREE.Color("#00d4ff"),
   new THREE.Color("#ff6b6b"),
   new THREE.Color("#a78bfa"),
+  new THREE.Color("#ffca7a"),
+  new THREE.Color("#7dd3fc"),
+  new THREE.Color("#f0abfc"),
+  new THREE.Color("#86efac"),
 ];
 
 function localDensity(t: number, salt: number) {
   const broad = Math.sin(t * 32.7 + salt) * 0.5 + 0.5;
   const fine = Math.sin(t * 91.3 + salt * 1.7) * 0.5 + 0.5;
-  return THREE.MathUtils.clamp(0.84 + broad * 0.1 + fine * 0.04, 0.84, 0.98);
+  const pocket = Math.sin(t * 19.3 + salt * 2.1) * Math.sin(t * 47.5 + salt * 0.73);
+  return THREE.MathUtils.clamp(0.73 + broad * 0.14 + fine * 0.07 - Math.max(0, pocket) * 0.08, 0.68, 0.94);
 }
 
 interface DNABuffers {
@@ -70,7 +76,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
     const seed = Math.random();
     const cloudAngle = seed * Math.PI * 2;
     const cloudRadius = 2.2 + Math.random() * 7.8;
-    const cloudHeight = (Math.random() - 0.5) * 17;
+    const cloudHeight = (Math.random() - 0.5) * 19;
     const cloudDepth = (Math.random() - 0.5) * 6.4;
 
     positions.push(x, y, z);
@@ -87,7 +93,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
   };
 
   // ─── Backbone particles (type 0) ────────────────────────────────
-  const tubeOffsets = [-0.075, 0, 0.075];
+  const tubeOffsets = [-0.105, -0.035, 0.035, 0.105];
   for (let i = 0; i <= totalSteps; i++) {
     const t = i / totalSteps; // 0..1
     const y = halfHeight - t * HELIX_PARAMS.height;
@@ -111,7 +117,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
           new THREE.Color("#49c5b6"),
           colorT
         );
-        pushParticle(x, y + (Math.random() - 0.5) * 0.035, z, c, 0.2 + Math.random() * 0.38, -1, 0);
+        pushParticle(x, y + (Math.random() - 0.5) * 0.04, z, c, 0.2 + Math.random() * 0.34, -1, 0);
       }
     }
   }
@@ -141,14 +147,14 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const pz = z1 + (z2 - z1) * pT + Math.sin(angle + Math.PI / 2) * widthJitter;
       const py = y + (Math.random() - 0.5) * 0.12;
 
-      pushParticle(px, py, pz, stationBlend, 0.16 + Math.random() * 0.19, -1, 4);
+      pushParticle(px, py, pz, stationBlend, 0.34 + Math.random() * 0.28, -1, 4);
     }
   }
 
   // ─── Station base pair rung particles (type 1) ─────────────────
   for (let s = 0; s < HELIX_PARAMS.stationCount; s++) {
-    const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationCount);
-    const stationT = (s + 0.5) / HELIX_PARAMS.stationCount;
+    const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationSlots);
+    const stationT = (s + 0.5) / HELIX_PARAMS.stationSlots;
     const stationAngle = stationT * omega;
     const stationColor = STATION_COLORS[s % STATION_COLORS.length];
 
@@ -159,7 +165,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
 
     for (let p = 0; p < HELIX_PARAMS.particlesPerBasePair; p++) {
       const pT = p / Math.max(1, HELIX_PARAMS.particlesPerBasePair - 1);
-      const widthJitter = (Math.random() - 0.5) * 0.18;
+      const widthJitter = (Math.random() - 0.5) * 0.24;
       const px = bx + (ox - bx) * pT + Math.cos(stationAngle + Math.PI / 2) * widthJitter;
       const pz = bz + (oz - bz) * pT + Math.sin(stationAngle + Math.PI / 2) * widthJitter;
       const py = stationY + (Math.random() - 0.5) * 0.26;

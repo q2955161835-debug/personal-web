@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
-import ProjectDetail from "@/components/ui/ProjectDetail";
 import { useProjectScene } from "@/components/three/SceneContext";
 import type { Project } from "@/types";
 
-const STATION_COUNT = 6;
+const STATION_COUNT = projects.length;
+const STATION_SCROLL_SLOTS = STATION_COUNT;
+const PROJECT_INTRO_PROGRESS = 0.12;
 
-// Theme colors for each project station
 const STATION_HEX_COLORS = [
   "#49c5b6",
   "#ff9398",
@@ -17,25 +17,94 @@ const STATION_HEX_COLORS = [
   "#00d4ff",
   "#ff6b6b",
   "#a78bfa",
+  "#ffca7a",
+  "#7dd3fc",
+  "#f0abfc",
+  "#86efac",
 ];
+
+function normalizeProjectProgress(progress: number) {
+  return Math.max(0, Math.min(1, (progress - PROJECT_INTRO_PROGRESS) / (1 - PROJECT_INTRO_PROGRESS)));
+}
+
+function rawProgressForStation(index: number) {
+  const stationProgress = STATION_COUNT <= 0 ? 0 : index / STATION_SCROLL_SLOTS;
+  return PROJECT_INTRO_PROGRESS + stationProgress * (1 - PROJECT_INTRO_PROGRESS);
+}
+
+function getSectionDocumentTop(section: HTMLElement) {
+  return section.getBoundingClientRect().top + window.scrollY;
+}
+
+function ProjectNarrative({
+  project,
+  index,
+  count,
+}: {
+  project: Project;
+  index: number;
+  count: number;
+}) {
+  const color = STATION_HEX_COLORS[index % STATION_HEX_COLORS.length];
+
+  return (
+    <div key={project.id} className="project-narrative pointer-events-none max-w-[min(520px,36vw)] text-right">
+      <p className="font-mono text-xs font-semibold uppercase tracking-[0.34em] text-white/36">
+        {String(index + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
+      </p>
+      <h3 className="mt-4 text-3xl font-bold leading-tight text-white md:text-5xl">
+        {project.name}
+      </h3>
+      <p className="mt-4 text-base font-medium leading-7" style={{ color }}>
+        {project.subtitle}
+      </p>
+      <p className="mt-7 text-sm leading-7 text-white/62">
+        {project.description}
+      </p>
+      <div className="mt-7 flex flex-wrap justify-end gap-x-4 gap-y-2">
+        {project.techStack.map((tech) => (
+          <span key={tech} className="text-xs font-semibold uppercase tracking-[0.18em] text-white/42">
+            {tech}
+          </span>
+        ))}
+      </div>
+      <div className="mt-6 flex flex-wrap justify-end gap-3">
+        {project.tags.map((tag) => (
+          <span key={tag} className="text-xs text-white/36">
+            {tag}
+          </span>
+        ))}
+      </div>
+      {project.githubUrl && (
+        <a
+          href={project.githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="cursor-target pointer-events-auto mt-7 inline-flex items-center gap-2 text-sm font-semibold text-white/78 transition-colors hover:text-white"
+        >
+          GitHub
+          <span aria-hidden="true">↗</span>
+        </a>
+      )}
+    </div>
+  );
+}
 
 export default function ProjectsSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const {
     activeSection,
     setActiveSection,
     carouselActiveIndex,
     setCarouselActiveIndex,
     setProjectProgress,
-    helixZoomedStation,
-    setHelixZoomedStation,
+    setDnaDissolveProgress,
   } = useProjectScene();
   const lastProgressRef = useRef(-1);
   const lastIndexRef = useRef(-1);
-  const visibleProjects = projects.slice(0, STATION_COUNT);
+  const visibleProjects = useMemo(() => projects.slice(0, STATION_COUNT), []);
+  const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
 
-  // ─── Scroll-driven active section detection ──────────────────────
   useEffect(() => {
     const section = sectionRef.current;
     if (!section) return;
@@ -43,36 +112,37 @@ export default function ProjectsSection() {
     const handleScroll = () => {
       const rect = section.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-
-      // Check if section is in view
       const sectionTop = rect.top;
       const sectionBottom = rect.bottom;
+      const upperTransitionDistance = viewportHeight * 1.08;
+      const mainProjectsView = sectionTop <= viewportHeight * 0.05 && sectionBottom > viewportHeight * 0.18;
+      const upperTransitionView = sectionTop > 0 && sectionTop < upperTransitionDistance && sectionBottom > 0;
 
-      if (sectionTop < viewportHeight * 0.9 && sectionBottom > viewportHeight * 0.25) {
+      if (mainProjectsView) {
         setActiveSection("projects");
-      } else if (sectionTop >= viewportHeight * 0.9) {
-        // Before the section - could be hero or about
-        // Let other sections handle their own activation
-        if (activeSection === "projects") {
-          setActiveSection(null);
-        }
+        setDnaDissolveProgress(0);
+      } else if (upperTransitionView) {
+        const gatherProgress = Math.max(0, Math.min(1, (upperTransitionDistance - sectionTop) / upperTransitionDistance));
+        setDnaDissolveProgress(1 - gatherProgress);
+        if (activeSection === "projects") setActiveSection(null);
       } else {
-        // Past the section
-        if (activeSection === "projects") {
-          setActiveSection(null);
-        }
+        if (sectionTop >= upperTransitionDistance || sectionBottom <= 0) setDnaDissolveProgress(1);
+        if (activeSection === "projects") setActiveSection(null);
       }
 
-      // Compute active index within the section
-      if (sectionTop < viewportHeight && sectionBottom > 0) {
-        const totalHeight = section.offsetHeight;
-        const scrolledInto = -sectionTop; // how far we've scrolled past the top
-        const progress = Math.max(0, Math.min(1, scrolledInto / (totalHeight - viewportHeight)));
-        const index = Math.min(STATION_COUNT - 1, Math.floor(progress * STATION_COUNT));
+      if (!mainProjectsView && activeSection === "projects") {
+        setActiveSection(null);
+      }
 
-        if (Math.abs(progress - lastProgressRef.current) > 0.002) {
-          lastProgressRef.current = progress;
-          setProjectProgress(progress);
+      if (sectionTop < viewportHeight && sectionBottom > 0) {
+        const scrollable = Math.max(1, section.offsetHeight - viewportHeight);
+        const rawProgress = Math.max(0, Math.min(1, -sectionTop / scrollable));
+        const stationProgress = normalizeProjectProgress(rawProgress);
+        const index = Math.min(STATION_COUNT - 1, Math.floor(stationProgress * STATION_SCROLL_SLOTS + 0.0001));
+
+        if (Math.abs(rawProgress - lastProgressRef.current) > 0.002) {
+          lastProgressRef.current = rawProgress;
+          setProjectProgress(rawProgress);
         }
         if (index !== lastIndexRef.current) {
           lastIndexRef.current = index;
@@ -81,34 +151,30 @@ export default function ProjectsSection() {
       }
     };
 
-    // Use GSAP ticker for scroll tracking (synced with Lenis)
-    const tickerCallback = () => handleScroll();
-    gsap.ticker.add(tickerCallback);
-
+    gsap.ticker.add(handleScroll);
     return () => {
-      gsap.ticker.remove(tickerCallback);
+      gsap.ticker.remove(handleScroll);
     };
-  }, [activeSection, setActiveSection, setCarouselActiveIndex, setProjectProgress]);
+  }, [activeSection, setActiveSection, setCarouselActiveIndex, setDnaDissolveProgress, setProjectProgress]);
 
-  // ─── Handle project selection from DNA helix zoom ──────────────
   useEffect(() => {
-    if (helixZoomedStation !== null) {
-      const project = projects[helixZoomedStation];
-      if (project) {
-        const timer = window.setTimeout(() => {
-          setSelectedProject(project);
-        }, 420);
+    const handleFocusProject = (event: Event) => {
+      const projectIndex = (event as CustomEvent<number>).detail;
+      if (typeof projectIndex !== "number") return;
 
-        return () => window.clearTimeout(timer);
-      }
-    }
-  }, [helixZoomedStation]);
+      const boundedIndex = Math.max(0, Math.min(STATION_COUNT - 1, projectIndex));
+      const section = sectionRef.current;
+      if (!section) return;
 
-  // ─── Close detail overlay ──────────────────────────────────────
-  const handleCloseDetail = useCallback(() => {
-    setSelectedProject(null);
-    setHelixZoomedStation(null);
-  }, [setHelixZoomedStation]);
+      const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
+      const targetScroll = getSectionDocumentTop(section) + scrollable * rawProgressForStation(boundedIndex);
+      window.scrollTo({ top: targetScroll, behavior: "smooth" });
+      setCarouselActiveIndex(boundedIndex);
+    };
+
+    window.addEventListener("portfolio:focus-project", handleFocusProject);
+    return () => window.removeEventListener("portfolio:focus-project", handleFocusProject);
+  }, [setCarouselActiveIndex]);
 
   const gradientTextStyle = {
     background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
@@ -119,60 +185,41 @@ export default function ProjectsSection() {
     animation: "gradient-flow 4s ease-in-out infinite",
   };
 
-  useEffect(() => {
-    const handleOpenProject = (event: Event) => {
-      const projectIndex = (event as CustomEvent<number>).detail;
-      if (typeof projectIndex !== "number") return;
-
-      const boundedIndex = Math.max(0, Math.min(STATION_COUNT - 1, projectIndex));
-      setCarouselActiveIndex(boundedIndex);
-      setHelixZoomedStation(boundedIndex);
-    };
-
-    window.addEventListener("portfolio:open-project", handleOpenProject);
-    return () => window.removeEventListener("portfolio:open-project", handleOpenProject);
-  }, [setCarouselActiveIndex, setHelixZoomedStation]);
-
   return (
     <section
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 220}vh` }}
+      style={{ height: `${160 + STATION_COUNT * 108}vh` }}
     >
       <div className="pointer-events-none sticky top-0 h-screen overflow-hidden">
-        <div className="absolute inset-0 bg-black/15" />
+        <div className="absolute inset-0 bg-transparent" />
       </div>
 
-      {/* ─── Compact project status (fixed while in view) ───────── */}
       <div
-        className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center"
+        className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center justify-between px-6 md:px-12"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.6s ease" }}
       >
-        <div className="ml-6 hidden w-[min(320px,42vw)] sm:block md:ml-12">
-          <h2
-            className="mb-3 text-2xl font-bold sm:text-3xl"
-            style={gradientTextStyle}
-          >
+        <div className="hidden w-[min(320px,26vw)] sm:block">
+          <h2 className="mb-3 text-2xl font-bold sm:text-3xl" style={gradientTextStyle}>
             Projects
           </h2>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
             {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
           </p>
+          <p className="mt-5 max-w-64 text-xs leading-6 text-white/35">
+            粒子先聚成 DNA，键位居中后右侧说明再同步切换，末端留出消散缓冲。
+          </p>
         </div>
-        <button
-          type="button"
-          aria-label={`Open active project ${String(carouselActiveIndex + 1).padStart(2, "0")}`}
-          className="cursor-target pointer-events-auto fixed left-1/2 top-[39%] h-28 w-[min(19rem,70vw)] -translate-x-1/2 -translate-y-1/2 bg-transparent"
-          style={{
-            opacity: activeSection === "projects" && !selectedProject ? 1 : 0,
-            pointerEvents: activeSection === "projects" && !selectedProject ? "auto" : "none",
-          }}
-          onClick={() => setHelixZoomedStation(carouselActiveIndex)}
+
+        <ProjectNarrative
+          key={activeProject.id}
+          project={activeProject}
+          index={carouselActiveIndex}
+          count={STATION_COUNT}
         />
       </div>
 
-      {/* ─── Scroll indicator dots (right side) ────────────────── */}
       <div
         className="fixed right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 md:right-6"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.5s ease" }}
@@ -185,24 +232,15 @@ export default function ProjectsSection() {
             <button
               key={project.id}
               onClick={() => {
-                // Scroll to the corresponding section
                 const section = sectionRef.current;
                 if (!section) return;
-                const totalHeight = section.offsetHeight;
-                const viewportHeight = window.innerHeight;
-                const scrollableHeight = totalHeight - viewportHeight;
-                const targetProgress = index / (STATION_COUNT - 1);
-                const targetScroll = section.offsetTop + scrollableHeight * targetProgress;
-
-                window.scrollTo({
-                  top: targetScroll,
-                  behavior: "smooth",
-                });
+                const scrollable = Math.max(1, section.offsetHeight - window.innerHeight);
+                const targetScroll = getSectionDocumentTop(section) + scrollable * rawProgressForStation(index);
+                window.scrollTo({ top: targetScroll, behavior: "smooth" });
               }}
               className="cursor-target group flex items-center gap-2"
               aria-label={`Go to project: ${project.name}`}
             >
-              {/* Dot */}
               <div
                 className="h-2.5 w-2.5 rounded-full transition-all duration-500"
                 style={{
@@ -211,24 +249,13 @@ export default function ProjectsSection() {
                   transform: isActive ? "scale(1.4)" : "scale(1)",
                 }}
               />
-              {/* Label (visible on hover) */}
-              <span
-                className="max-w-0 overflow-hidden whitespace-nowrap text-xs text-gray-500 transition-all duration-300 group-hover:max-w-[120px]"
-              >
+              <span className="max-w-0 overflow-hidden whitespace-nowrap text-xs text-gray-500 transition-all duration-300 group-hover:max-w-[150px]">
                 {project.name}
               </span>
             </button>
           );
         })}
       </div>
-
-      {/* ─── Project detail overlay ──────────────────────────── */}
-      {selectedProject && (
-        <ProjectDetail
-          project={selectedProject}
-          onClose={handleCloseDetail}
-        />
-      )}
     </section>
   );
 }

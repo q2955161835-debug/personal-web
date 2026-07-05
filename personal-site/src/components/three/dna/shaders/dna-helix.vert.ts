@@ -3,6 +3,8 @@ uniform float uTime;
 uniform vec2 uPointer;
 uniform float uMouseActive;
 uniform float uScrollProgress;
+uniform float uStationProgress;
+uniform float uDissolveProgress;
 uniform float uFocusY;
 uniform float uActiveStation;
 uniform float uHoveredStation;
@@ -51,10 +53,10 @@ void main() {
   }
 
   // Scroll drives object rotation and a vertical journey through the DNA.
-  float scrollAngle = uScrollProgress * 6.25 + uTime * 0.045;
+  float scrollAngle = uStationProgress * 7.1 + uTime * 0.045;
   dnaPos.xz = rotate2d(scrollAngle) * dnaPos.xz;
   dnaPos.y -= uFocusY;
-  dnaPos.y += (0.5 - uScrollProgress) * 1.2;
+  dnaPos.y += (0.5 - uStationProgress) * 1.2;
 
   // Small breathing motion once the helix is formed.
   float noiseT = uTime * 0.32;
@@ -63,7 +65,7 @@ void main() {
   dnaPos.z += cos(dnaPos.y * 1.4 + noiseT * 1.2 + aRandomSeed * 4.7123) * noiseAmp;
 
   // Long lower-section scatter becomes the Projects -> Data Analysis transition.
-  float exitScatter = smoothstep(0.74, 1.0, uScrollProgress);
+  float exitScatter = smoothstep(0.02, 1.0, uDissolveProgress);
   if (exitScatter > 0.001) {
     vec3 exitDir = normalize(vec3(
       sin(aRandomSeed * 21.13 + dnaPos.y * 0.18),
@@ -112,7 +114,7 @@ void main() {
     }
   }
 
-  vAlpha *= 1.0 - exitScatter * 0.38;
+  vAlpha *= 1.0 - exitScatter * 0.92;
 
   if (aParticleType > 0.5 && aParticleType < 1.5) {
     vAlpha *= 0.56;
@@ -136,7 +138,7 @@ void main() {
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
     baseSize *= 1.25 + keyWeight * 0.95;
   } else if (aParticleType > 3.5 && aParticleType < 4.5) {
-    baseSize *= 0.84;
+    baseSize *= 1.18;
   } else if (aParticleType > 2.5) {
     baseSize *= 0.36;
   }

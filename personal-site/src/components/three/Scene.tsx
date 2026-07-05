@@ -90,8 +90,9 @@ function FadeableParticleField({
 export default function Scene({ className }: SceneProps) {
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const [scrollProgress, setScrollProgress] = useState(0);
-  const { activeSection } = useProjectScene();
+  const { activeSection, dnaDissolveProgress } = useProjectScene();
   const isProjectsActive = activeSection === "projects";
+  const isDnaTransitioning = dnaDissolveProgress < 0.985;
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -120,9 +121,9 @@ export default function Scene({ className }: SceneProps) {
     >
       <CanvasResizer />
       <ScrollTracker onScroll={setScrollProgress} />
-      <CameraHomeController enabled={!isProjectsActive} />
+      <CameraHomeController enabled={!isProjectsActive && !isDnaTransitioning} />
       <FadeableParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
-      <DNAHelixScene visible={isProjectsActive} />
+      <DNAHelixScene visible={isProjectsActive || isDnaTransitioning} />
       <PostProcessing />
     </Canvas>
   );
