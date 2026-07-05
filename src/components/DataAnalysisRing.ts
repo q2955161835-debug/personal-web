@@ -172,24 +172,25 @@ export class DataAnalysisRing {
       ringGroup.add(ring);
       this.rings.push(ring);
 
-      // 每组的小星体（按 count 分布）
+      // 每组的小星体（按 count 分布）- 共享 geometry + 共享 material 减少 drawcall
+      const sharedStarGeo = new THREE.IcosahedronGeometry(1, 1); // unit geometry, 通过 scale 区分尺寸
+      const sharedStarMat = new THREE.MeshBasicMaterial({
+        color: data.color,
+        transparent: true,
+        opacity: 0.85,
+      });
       for (let i = 0; i < data.count; i++) {
         const angle = (i / data.count) * Math.PI * 2 + Math.random() * 0.1;
         const height = (Math.random() - 0.5) * ringHeightVariation;
         const size = 0.04 + Math.random() * 0.06;
 
-        const starGeo = new THREE.IcosahedronGeometry(size, 4);
-        const starMat = new THREE.MeshBasicMaterial({
-          color: data.color,
-          transparent: true,
-          opacity: 0.9,
-        });
-        const mesh = new THREE.Mesh(starGeo, starMat);
+        const mesh = new THREE.Mesh(sharedStarGeo, sharedStarMat);
         mesh.position.set(
           Math.cos(angle) * ringRadius,
           height,
           Math.sin(angle) * ringRadius
         );
+        mesh.scale.setScalar(size);
         ringGroup.add(mesh);
 
         this.stars.push({
@@ -221,11 +222,8 @@ export class DataAnalysisRing {
       this.ringGroups[i].rotation.y += delta * speed;
     }
 
-    // 小星体闪烁
-    for (const star of this.stars) {
-      const twinkle = 0.6 + 0.4 * Math.sin(elapsed * 2.0 + star.phase);
-      (star.mesh.material as THREE.MeshBasicMaterial).opacity = twinkle;
-    }
+    // 注：原每帧 92 个 mesh opacity 闪烁改为静态 opacity，
+    // 动态感由中心恒星脉冲 + 各组旋转承担，避免 CPU 瓶颈
   }
 
   dispose(): void {
@@ -235,9 +233,20 @@ export class DataAnalysisRing {
       ring.geometry.dispose();
       (ring.material as THREE.Material).dispose();
     }
+    // 92 个星体共享 8 套 geometry/material（按 group），需去重释放
+    const disposedMats = new Set<THREE.Material>();
+    const disposedGeos = new Set<THREE.BufferGeometry>();
     for (const star of this.stars) {
-      star.mesh.geometry.dispose();
-      (star.mesh.material as THREE.Material).dispose();
+      const mat = star.mesh.material as THREE.Material;
+      const geo = star.mesh.geometry;
+      if (!disposedMats.has(mat)) {
+        mat.dispose();
+        disposedMats.add(mat);
+      }
+      if (!disposedGeos.has(geo)) {
+        geo.dispose();
+        disposedGeos.add(geo);
+      }
     }
   }
 }

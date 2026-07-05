@@ -45,6 +45,11 @@ export class SceneManager {
   private targetCameraX = 0;
   private targetCameraY = 0;
 
+  // 性能优化：reduced motion 检测 + 页面隐藏暂停
+  private readonly reducedMotion: boolean;
+  private readonly animScale: number;
+  private hidden = false;
+
   constructor(canvas: HTMLCanvasElement) {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.FogExp2(0x03030a, 0.0008);
@@ -93,9 +98,15 @@ export class SceneManager {
     this.onResize = this.onResize.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
     this.animate = this.animate.bind(this);
+    this.onVisibilityChange = this.onVisibilityChange.bind(this);
+
+    // 性能优化：reduced motion 检测
+    this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    this.animScale = this.reducedMotion ? 0.3 : 1.0;
 
     window.addEventListener('resize', this.onResize);
     window.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
 
     // 行星交互（raycasting + 点击弹模态框）
     this.planetInteraction = new PlanetInteraction(this.camera, (data) => {
@@ -173,6 +184,16 @@ export class SceneManager {
     this.mouseY = -((e.clientY / window.innerHeight) * 2 - 1);
   }
 
+  private onVisibilityChange(): void {
+    this.hidden = document.hidden;
+    if (!this.hidden && !this.running) {
+      // 恢复可见时重启渲染循环
+      this.running = true;
+      this.clock.start();
+      this.animate();
+    }
+  }
+
   /** 兼容旧接口，阶段3 起改由 ScrollController 驱动 */
   setScrollProgress(p: number): void {
     this.scrollProgress = THREE.MathUtils.clamp(p, 0, 1);
@@ -194,8 +215,14 @@ export class SceneManager {
     if (!this.running) return;
     this.rafId = requestAnimationFrame(this.animate);
 
-    const delta = this.clock.getDelta();
-    const elapsed = this.clock.getElapsedTime();
+    // 页面隐藏时暂停渲染（性能优化）
+    if (this.hidden) {
+      this.running = false;
+      return;
+    }
+
+    const delta = this.clock.getDelta() * this.animScale;
+    const elapsed = this.clock.getElapsedTime() * this.animScale;
 
     // 星空更新
     this.starfield.update(elapsed, delta);
@@ -235,6 +262,7 @@ export class SceneManager {
     this.stop();
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.starfield.dispose();
     this.homeStar.dispose();
     for (const planet of this.planets) planet.dispose();

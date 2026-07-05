@@ -147,6 +147,9 @@ function bootstrap(): void {
       skillUi.style.opacity = `${skillOpacity}`;
       skillUi.style.pointerEvents = skillOpacity > 0.5 ? 'auto' : 'none';
     }
+
+    // 滚动到空间站区域（>=88%）禁用行星交互，避免误触
+    manager.setInteractionEnabled(progress < 0.88);
   };
   window.addEventListener('scroll', handleScroll, { passive: true });
 
