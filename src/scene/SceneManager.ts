@@ -3,6 +3,7 @@ import { Renderer } from './Renderer';
 import { Starfield } from '../components/Starfield';
 import { HomeStar } from '../components/HomeStar';
 import { PlanetPlaceholder } from '../components/PlanetPlaceholder';
+import { DataAnalysisRing } from '../components/DataAnalysisRing';
 import { ScrollController } from './ScrollController';
 import { PROJECT_PLANETS } from '../data/projects';
 
@@ -11,6 +12,8 @@ import { PROJECT_PLANETS } from '../data/projects';
  * 阶段1：相机 + 灯光 + 星空背景 + 渲染循环
  * 阶段2：入口恒星（增强版太阳）
  * 阶段3：滚动叙事系统（Lenis + GSAP ScrollTrigger + 相机贝塞尔曲线 + 行星定位）
+ * 阶段4-5：8 个主行星自定义表面 shader
+ * 阶段6：数据分析星环（90+ 小星体按 8 领域分组）
  */
 export class SceneManager {
   public readonly scene: THREE.Scene;
@@ -19,6 +22,7 @@ export class SceneManager {
   private readonly starfield: Starfield;
   private readonly homeStar: HomeStar;
   private readonly planets: PlanetPlaceholder[] = [];
+  private dataAnalysisRing: DataAnalysisRing | null = null;
   private scrollController: ScrollController | null = null;
 
   private clock = new THREE.Clock();
@@ -60,13 +64,16 @@ export class SceneManager {
     this.homeStar.group.position.set(0, 0, -15);
     this.scene.add(this.homeStar.group);
 
-    // 滚动控制器（驱动相机沿路径移动）- 必须在 setupPlanets 之前创建
+    // 滚动控制器（驱动相机沿路径移动）- 必须在 setupPlanets 和 setupRing 之前创建
     this.scrollController = new ScrollController(this.camera, (p) => {
       this.scrollProgress = p;
     });
 
-    // 8 个占位行星沿路径分布
+    // 8 个主行星沿路径分布
     this.setupPlanets();
+
+    // 数据分析星环（放在路径中段）
+    this.setupDataAnalysisRing();
 
     // 事件绑定
     this.onResize = this.onResize.bind(this);
@@ -88,20 +95,29 @@ export class SceneManager {
 
       // 用 ScrollController 的路径定位行星
       const t = planetProgress[i];
-      if (this.scrollController) {
-        const pos = this.scrollController.getPathPoint(t);
-        // 行星偏离路径一点，放在相机视野侧
-        const tangent = this.scrollController.getPathTangent(t);
-        const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
-        const offset = i % 2 === 0 ? 6 : -6;
-        planet.group.position.copy(pos).add(side.multiplyScalar(offset));
-      } else {
-        planet.group.position.set(0, 0, -20 - i * 15);
-      }
+      const pos = this.scrollController!.getPathPoint(t);
+      // 行星偏离路径一点，放在相机视野侧
+      const tangent = this.scrollController!.getPathTangent(t);
+      const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+      const offset = i % 2 === 0 ? 6 : -6;
+      planet.group.position.copy(pos).add(side.multiplyScalar(offset));
 
       this.scene.add(planet.group);
       this.planets.push(planet);
     }
+  }
+
+  /** 数据分析星环（路径中段） */
+  private setupDataAnalysisRing(): void {
+    this.dataAnalysisRing = new DataAnalysisRing(0.8);
+    // 放在路径中段（约 0.45 进度处）
+    const pos = this.scrollController!.getPathPoint(0.45);
+    const tangent = this.scrollController!.getPathTangent(0.45);
+    const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+    // 偏向另一侧，避免与主行星重叠
+    this.dataAnalysisRing.group.position.copy(pos).add(side.multiplyScalar(-10));
+    this.dataAnalysisRing.group.position.y += 2;
+    this.scene.add(this.dataAnalysisRing.group);
   }
 
   private onResize(): void {
@@ -150,6 +166,9 @@ export class SceneManager {
       planet.update(elapsed, delta);
     }
 
+    // 数据分析星环更新
+    this.dataAnalysisRing?.update(elapsed, delta);
+
     // 相机视差（鼠标驱动，轻微）- 仅在首页生效，滚动后衰减
     const parallaxStrength = Math.max(0, 1 - this.scrollProgress * 3);
     this.targetCameraX += (this.mouseX * 8 * parallaxStrength - this.targetCameraX) * 0.05;
@@ -168,6 +187,7 @@ export class SceneManager {
     this.starfield.dispose();
     this.homeStar.dispose();
     for (const planet of this.planets) planet.dispose();
+    this.dataAnalysisRing?.dispose();
     this.scrollController?.dispose();
     this.renderer.dispose();
   }
