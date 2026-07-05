@@ -3,9 +3,9 @@ import { SceneManager } from './scene/SceneManager';
 import { MeteorField } from './components/MeteorField';
 
 /**
- * 入口 - 阶段 2 入口恒星首页
- * 启动 Three.js 场景（入口恒星 + 倒V Logo + 星空）+ 鼠标流星 + 姓名 UI
- * 后续阶段接入滚动叙事与项目展示
+ * 入口 - 阶段 3 滚动叙事系统
+ * 启动 Three.js 场景（入口恒星 + 8 占位行星 + 星空）
+ * + 鼠标流星 + Hero UI + Lenis 平滑滚动 + GSAP ScrollTrigger
  */
 function bootstrap(): void {
   const canvas = document.getElementById('webgl') as HTMLCanvasElement | null;
@@ -38,7 +38,7 @@ function bootstrap(): void {
     }, 600);
   }
 
-  // UI overlay：顶部导航 + Hero 姓名/求职方向 + 滚动提示 + HUD
+  // UI overlay：顶部导航 + Hero 姓名 + 滚动提示 + HUD
   const overlay = document.getElementById('ui-overlay');
   if (overlay) {
     overlay.innerHTML = `
@@ -62,11 +62,48 @@ function bootstrap(): void {
       </div>
 
       <div class="hud-info">
-        <div><span class="label">SCENE:</span> HOME_STAR</div>
-        <div><span class="label">STATUS:</span> <span style="color:#6bff9d">READY</span></div>
+        <div><span class="label">SCENE:</span> <span id="scene-name">HOME_STAR</span></div>
+        <div><span class="label">PROGRESS:</span> <span id="scene-progress">0%</span></div>
+        <div><span class="label">STATUS:</span> <span style="color:#6bff9d">FLYING</span></div>
       </div>
     `;
   }
+
+  // 监听滚动进度，更新 HUD 和 Hero 文字隐藏
+  let lastProgress = 0;
+  const handleScroll = (): void => {
+    const progress = (window as unknown as { __scrollProgress?: number }).__scrollProgress ?? 0;
+    if (Math.abs(progress - lastProgress) < 0.005) return;
+    lastProgress = progress;
+
+    // Hero 文字：滚动 5% 后开始淡出
+    const heroText = document.getElementById('hero-text');
+    if (heroText) {
+      const heroOpacity = Math.max(0, 1 - progress * 8);
+      heroText.style.opacity = `${heroOpacity}`;
+      heroText.style.transform = `translateY(${-progress * 200}px)`;
+    }
+
+    // 滚动提示：滚动 3% 后淡出
+    const scrollHint = document.getElementById('scroll-hint');
+    if (scrollHint) {
+      scrollHint.style.opacity = `${Math.max(0, 1 - progress * 15)}`;
+    }
+
+    // HUD 更新
+    const sceneName = document.getElementById('scene-name');
+    const sceneProgress = document.getElementById('scene-progress');
+    if (sceneProgress) sceneProgress.textContent = `${Math.round(progress * 100)}%`;
+    if (sceneName) {
+      if (progress < 0.05) sceneName.textContent = 'HOME_STAR';
+      else if (progress < 0.85) {
+        const planetIdx = Math.min(7, Math.floor((progress - 0.05) / 0.1));
+        const planetNames = ['LANG_DRILL', 'MAHJONG_AI', 'GOMOKU_AI', 'CODEX_VIDEO', 'GARCH_MIDAS', 'MARINE_FUSION', 'ECO_MAP', 'HPLC_GREY'];
+        sceneName.textContent = planetNames[planetIdx] ?? 'SPACE_TRAVEL';
+      } else sceneName.textContent = 'SPACE_STATION';
+    }
+  };
+  window.addEventListener('scroll', handleScroll, { passive: true });
 
   // 窗口卸载时清理
   window.addEventListener('beforeunload', () => {

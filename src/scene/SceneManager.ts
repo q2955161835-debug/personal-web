@@ -2,12 +2,15 @@ import * as THREE from 'three';
 import { Renderer } from './Renderer';
 import { Starfield } from '../components/Starfield';
 import { HomeStar } from '../components/HomeStar';
+import { PlanetPlaceholder } from '../components/PlanetPlaceholder';
+import { ScrollController } from './ScrollController';
+import { PROJECT_PLANETS } from '../data/projects';
 
 /**
  * 场景管理器
  * 阶段1：相机 + 灯光 + 星空背景 + 渲染循环
  * 阶段2：入口恒星（增强版太阳）
- * 后续阶段会接入：行星、星环、空间站、滚动叙事、后处理
+ * 阶段3：滚动叙事系统（Lenis + GSAP ScrollTrigger + 相机贝塞尔曲线 + 行星定位）
  */
 export class SceneManager {
   public readonly scene: THREE.Scene;
@@ -15,12 +18,14 @@ export class SceneManager {
   private readonly renderer: Renderer;
   private readonly starfield: Starfield;
   private readonly homeStar: HomeStar;
+  private readonly planets: PlanetPlaceholder[] = [];
+  private scrollController: ScrollController | null = null;
 
   private clock = new THREE.Clock();
   private rafId = 0;
   private running = false;
 
-  // 滚动进度（0-1），后续阶段由 GSAP ScrollTrigger 驱动
+  // 滚动进度（0-1），由 ScrollController 驱动
   private scrollProgress = 0;
 
   // 鼠标位置（NDC），用于流星和视差
@@ -55,6 +60,14 @@ export class SceneManager {
     this.homeStar.group.position.set(0, 0, -15);
     this.scene.add(this.homeStar.group);
 
+    // 滚动控制器（驱动相机沿路径移动）- 必须在 setupPlanets 之前创建
+    this.scrollController = new ScrollController(this.camera, (p) => {
+      this.scrollProgress = p;
+    });
+
+    // 8 个占位行星沿路径分布
+    this.setupPlanets();
+
     // 事件绑定
     this.onResize = this.onResize.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
@@ -62,6 +75,33 @@ export class SceneManager {
 
     window.addEventListener('resize', this.onResize);
     window.addEventListener('mousemove', this.onMouseMove);
+  }
+
+  /** 沿相机路径布置 8 个行星 */
+  private setupPlanets(): void {
+    // 行星在路径上的进度位置（0.1 ~ 0.85）
+    const planetProgress = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80];
+
+    for (let i = 0; i < PROJECT_PLANETS.length; i++) {
+      const data = PROJECT_PLANETS[i];
+      const planet = new PlanetPlaceholder(data, 1.8);
+
+      // 用 ScrollController 的路径定位行星
+      const t = planetProgress[i];
+      if (this.scrollController) {
+        const pos = this.scrollController.getPathPoint(t);
+        // 行星偏离路径一点，放在相机视野侧
+        const tangent = this.scrollController.getPathTangent(t);
+        const side = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+        const offset = i % 2 === 0 ? 6 : -6;
+        planet.group.position.copy(pos).add(side.multiplyScalar(offset));
+      } else {
+        planet.group.position.set(0, 0, -20 - i * 15);
+      }
+
+      this.scene.add(planet.group);
+      this.planets.push(planet);
+    }
   }
 
   private onResize(): void {
@@ -75,6 +115,7 @@ export class SceneManager {
     this.mouseY = -((e.clientY / window.innerHeight) * 2 - 1);
   }
 
+  /** 兼容旧接口，阶段3 起改由 ScrollController 驱动 */
   setScrollProgress(p: number): void {
     this.scrollProgress = THREE.MathUtils.clamp(p, 0, 1);
   }
@@ -104,12 +145,18 @@ export class SceneManager {
     // 入口恒星更新
     this.homeStar.update(elapsed, delta);
 
-    // 相机视差（鼠标驱动，轻微）
-    this.targetCameraX += (this.mouseX * 8 - this.targetCameraX) * 0.05;
-    this.targetCameraY += (this.mouseY * 6 - this.targetCameraY) * 0.05;
-    this.camera.position.x = this.targetCameraX;
-    this.camera.position.y = this.targetCameraY;
-    this.camera.lookAt(0, 0, 0);
+    // 行星更新
+    for (const planet of this.planets) {
+      planet.update(elapsed, delta);
+    }
+
+    // 相机视差（鼠标驱动，轻微）- 仅在首页生效，滚动后衰减
+    const parallaxStrength = Math.max(0, 1 - this.scrollProgress * 3);
+    this.targetCameraX += (this.mouseX * 8 * parallaxStrength - this.targetCameraX) * 0.05;
+    this.targetCameraY += (this.mouseY * 6 * parallaxStrength - this.targetCameraY) * 0.05;
+    // 鼠标视差仅作为偏移叠加（ScrollController 已设置 base position）
+    this.camera.position.x += this.targetCameraX * 0.02;
+    this.camera.position.y += this.targetCameraY * 0.02;
 
     this.renderer.render(this.scene, this.camera);
   }
@@ -120,6 +167,8 @@ export class SceneManager {
     window.removeEventListener('mousemove', this.onMouseMove);
     this.starfield.dispose();
     this.homeStar.dispose();
+    for (const planet of this.planets) planet.dispose();
+    this.scrollController?.dispose();
     this.renderer.dispose();
   }
 }
