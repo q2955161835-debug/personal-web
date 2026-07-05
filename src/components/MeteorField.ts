@@ -100,12 +100,13 @@ export class MeteorField {
     for (let i = 0; i < count; i++) {
       const angle = moveAngle + (Math.random() - 0.5) * 0.4;
       const speed = 2.0 + Math.random() * 3 + dist * 0.04;
+      // 全冷色调：蓝-青-紫，完全匹配星空，无暖色
       const r = Math.random();
-      const hue = r < 0.55
-        ? 200 + Math.random() * 60
-        : r < 0.85
-          ? 280 + Math.random() * 40
-          : 30 + Math.random() * 25;
+      const hue = r < 0.45
+        ? 200 + Math.random() * 40   // 蓝-青
+        : r < 0.80
+          ? 220 + Math.random() * 40  // 蓝-蓝紫
+          : 270 + Math.random() * 40; // 紫-品红
 
       this.comets.push({
         x: x + (Math.random() - 0.5) * 6,
@@ -113,8 +114,8 @@ export class MeteorField {
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         life: 0,
-        maxLife: 1.2 + Math.random() * 0.9,
-        size: 1.5 + Math.random() * 1.8,
+        maxLife: 1.4 + Math.random() * 1.0,
+        size: 1.0 + Math.random() * 1.2,  // 更小尺寸
         hue,
         distAccum: 0,
       });
@@ -228,51 +229,51 @@ export class MeteorField {
     }
   };
 
-  /** 绘制彗星头部：多层径向柔光 */
+  /** 绘制彗星头部：多层径向柔光（低饱和融入星空） */
   private drawHead(x: number, y: number, size: number, hue: number, alpha: number): void {
-    // 外层柔光大光环
-    const outer = this.ctx.createRadialGradient(x, y, 0, x, y, size * 6);
-    outer.addColorStop(0, `hsla(${hue}, 70%, 80%, ${alpha * 0.35})`);
-    outer.addColorStop(0.3, `hsla(${hue}, 60%, 65%, ${alpha * 0.18})`);
-    outer.addColorStop(1, `hsla(${hue}, 50%, 55%, 0)`);
+    // 外层柔光大光环（更淡，避免突兀）
+    const outer = this.ctx.createRadialGradient(x, y, 0, x, y, size * 5);
+    outer.addColorStop(0, `hsla(${hue}, 55%, 70%, ${alpha * 0.22})`);
+    outer.addColorStop(0.3, `hsla(${hue}, 45%, 55%, ${alpha * 0.1})`);
+    outer.addColorStop(1, `hsla(${hue}, 40%, 50%, 0)`);
     this.ctx.fillStyle = outer;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 6, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 5, 0, Math.PI * 2);
     this.ctx.fill();
 
     // 中层亮核
-    const mid = this.ctx.createRadialGradient(x, y, 0, x, y, size * 2.5);
-    mid.addColorStop(0, `hsla(${hue}, 80%, 90%, ${alpha * 0.85})`);
-    mid.addColorStop(0.5, `hsla(${hue}, 70%, 75%, ${alpha * 0.45})`);
-    mid.addColorStop(1, `hsla(${hue}, 60%, 60%, 0)`);
+    const mid = this.ctx.createRadialGradient(x, y, 0, x, y, size * 2.2);
+    mid.addColorStop(0, `hsla(${hue}, 60%, 85%, ${alpha * 0.6})`);
+    mid.addColorStop(0.5, `hsla(${hue}, 55%, 70%, ${alpha * 0.3})`);
+    mid.addColorStop(1, `hsla(${hue}, 50%, 55%, 0)`);
     this.ctx.fillStyle = mid;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 2.2, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // 最亮中心点
-    this.ctx.fillStyle = `hsla(${hue}, 50%, 95%, ${alpha * 0.9})`;
+    // 最亮中心点（接近白，模拟星点）
+    this.ctx.fillStyle = `hsla(${hue}, 30%, 95%, ${alpha * 0.75})`;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 0.45, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
-  /** 绘制拖尾粒子：单个柔和光点 */
+  /** 绘制拖尾粒子：单个柔和光点（融入星空） */
   private drawTrailDot(x: number, y: number, size: number, hue: number, alpha: number): void {
-    // 柔和光晕
-    const grad = this.ctx.createRadialGradient(x, y, 0, x, y, size * 4);
-    grad.addColorStop(0, `hsla(${hue}, 65%, 80%, ${alpha * 0.5})`);
-    grad.addColorStop(0.4, `hsla(${hue}, 55%, 65%, ${alpha * 0.2})`);
-    grad.addColorStop(1, `hsla(${hue}, 50%, 55%, 0)`);
+    // 柔和光晕（更淡）
+    const grad = this.ctx.createRadialGradient(x, y, 0, x, y, size * 3.5);
+    grad.addColorStop(0, `hsla(${hue}, 50%, 75%, ${alpha * 0.35})`);
+    grad.addColorStop(0.4, `hsla(${hue}, 40%, 60%, ${alpha * 0.12})`);
+    grad.addColorStop(1, `hsla(${hue}, 35%, 50%, 0)`);
     this.ctx.fillStyle = grad;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 4, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 3.5, 0, Math.PI * 2);
     this.ctx.fill();
 
-    // 中心亮点
-    this.ctx.fillStyle = `hsla(${hue}, 60%, 90%, ${alpha * 0.6})`;
+    // 中心亮点（小而柔）
+    this.ctx.fillStyle = `hsla(${hue}, 45%, 88%, ${alpha * 0.45})`;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, size * 0.8, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 0.7, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
