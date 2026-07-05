@@ -407,6 +407,135 @@ html.lenis body {
   mix-blend-mode: screen;
 }
 
+/* 技能空间站 UI */
+.skill-station-ui {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  overflow-y: auto;
+}
+.skill-station-ui .station-title {
+  font-size: clamp(24px, 4vw, 36px);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  margin-bottom: 40px;
+  background: linear-gradient(135deg, #a0d0ff 0%, #d4c2ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-align: center;
+}
+.skill-station-ui .skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  max-width: 1200px;
+  width: 100%;
+  margin-bottom: 40px;
+}
+.skill-station-ui .skill-card {
+  background: rgba(20, 20, 40, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 20px 22px;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.skill-station-ui .skill-card:hover {
+  transform: translateY(-4px);
+}
+.skill-station-ui .skill-card h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.skill-station-ui .skill-name-en {
+  margin: 0 0 16px;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+.skill-station-ui .skill-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.skill-station-ui .skill-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+}
+.skill-station-ui .skill-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}
+.skill-station-ui .skill-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.skill-station-ui .skill-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+}
+.skill-station-ui .contact-section {
+  max-width: 800px;
+  width: 100%;
+  text-align: center;
+}
+.skill-station-ui .contact-section h3 {
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 20px;
+}
+.skill-station-ui .contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.skill-station-ui .contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  background: rgba(20, 20, 40, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+.skill-station-ui .contact-label {
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+}
+.skill-station-ui .contact-value {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.skill-station-ui .contact-value:hover {
+  color: #a0d0ff;
+}
+
 /* reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

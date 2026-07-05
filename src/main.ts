@@ -1,6 +1,7 @@
 import './style.css';
 import { SceneManager } from './scene/SceneManager';
 import { MeteorField } from './components/MeteorField';
+import { SKILL_CATEGORIES, CONTACT_INFO } from './data/skills';
 
 /**
  * 入口 - 阶段 3 滚动叙事系统
@@ -66,6 +67,41 @@ function bootstrap(): void {
         <div><span class="label">PROGRESS:</span> <span id="scene-progress">0%</span></div>
         <div><span class="label">STATUS:</span> <span style="color:#6bff9d">FLYING</span></div>
       </div>
+
+      <section class="skill-station-ui" id="skill-station-ui">
+        <h2 class="station-title">SKILL STATION · 技能空间站</h2>
+        <div class="skill-grid">
+          ${SKILL_CATEGORIES.map(cat => `
+            <div class="skill-card" style="border-color:${cat.color}40;">
+              <h3 style="color:${cat.color};">${cat.name}</h3>
+              <p class="skill-name-en">${cat.nameEn}</p>
+              <ul class="skill-list">
+                ${cat.skills.map(s => `
+                  <li>
+                    <span class="skill-name">${s.name}</span>
+                    <div class="skill-bar">
+                      <div class="skill-bar-fill" style="width:${s.level}%;background:${cat.color};"></div>
+                    </div>
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          `).join('')}
+        </div>
+        <div class="contact-section">
+          <h3>CONTACT · 联系方式</h3>
+          <div class="contact-grid">
+            ${CONTACT_INFO.map(c => `
+              <div class="contact-item">
+                <span class="contact-label">${c.label}</span>
+                ${c.href
+                  ? `<a class="contact-value" href="${c.href}" target="_blank" rel="noopener">${c.value}</a>`
+                  : `<span class="contact-value">${c.value}</span>`}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </section>
     `;
   }
 
@@ -101,6 +137,14 @@ function bootstrap(): void {
         const planetNames = ['LANG_DRILL', 'MAHJONG_AI', 'GOMOKU_AI', 'CODEX_VIDEO', 'GARCH_MIDAS', 'MARINE_FUSION', 'ECO_MAP', 'HPLC_GREY'];
         sceneName.textContent = planetNames[planetIdx] ?? 'SPACE_TRAVEL';
       } else sceneName.textContent = 'SPACE_STATION';
+    }
+
+    // 技能空间站 UI：滚动 85% 后淡入
+    const skillUi = document.getElementById('skill-station-ui');
+    if (skillUi) {
+      const skillOpacity = Math.max(0, Math.min(1, (progress - 0.85) / 0.1));
+      skillUi.style.opacity = `${skillOpacity}`;
+      skillUi.style.pointerEvents = skillOpacity > 0.5 ? 'auto' : 'none';
     }
   };
   window.addEventListener('scroll', handleScroll, { passive: true });

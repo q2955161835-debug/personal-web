@@ -5,6 +5,7 @@ import { HomeStar } from '../components/HomeStar';
 import { PlanetPlaceholder } from '../components/PlanetPlaceholder';
 import { DataAnalysisRing } from '../components/DataAnalysisRing';
 import { TransitionEffects } from '../components/TransitionEffects';
+import { SkillStation } from '../components/SkillStation';
 import { ScrollController } from './ScrollController';
 import { PROJECT_PLANETS } from '../data/projects';
 
@@ -25,6 +26,7 @@ export class SceneManager {
   private readonly planets: PlanetPlaceholder[] = [];
   private dataAnalysisRing: DataAnalysisRing | null = null;
   private transitionEffects: TransitionEffects | null = null;
+  private skillStation: SkillStation | null = null;
   private scrollController: ScrollController | null = null;
 
   private clock = new THREE.Clock();
@@ -81,6 +83,9 @@ export class SceneManager {
     this.transitionEffects = new TransitionEffects();
     this.scene.add(this.transitionEffects.group);
 
+    // 技能证书空间站（路径终点）
+    this.setupSkillStation();
+
     // 事件绑定
     this.onResize = this.onResize.bind(this);
     this.onMouseMove = this.onMouseMove.bind(this);
@@ -124,6 +129,16 @@ export class SceneManager {
     this.dataAnalysisRing.group.position.copy(pos).add(side.multiplyScalar(-10));
     this.dataAnalysisRing.group.position.y += 2;
     this.scene.add(this.dataAnalysisRing.group);
+  }
+
+  /** 技能证书空间站（路径终点） */
+  private setupSkillStation(): void {
+    this.skillStation = new SkillStation(2);
+    // 放在路径终点（0.92 进度处）
+    const pos = this.scrollController!.getPathPoint(0.92);
+    this.skillStation.group.position.copy(pos);
+    this.skillStation.group.position.y += 1;
+    this.scene.add(this.skillStation.group);
   }
 
   private onResize(): void {
@@ -178,6 +193,9 @@ export class SceneManager {
     // 转场动效更新
     this.transitionEffects?.update(elapsed, delta);
 
+    // 空间站更新
+    this.skillStation?.update(elapsed, delta);
+
     // 相机视差（鼠标驱动，轻微）- 仅在首页生效，滚动后衰减
     const parallaxStrength = Math.max(0, 1 - this.scrollProgress * 3);
     this.targetCameraX += (this.mouseX * 8 * parallaxStrength - this.targetCameraX) * 0.05;
@@ -198,6 +216,7 @@ export class SceneManager {
     for (const planet of this.planets) planet.dispose();
     this.dataAnalysisRing?.dispose();
     this.transitionEffects?.dispose();
+    this.skillStation?.dispose();
     this.scrollController?.dispose();
     this.renderer.dispose();
   }
