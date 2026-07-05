@@ -13,7 +13,7 @@ interface ParticleFieldProps {
   scrollProgress: number;
 }
 
-const PARTICLE_COUNT = 3000;
+const PARTICLE_COUNT = 4000;
 
 /** Color palette endpoints */
 const COLOR_TEAL = new THREE.Color("#49c5b6");
@@ -30,25 +30,13 @@ export default function ParticleField({ mouse, scrollProgress }: ParticleFieldPr
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const i3 = i * 3;
 
-      // --- Mixed distribution: 60% near-center gaussian, 40% uniform spread ---
-      let x: number, y: number, z: number;
-      if (i < PARTICLE_COUNT * 0.6) {
-        // Gaussian-like center cluster (Box-Muller)
-        const u1 = Math.random();
-        const u2 = Math.random();
-        const u3 = Math.random();
-        x = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2) * 3.0;
-        y = Math.sqrt(-2 * Math.log(u1)) * Math.sin(2 * Math.PI * u2) * 2.0;
-        z = (Math.random() - 0.5) * 4;
-        // Clamp outliers
-        x = Math.max(-6, Math.min(6, x));
-        y = Math.max(-4, Math.min(4, y));
-      } else {
-        // Uniform spread for the outer field
-        x = (Math.random() - 0.5) * 16;
-        y = (Math.random() - 0.5) * 10;
-        z = (Math.random() - 0.5) * 12;
-      }
+      // --- Ring-biased distribution: more particles at edges, hollow center ---
+      const angle = Math.random() * Math.PI * 2;
+      // pow < 0.5 strongly biases toward outer radius
+      const r = 2.5 + Math.pow(Math.random(), 0.45) * 7; // radius 2.5~9.5, stronger outer bias
+      const x = Math.cos(angle) * r;
+      const y = Math.sin(angle) * r * 0.6; // squash Y for wider-than-tall layout
+      const z = (Math.random() - 0.5) * 10;
 
       positions[i3] = x;
       positions[i3 + 1] = y;
