@@ -53,17 +53,8 @@ function bootstrap(): void {
       <section class="hero-text" id="hero-text">
         <h1 class="hero-name">
           <span class="hero-name-en">FAN JUNJIE</span>
-          <span class="hero-name-zh">范俊杰</span>
         </h1>
         <p class="hero-title">AI 产品 / 数据分析实习</p>
-        <p class="hero-subtitle">Three.js 星空作品集 · 探索数据与交互的边界</p>
-        <div class="hero-meta">
-          <span>苏州</span>
-          <span class="dot">·</span>
-          <span>盐城师范学院</span>
-          <span class="dot">·</span>
-          <a href="https://github.com/q2955161835-debug" target="_blank" rel="noopener">GitHub 主页</a>
-        </div>
       </section>
 
       <div class="scroll-hint" id="scroll-hint">

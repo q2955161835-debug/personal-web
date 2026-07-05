@@ -1,32 +1,32 @@
 /**
- * 光标拖尾效果 - activetheory 风格
- * 优雅的物理跟随：主光球 + 多层滞后粒子 + 柔光叠加
- * 不再是激进的流星爆裂，而是丝滑流畅的能量拖尾
+ * 鼠标彗星效果
+ * 向鼠标移动方向发射有拖尾的彗星粒子
+ * - 每次鼠标移动生成一颗彗星，沿移动方向喷射
+ * - 彗星含头部光球 + 锥形拖尾 + 柔光
+ * - 多层叠加 + 加色混合，形成能量感
  */
 
-interface Follower {
+interface Comet {
   x: number;
   y: number;
-  /** 跟随缓动系数（越小越滞后） */
-  ease: number;
-  /** 半径 */
-  radius: number;
-  /** 历史轨迹（用于绘制丝带） */
-  trail: { x: number; y: number }[];
-  /** 颜色色相（0-360） */
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  size: number;
   hue: number;
+  trail: { x: number; y: number; alpha: number }[];
 }
 
 export class MeteorField {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private targetX = window.innerWidth / 2;
-  private targetY = window.innerHeight / 2;
-  private followers: Follower[] = [];
+  private comets: Comet[] = [];
+  private lastX = -1;
+  private lastY = -1;
+  private lastSpawnTime = 0;
   private rafId = 0;
   private running = false;
-  private visible = false;
-  private hideTimer = 0;
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -38,32 +38,9 @@ export class MeteorField {
     this.ctx = this.canvas.getContext('2d')!;
     this.resize();
 
-    // 主光球 + 多层滞后粒子，ease 越小越滞后
-    const config = [
-      { ease: 0.18, radius: 14, hue: 190 }, // 主光球（青）
-      { ease: 0.14, radius: 10, hue: 200 },
-      { ease: 0.11, radius: 8, hue: 215 },
-      { ease: 0.085, radius: 6, hue: 230 },
-      { ease: 0.065, radius: 5, hue: 250 },
-      { ease: 0.05, radius: 4, hue: 270 }, // 尾端（紫）
-      { ease: 0.038, radius: 3, hue: 290 },
-      { ease: 0.028, radius: 2.5, hue: 310 },
-    ];
-    for (const c of config) {
-      this.followers.push({
-        x: this.targetX,
-        y: this.targetY,
-        ease: c.ease,
-        radius: c.radius,
-        trail: [],
-        hue: c.hue,
-      });
-    }
-
     window.addEventListener('resize', this.resize);
     window.addEventListener('mousemove', this.onMouseMove);
     window.addEventListener('touchmove', this.onTouchMove, { passive: true });
-    window.addEventListener('mouseleave', this.onMouseLeave);
   }
 
   private resize = (): void => {
@@ -76,24 +53,67 @@ export class MeteorField {
   };
 
   private onMouseMove = (e: MouseEvent): void => {
-    this.targetX = e.clientX;
-    this.targetY = e.clientY;
-    this.visible = true;
-    this.hideTimer = 0;
+    this.spawn(e.clientX, e.clientY);
   };
 
   private onTouchMove = (e: TouchEvent): void => {
     if (e.touches.length > 0) {
-      this.targetX = e.touches[0].clientX;
-      this.targetY = e.touches[0].clientY;
-      this.visible = true;
-      this.hideTimer = 0;
+      this.spawn(e.touches[0].clientX, e.touches[0].clientY);
     }
   };
 
-  private onMouseLeave = (): void => {
-    // 鼠标离开窗口时淡出
-  };
+  private spawn(x: number, y: number): void {
+    const now = performance.now();
+    if (this.lastX < 0) {
+      this.lastX = x;
+      this.lastY = y;
+      return;
+    }
+
+    const dx = x - this.lastX;
+    const dy = y - this.lastY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // 移动距离阈值 + 时间节流
+    if (dist < 6 || now - this.lastSpawnTime < 28) {
+      this.lastX = x;
+      this.lastY = y;
+      return;
+    }
+    this.lastSpawnTime = now;
+
+    // 沿移动方向发射彗星（速度叠加移动方向）
+    const moveAngle = Math.atan2(dy, dx);
+    const count = Math.min(3, Math.floor(dist / 30) + 1);
+
+    for (let i = 0; i < count; i++) {
+      // 在移动方向附近散布
+      const angle = moveAngle + (Math.random() - 0.5) * 0.5;
+      const speed = 2.5 + Math.random() * 4 + dist * 0.05;
+      // 色相：暖橙金 + 偶尔蓝青
+      const hue = Math.random() < 0.75 ? 25 + Math.random() * 35 : 190 + Math.random() * 40;
+
+      this.comets.push({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0,
+        maxLife: 1.0 + Math.random() * 0.8,
+        size: 1.8 + Math.random() * 2.2,
+        hue,
+        trail: [],
+      });
+    }
+
+    this.lastX = x;
+    this.lastY = y;
+
+    // 限流
+    if (this.comets.length > 80) {
+      this.comets.splice(0, this.comets.length - 80);
+    }
+  }
 
   start(): void {
     if (this.running) return;
@@ -113,84 +133,116 @@ export class MeteorField {
     const w = window.innerWidth;
     const h = window.innerHeight;
 
-    // 渐隐背景（轻拖尾）
+    // 渐隐背景（拖尾余晖）
     this.ctx.globalCompositeOperation = 'destination-out';
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
     this.ctx.fillRect(0, 0, w, h);
 
     this.ctx.globalCompositeOperation = 'lighter';
 
-    // 更新跟随粒子位置（lerp 缓动）
-    for (const f of this.followers) {
-      f.x += (this.targetX - f.x) * f.ease;
-      f.y += (this.targetY - f.y) * f.ease;
+    const dt = 0.016;
+    for (let i = this.comets.length - 1; i >= 0; i--) {
+      const c = this.comets[i];
+      c.life += dt;
 
-      // 记录轨迹
-      f.trail.push({ x: f.x, y: f.y });
-      if (f.trail.length > 18) f.trail.shift();
-    }
-
-    // 闲置淡出
-    if (!this.visible) {
-      this.hideTimer++;
-    }
-    const globalAlpha = this.visible ? 1 : Math.max(0, 1 - this.hideTimer / 60);
-
-    // 绘制丝带连接（从尾端到主光球的平滑曲线）
-    if (globalAlpha > 0.01) {
-      this.drawRibbon(globalAlpha);
-
-      // 绘制每个跟随粒子的柔光
-      for (const f of this.followers) {
-        this.drawSoftGlow(f.x, f.y, f.radius, f.hue, globalAlpha);
+      if (c.life >= c.maxLife) {
+        this.comets.splice(i, 1);
+        continue;
       }
-    }
 
-    // 鼠标停止移动一段时间后重新进入可见状态
-    if (this.hideTimer > 60) this.visible = false;
+      // 更新位置
+      c.x += c.vx;
+      c.y += c.vy;
+      // 轻微减速
+      c.vx *= 0.985;
+      c.vy *= 0.985;
+      // 轻微重力（向下飘）
+      c.vy += 0.02;
+
+      // 记录拖尾
+      c.trail.push({ x: c.x, y: c.y, alpha: 1 - c.life / c.maxLife });
+      if (c.trail.length > 22) c.trail.shift();
+
+      const lifeRatio = c.life / c.maxLife;
+      const alpha = (1 - lifeRatio) * 0.95;
+
+      // 绘制拖尾（多层渐变锥形）
+      this.drawTrail(c, alpha);
+
+      // 绘制头部光球
+      this.drawHead(c.x, c.y, c.size, c.hue, alpha);
+    }
   };
 
-  /** 绘制柔光圆点（径向渐变） */
-  private drawSoftGlow(x: number, y: number, radius: number, hue: number, alpha: number): void {
-    const grad = this.ctx.createRadialGradient(x, y, 0, x, y, radius * 2.5);
-    grad.addColorStop(0, `hsla(${hue}, 100%, 92%, ${alpha * 0.95})`);
-    grad.addColorStop(0.35, `hsla(${hue}, 90%, 75%, ${alpha * 0.5})`);
-    grad.addColorStop(1, `hsla(${hue}, 80%, 60%, 0)`);
-    this.ctx.fillStyle = grad;
+  /** 绘制彗星头部：多层径向柔光 */
+  private drawHead(x: number, y: number, size: number, hue: number, alpha: number): void {
+    // 外层柔光大光环
+    const outer = this.ctx.createRadialGradient(x, y, 0, x, y, size * 6);
+    outer.addColorStop(0, `hsla(${hue}, 100%, 90%, ${alpha * 0.5})`);
+    outer.addColorStop(0.3, `hsla(${hue}, 95%, 70%, ${alpha * 0.25})`);
+    outer.addColorStop(1, `hsla(${hue}, 90%, 60%, 0)`);
+    this.ctx.fillStyle = outer;
     this.ctx.beginPath();
-    this.ctx.arc(x, y, radius * 2.5, 0, Math.PI * 2);
+    this.ctx.arc(x, y, size * 6, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // 中层亮核
+    const mid = this.ctx.createRadialGradient(x, y, 0, x, y, size * 2.5);
+    mid.addColorStop(0, `hsla(${hue}, 100%, 95%, ${alpha})`);
+    mid.addColorStop(0.5, `hsla(${hue}, 100%, 80%, ${alpha * 0.6})`);
+    mid.addColorStop(1, `hsla(${hue}, 95%, 65%, 0)`);
+    this.ctx.fillStyle = mid;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, size * 2.5, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // 最亮中心点
+    this.ctx.fillStyle = `hsla(${hue}, 100%, 98%, ${alpha})`;
+    this.ctx.beginPath();
+    this.ctx.arc(x, y, size * 0.6, 0, Math.PI * 2);
     this.ctx.fill();
   }
 
-  /** 绘制丝带：用二次贝塞尔连接主光球的轨迹 */
-  private drawRibbon(alpha: number): void {
-    const main = this.followers[0];
-    if (main.trail.length < 2) return;
+  /** 绘制拖尾：从尾端到头部的渐变粗细曲线 */
+  private drawTrail(c: Comet, alpha: number): void {
+    if (c.trail.length < 2) return;
 
     this.ctx.lineCap = 'round';
     this.ctx.lineJoin = 'round';
 
-    // 多层叠加，从外到内变细变亮
+    // 三层叠加：外光晕 + 中层 + 内亮线
     const layers = [
-      { width: 8, alpha: 0.08, hue: 220 },
-      { width: 4, alpha: 0.18, hue: 210 },
-      { width: 2, alpha: 0.35, hue: 200 },
-      { width: 1, alpha: 0.6, hue: 190 },
+      { widthMul: 4.0, alphaMul: 0.12, hueOffset: 0 },
+      { widthMul: 2.0, alphaMul: 0.3, hueOffset: 0 },
+      { widthMul: 0.8, alphaMul: 0.7, hueOffset: -5 },
     ];
 
     for (const layer of layers) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = `hsla(${layer.hue}, 100%, 85%, ${alpha * layer.alpha})`;
-      this.ctx.lineWidth = layer.width;
+      const trail = c.trail;
+      const start = trail[0];
+      this.ctx.moveTo(start.x, start.y);
 
-      const trail = main.trail;
-      this.ctx.moveTo(trail[0].x, trail[0].y);
       for (let i = 1; i < trail.length - 1; i++) {
         const xc = (trail[i].x + trail[i + 1].x) / 2;
         const yc = (trail[i].y + trail[i + 1].y) / 2;
         this.ctx.quadraticCurveTo(trail[i].x, trail[i].y, xc, yc);
       }
       this.ctx.lineTo(trail[trail.length - 1].x, trail[trail.length - 1].y);
+
+      // 沿拖尾渐变粗细：用多段绘制实现锥形
+      const grad = this.ctx.createLinearGradient(
+        trail[0].x,
+        trail[0].y,
+        c.x,
+        c.y
+      );
+      grad.addColorStop(0, `hsla(${c.hue + layer.hueOffset}, 100%, 70%, 0)`);
+      grad.addColorStop(0.6, `hsla(${c.hue + layer.hueOffset}, 100%, 80%, ${alpha * layer.alphaMul * 0.6})`);
+      grad.addColorStop(1, `hsla(${c.hue + layer.hueOffset}, 100%, 92%, ${alpha * layer.alphaMul})`);
+
+      this.ctx.strokeStyle = grad;
+      this.ctx.lineWidth = c.size * layer.widthMul;
       this.ctx.stroke();
     }
   }
@@ -200,7 +252,6 @@ export class MeteorField {
     window.removeEventListener('resize', this.resize);
     window.removeEventListener('mousemove', this.onMouseMove);
     window.removeEventListener('touchmove', this.onTouchMove);
-    window.removeEventListener('mouseleave', this.onMouseLeave);
     this.canvas.remove();
   }
 }

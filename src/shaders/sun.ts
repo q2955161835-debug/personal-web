@@ -85,14 +85,21 @@ export const sunVertexShader = /* glsl */ `
     float lowFreq = fbm(position * 0.6 + vec3(uTime * 0.12));
     float midFreq = snoise(position * 1.8 + vec3(uTime * 0.25)) * 0.4;
     float highFreq = snoise(position * 4.5 + vec3(uTime * 0.4)) * 0.15;
-    float displacement = (lowFreq * 0.5 + midFreq + highFreq) * 0.18;
+    float displacement = (lowFreq * 0.5 + midFreq + highFreq) * 0.22;
 
     // 边缘日珥：在视线切线方向增强位移（limb 处生成等离子体突起）
     vec3 viewDir = normalize(cameraPosition - (modelMatrix * vec4(position, 1.0)).xyz);
     float limb = 1.0 - max(dot(viewDir, normalize(normalMatrix * normal)), 0.0);
     limb = pow(limb, 2.0);
-    float prominence = snoise(position * 2.5 + vec3(uTime * 0.35)) * limb * 0.25;
+    float prominence = snoise(position * 2.5 + vec3(uTime * 0.35)) * limb * 0.35;
     displacement += prominence;
+
+    // 溅射喷发：偶发性突起（噪声+脉动组合，形成等离子体喷射）
+    float eruptionNoise = snoise(position * 1.2 + vec3(uTime * 0.18));
+    float eruptionMask = smoothstep(0.55, 0.85, eruptionNoise);
+    float eruptionPulse = 0.5 + 0.5 * sin(uTime * 0.9 + eruptionNoise * 6.28);
+    float eruption = eruptionMask * eruptionPulse * 0.4;
+    displacement += eruption;
 
     vDisplacement = displacement;
     vec3 newPosition = position + normal * displacement;
@@ -208,7 +215,11 @@ export const sunFragmentShader = /* glsl */ `
     color *= 0.45 + 0.55 * limbDarkening;
 
     // 位移高的地方更亮（等离子体突起）
-    color += uColorCore * max(vDisplacement, 0.0) * 1.5;
+    color += uColorCore * max(vDisplacement, 0.0) * 2.0;
+
+    // 溅射喷发区域：白热高光（位移 > 阈值时认为是喷发）
+    float eruptionGlow = smoothstep(0.15, 0.45, vDisplacement);
+    color += vec3(1.0, 0.95, 0.85) * eruptionGlow * 0.8;
 
     // Fresnel 多层辉光
     float fresnel = 1.0 - max(dot(vViewDirection, vNormal), 0.0);
@@ -285,9 +296,13 @@ export const coronaVertexShader = /* glsl */ `
   void main() {
     vNormal = normalize(normalMatrix * normal);
     vPosition = position;
-    // 日冕边缘扭曲
-    float wobble = snoise(position * 0.8 + vec3(uTime * 0.2)) * 0.04;
-    vec3 newPosition = position + normal * wobble;
+    // 日冕边缘大幅扭曲：多尺度噪声，让外缘破碎不规则
+    float bigBlob = snoise(position * 0.6 + vec3(uTime * 0.18)) * 0.35;
+    float stream = snoise(position * 1.4 + vec3(uTime * 0.32, uTime * 0.22, uTime * 0.28)) * 0.18;
+    float fine = snoise(position * 3.2 + vec3(uTime * 0.5)) * 0.08;
+    // 沿法线方向位移，让球壳外缘变成不规则形态
+    float displacement = bigBlob + stream + fine;
+    vec3 newPosition = position + normal * displacement;
     vWorldPosition = (modelMatrix * vec4(newPosition, 1.0)).xyz;
     vViewDirection = normalize(cameraPosition - vWorldPosition);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition, 1.0);
