@@ -5,18 +5,44 @@ import { createContext, useContext, useState, useCallback } from "react";
 interface SceneContextValue {
   activeProjectScene: string | null;
   setActiveProjectScene: (scene: string | null) => void;
+  activeSection: string | null;
+  setActiveSection: (section: string | null) => void;
+  carouselActiveIndex: number;
+  setCarouselActiveIndex: (index: number) => void;
+  carouselSelectedIndex: number | null;
+  setCarouselSelectedIndex: (index: number | null) => void;
 }
 
 const SceneContext = createContext<SceneContextValue>({
   activeProjectScene: null,
   setActiveProjectScene: () => {},
+  activeSection: null,
+  setActiveSection: () => {},
+  carouselActiveIndex: 0,
+  setCarouselActiveIndex: () => {},
+  carouselSelectedIndex: null,
+  setCarouselSelectedIndex: () => {},
 });
 
 export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [activeProjectScene, setActiveProjectScene] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
+  const [carouselSelectedIndex, setCarouselSelectedIndex] = useState<number | null>(null);
 
   return (
-    <SceneContext.Provider value={{ activeProjectScene, setActiveProjectScene }}>
+    <SceneContext.Provider
+      value={{
+        activeProjectScene,
+        setActiveProjectScene,
+        activeSection,
+        setActiveSection,
+        carouselActiveIndex,
+        setCarouselActiveIndex,
+        carouselSelectedIndex,
+        setCarouselSelectedIndex,
+      }}
+    >
       {children}
     </SceneContext.Provider>
   );

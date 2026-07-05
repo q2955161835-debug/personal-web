@@ -7,6 +7,7 @@ import * as THREE from "three";
 import ParticleField from "./ParticleField";
 import PostProcessing from "./PostProcessing";
 import ProjectScene from "./ProjectScene";
+import ProjectCarousel from "./ProjectCarousel";
 import { useProjectScene } from "./SceneContext";
 
 interface SceneProps {
@@ -37,6 +38,29 @@ function CanvasResizer() {
   });
 
   return null;
+}
+
+/**
+ * Wrapper that fades ParticleField in/out based on activeSection.
+ * When "projects" section is active, the hero particles fade to make
+ * room for the carousel particle sphere.
+ */
+function FadeableParticleField({
+  mouse,
+  scrollProgress,
+}: {
+  mouse: THREE.Vector2;
+  scrollProgress: number;
+}) {
+  const { activeSection } = useProjectScene();
+  const isProjectsActive = activeSection === "projects";
+
+  return (
+    <ParticleField
+      mouse={mouse}
+      scrollProgress={isProjectsActive ? 1.0 : scrollProgress}
+    />
+  );
 }
 
 export default function Scene({ className }: SceneProps) {
@@ -71,8 +95,9 @@ export default function Scene({ className }: SceneProps) {
     >
       <CanvasResizer />
       <ScrollTracker onScroll={setScrollProgress} />
-      <ParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
+      <FadeableParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
       <ProjectScene activeScene={activeProjectScene} visible={activeProjectScene != null} />
+      <ProjectCarousel />
       <PostProcessing />
     </Canvas>
   );
