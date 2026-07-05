@@ -1,9 +1,11 @@
 import './style.css';
 import { SceneManager } from './scene/SceneManager';
+import { MeteorField } from './components/MeteorField';
 
 /**
- * 入口 - 阶段 1 基础骨架
- * 启动 Three.js 场景，隐藏 loader，后续阶段接入滚动叙事与项目展示
+ * 入口 - 阶段 2 入口恒星首页
+ * 启动 Three.js 场景（入口恒星 + 倒V Logo + 星空）+ 鼠标流星 + 姓名 UI
+ * 后续阶段接入滚动叙事与项目展示
  */
 function bootstrap(): void {
   const canvas = document.getElementById('webgl') as HTMLCanvasElement | null;
@@ -23,6 +25,10 @@ function bootstrap(): void {
   const manager = new SceneManager(canvas);
   manager.start();
 
+  // 鼠标流星效果（独立 2D canvas 叠加层）
+  const meteorField = new MeteorField();
+  meteorField.start();
+
   // 隐藏 loader
   const loader = document.getElementById('loader');
   if (loader) {
@@ -32,7 +38,7 @@ function bootstrap(): void {
     }, 600);
   }
 
-  // 添加顶部导航（临时，后续阶段会接入完整 UI）
+  // UI overlay：顶部导航 + Hero 姓名/求职方向 + 滚动提示 + HUD
   const overlay = document.getElementById('ui-overlay');
   if (overlay) {
     overlay.innerHTML = `
@@ -43,12 +49,30 @@ function bootstrap(): void {
           <a href="#contact">Contact</a>
         </div>
       </nav>
+
+      <section class="hero-text" id="hero-text">
+        <h1 class="hero-name">
+          <span class="hero-name-en">FAN JUNJIE</span>
+          <span class="hero-name-zh">范俊杰</span>
+        </h1>
+        <p class="hero-title">AI 产品 / 数据分析实习</p>
+        <p class="hero-subtitle">Three.js 星空作品集 · 探索数据与交互的边界</p>
+        <div class="hero-meta">
+          <span>苏州</span>
+          <span class="dot">·</span>
+          <span>盐城师范学院</span>
+          <span class="dot">·</span>
+          <a href="https://github.com/q2955161835-debug" target="_blank" rel="noopener">GitHub 主页</a>
+        </div>
+      </section>
+
       <div class="scroll-hint" id="scroll-hint">
         <div class="arrow"></div>
         <span>SCROLL TO EXPLORE</span>
       </div>
+
       <div class="hud-info">
-        <div><span class="label">SCENE:</span> STARFIELD_INIT</div>
+        <div><span class="label">SCENE:</span> HOME_STAR</div>
         <div><span class="label">STATUS:</span> <span style="color:#6bff9d">READY</span></div>
       </div>
     `;
@@ -57,10 +81,12 @@ function bootstrap(): void {
   // 窗口卸载时清理
   window.addEventListener('beforeunload', () => {
     manager.dispose();
+    meteorField.dispose();
   });
 
   // 暴露到 window 便于调试
-  (window as unknown as { __sceneManager: unknown }).__sceneManager = manager;
+  (window as unknown as { __sceneManager: unknown; __meteorField: unknown }).__sceneManager = manager;
+  (window as unknown as { __sceneManager: unknown; __meteorField: unknown }).__meteorField = meteorField;
 }
 
 function showUnsupported(): void {

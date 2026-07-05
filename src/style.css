@@ -112,6 +112,85 @@ body {
   text-shadow: 0 0 10px rgba(157, 107, 255, 0.7);
 }
 
+/* Hero 姓名求职方向（首页叠加层） */
+.hero-text {
+  position: fixed;
+  left: 48px;
+  bottom: 90px;
+  z-index: 8;
+  max-width: 520px;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: hero-fade-in 1.4s ease 0.4s forwards;
+}
+@keyframes hero-fade-in {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero-text .hero-name {
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1;
+}
+.hero-text .hero-name-en {
+  font-family: "NB Architekt Std", "PingFang SC", sans-serif;
+  font-weight: 700;
+  font-size: clamp(36px, 6vw, 68px);
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #ffffff 0%, #d4c2ff 50%, #9d6bff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 40px rgba(157, 107, 255, 0.3);
+}
+.hero-text .hero-name-zh {
+  font-weight: 300;
+  font-size: clamp(14px, 1.6vw, 18px);
+  letter-spacing: 0.6em;
+  color: rgba(255, 255, 255, 0.6);
+  padding-left: 4px;
+}
+.hero-text .hero-title {
+  margin: 0 0 6px;
+  font-size: clamp(14px, 1.6vw, 17px);
+  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+}
+.hero-text .hero-subtitle {
+  margin: 0 0 14px;
+  font-size: clamp(12px, 1.2vw, 13px);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55);
+}
+.hero-text .hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: auto;
+}
+.hero-text .hero-meta .dot {
+  color: rgba(157, 107, 255, 0.6);
+}
+.hero-text .hero-meta a {
+  color: rgba(180, 212, 255, 0.85);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(180, 212, 255, 0.3);
+  transition: all 0.25s ease;
+}
+.hero-text .hero-meta a:hover {
+  color: #fff;
+  border-bottom-color: rgba(180, 212, 255, 0.8);
+  text-shadow: 0 0 8px rgba(74, 158, 255, 0.5);
+}
+
 /* 玻璃面板基础 */
 .glass-panel {
   background: rgba(20, 20, 40, 0.35);

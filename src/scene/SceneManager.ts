@@ -1,17 +1,22 @@
 import * as THREE from 'three';
 import { Renderer } from './Renderer';
 import { Starfield } from '../components/Starfield';
+import { HomeStar } from '../components/HomeStar';
+import { InvertedVLogo } from '../components/InvertedVLogo';
 
 /**
- * 场景管理器 - 阶段 1 基础骨架
- * 当前：相机 + 灯光 + 星空背景 + 渲染循环
- * 后续阶段会接入：恒星、行星、星环、空间站、滚动叙事、后处理
+ * 场景管理器
+ * 阶段1：相机 + 灯光 + 星空背景 + 渲染循环
+ * 阶段2：入口恒星 + 倒V Logo
+ * 后续阶段会接入：行星、星环、空间站、滚动叙事、后处理
  */
 export class SceneManager {
   public readonly scene: THREE.Scene;
   public readonly camera: THREE.PerspectiveCamera;
   private readonly renderer: Renderer;
   private readonly starfield: Starfield;
+  private readonly homeStar: HomeStar;
+  private readonly logo: InvertedVLogo;
 
   private clock = new THREE.Clock();
   private rafId = 0;
@@ -31,19 +36,31 @@ export class SceneManager {
     this.scene.fog = new THREE.FogExp2(0x03030a, 0.0008);
 
     this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 5000);
-    this.camera.position.set(0, 0, 100);
+    this.camera.position.set(0, 0, 38);
 
     this.renderer = new Renderer(canvas);
 
-    // 灯光：环境光 + 远处点光模拟恒星
-    const ambient = new THREE.AmbientLight(0x1a1a3a, 0.6);
-    const pointLight = new THREE.PointLight(0xffd966, 2.0, 1000, 1.5);
-    pointLight.position.set(0, 0, 0);
-    this.scene.add(ambient, pointLight);
+    // 灯光：环境光 + 太阳点光（照亮 Logo）
+    const ambient = new THREE.AmbientLight(0x2a2a4a, 0.7);
+    const sunLight = new THREE.PointLight(0xffd966, 2.5, 200, 1.5);
+    sunLight.position.set(0, 0, -15);
+    const fillLight = new THREE.DirectionalLight(0x9d6bff, 0.4);
+    fillLight.position.set(2, 3, 5);
+    this.scene.add(ambient, sunLight, fillLight);
 
     // 星空背景
     this.starfield = new Starfield();
     this.scene.add(this.starfield.group);
+
+    // 入口恒星（首页中心太阳）
+    this.homeStar = new HomeStar(8);
+    this.homeStar.group.position.set(0, 0, -15);
+    this.scene.add(this.homeStar.group);
+
+    // 倒V Logo（漂浮在太阳前方）
+    this.logo = new InvertedVLogo(1.1);
+    this.logo.group.position.set(0, 0.5, 8);
+    this.scene.add(this.logo.group);
 
     // 事件绑定
     this.onResize = this.onResize.bind(this);
@@ -91,6 +108,10 @@ export class SceneManager {
     // 星空更新
     this.starfield.update(elapsed, delta);
 
+    // 入口恒星 + Logo 更新
+    this.homeStar.update(elapsed, delta);
+    this.logo.update(elapsed, delta);
+
     // 相机视差（鼠标驱动，轻微）
     this.targetCameraX += (this.mouseX * 8 - this.targetCameraX) * 0.05;
     this.targetCameraY += (this.mouseY * 6 - this.targetCameraY) * 0.05;
@@ -106,6 +127,8 @@ export class SceneManager {
     window.removeEventListener('resize', this.onResize);
     window.removeEventListener('mousemove', this.onMouseMove);
     this.starfield.dispose();
+    this.homeStar.dispose();
+    this.logo.dispose();
     this.renderer.dispose();
   }
 }
