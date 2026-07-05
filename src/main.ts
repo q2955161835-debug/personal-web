@@ -2,6 +2,7 @@ import './style.css';
 import { SceneManager } from './scene/SceneManager';
 import { MeteorField } from './components/MeteorField';
 import { SKILL_CATEGORIES, CONTACT_INFO } from './data/skills';
+import { ProjectPlanetData } from './data/projects';
 
 /**
  * 入口 - 阶段 3 滚动叙事系统
@@ -148,6 +149,89 @@ function bootstrap(): void {
     }
   };
   window.addEventListener('scroll', handleScroll, { passive: true });
+
+  // 行星点击模态框
+  const openProjectModal = (data: ProjectPlanetData): void => {
+    let modal = document.getElementById('project-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'project-modal';
+      modal.className = 'project-modal';
+      document.body.appendChild(modal);
+    }
+    modal.innerHTML = `
+      <div class="modal-backdrop"></div>
+      <div class="modal-content glass-panel">
+        <button class="modal-close" aria-label="Close">×</button>
+        <div class="modal-header">
+          <h2 class="modal-title">${data.name}</h2>
+          <p class="modal-subtitle">${data.nameEn} · ${data.subtitle}</p>
+        </div>
+        <div class="modal-body">
+          <section class="modal-section">
+            <h3>项目简介</h3>
+            <p>${data.brief}</p>
+          </section>
+          <section class="modal-section">
+            <h3>含金量亮点</h3>
+            <ul class="highlights-list">
+              ${data.highlights.map(h => `<li>${h}</li>`).join('')}
+            </ul>
+          </section>
+          <section class="modal-section">
+            <h3>项目详情</h3>
+            <p>${data.detail.overview}</p>
+          </section>
+          <section class="modal-section">
+            <h3>技术栈</h3>
+            <div class="tags-row">
+              ${data.detail.techStack.map(t => `<span class="tag">${t}</span>`).join('')}
+              ${data.tags.map(t => `<span class="tag tag-alt">${t}</span>`).join('')}
+            </div>
+          </section>
+          ${data.detail.keyFeatures.length > 0 ? `
+          <section class="modal-section">
+            <h3>核心特性</h3>
+            <ul class="features-list">
+              ${data.detail.keyFeatures.map(f => `<li>${f}</li>`).join('')}
+            </ul>
+          </section>` : ''}
+          ${data.detail.outcomes && data.detail.outcomes.length > 0 ? `
+          <section class="modal-section">
+            <h3>成果</h3>
+            <ul class="outcomes-list">
+              ${data.detail.outcomes.map(o => `<li>${o}</li>`).join('')}
+            </ul>
+          </section>` : ''}
+          ${data.detail.links && data.detail.links.length > 0 ? `
+          <section class="modal-section">
+            <h3>相关链接</h3>
+            <div class="links-row">
+              ${data.detail.links.map(l => `<a href="${l.url}" target="_blank" rel="noopener" class="project-link">${l.label} →</a>`).join('')}
+            </div>
+          </section>` : ''}
+        </div>
+      </div>
+    `;
+    modal.classList.add('open');
+    // 关闭逻辑
+    const close = () => {
+      modal!.classList.remove('open');
+      setTimeout(() => modal!.remove(), 400);
+    };
+    modal.querySelector('.modal-close')?.addEventListener('click', close);
+    modal.querySelector('.modal-backdrop')?.addEventListener('click', close);
+    // ESC 关闭
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close();
+        window.removeEventListener('keydown', onEsc);
+      }
+    };
+    window.addEventListener('keydown', onEsc);
+  };
+
+  manager.setModalOpenCallback(openProjectModal);
 
   // 窗口卸载时清理
   window.addEventListener('beforeunload', () => {

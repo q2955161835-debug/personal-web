@@ -6,8 +6,9 @@ import { PlanetPlaceholder } from '../components/PlanetPlaceholder';
 import { DataAnalysisRing } from '../components/DataAnalysisRing';
 import { TransitionEffects } from '../components/TransitionEffects';
 import { SkillStation } from '../components/SkillStation';
+import { PlanetInteraction } from './PlanetInteraction';
 import { ScrollController } from './ScrollController';
-import { PROJECT_PLANETS } from '../data/projects';
+import { PROJECT_PLANETS, ProjectPlanetData } from '../data/projects';
 
 /**
  * 场景管理器
@@ -27,7 +28,9 @@ export class SceneManager {
   private dataAnalysisRing: DataAnalysisRing | null = null;
   private transitionEffects: TransitionEffects | null = null;
   private skillStation: SkillStation | null = null;
+  private planetInteraction: PlanetInteraction | null = null;
   private scrollController: ScrollController | null = null;
+  private onModalOpen: ((data: ProjectPlanetData) => void) | null = null;
 
   private clock = new THREE.Clock();
   private rafId = 0;
@@ -93,6 +96,24 @@ export class SceneManager {
 
     window.addEventListener('resize', this.onResize);
     window.addEventListener('mousemove', this.onMouseMove);
+
+    // 行星交互（raycasting + 点击弹模态框）
+    this.planetInteraction = new PlanetInteraction(this.camera, (data) => {
+      this.onModalOpen?.(data);
+    });
+    for (let i = 0; i < this.planets.length; i++) {
+      this.planetInteraction.registerPlanet(this.planets[i].mesh, PROJECT_PLANETS[i]);
+    }
+  }
+
+  /** 设置模态框打开回调 */
+  setModalOpenCallback(cb: (data: ProjectPlanetData) => void): void {
+    this.onModalOpen = cb;
+  }
+
+  /** 设置交互是否启用（滚动到空间站时禁用） */
+  setInteractionEnabled(v: boolean): void {
+    this.planetInteraction?.setEnabled(v);
   }
 
   /** 沿相机路径布置 8 个行星 */
@@ -196,6 +217,9 @@ export class SceneManager {
     // 空间站更新
     this.skillStation?.update(elapsed, delta);
 
+    // 行星交互更新（raycasting）
+    this.planetInteraction?.update();
+
     // 相机视差（鼠标驱动，轻微）- 仅在首页生效，滚动后衰减
     const parallaxStrength = Math.max(0, 1 - this.scrollProgress * 3);
     this.targetCameraX += (this.mouseX * 8 * parallaxStrength - this.targetCameraX) * 0.05;
@@ -217,6 +241,7 @@ export class SceneManager {
     this.dataAnalysisRing?.dispose();
     this.transitionEffects?.dispose();
     this.skillStation?.dispose();
+    this.planetInteraction?.dispose();
     this.scrollController?.dispose();
     this.renderer.dispose();
   }

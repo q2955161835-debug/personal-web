@@ -10,7 +10,7 @@ import { getPlanetShader } from '../shaders/planet-surfaces';
  */
 export class PlanetPlaceholder {
   public readonly group: THREE.Group;
-  private readonly mesh: THREE.Mesh;
+  public readonly mesh: THREE.Mesh;
   private readonly atmosphere: THREE.Mesh;
   private readonly material: THREE.ShaderMaterial;
   private readonly atmosphereMaterial: THREE.ShaderMaterial;
