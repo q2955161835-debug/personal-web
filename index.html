@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#03030a" />
+    <meta name="description" content="范俊杰 · AI 产品 / 数据分析实习 · 星空叙事个人作品集。Lang Drill Agent、93 个数据分析项目、异环麻将机器人、AI 五子棋、codex 视频工作区。" />
+    <title>范俊杰 · 星空作品集</title>
+    <style>
+      html, body, #app {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #03030a;
+        color: #ffffff;
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      canvas { display: block; }
+      #loader {
+        position: fixed;
+        inset: 0;
+        background: #03030a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        transition: opacity 1.2s ease 0.3s;
+      }
+      #loader.hide { opacity: 0; pointer-events: none; }
+      #loader .core {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #ffd966 0%, #ff9d4a 40%, transparent 70%);
+        animation: pulse 1.6s ease-in-out infinite;
+        filter: blur(2px);
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.8; }
+        50% { transform: scale(1.3); opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader"><div class="core"></div></div>
+    <div id="app"></div>
+    <canvas id="webgl"></canvas>
+    <div id="ui-overlay"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

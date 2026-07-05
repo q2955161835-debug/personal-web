@@ -1,0 +1,44 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-ssr/
+
+# 环境变量真账本
+.env
+.env.local
+.env.*.local
+
+# 编辑器/系统
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 临时文件
+.tmp/
+temp/
+*.tmp
+
+# 测试产物
+try/
+coverage/
+
+# 大资源（按需取消注释）
+# public/assets/models/*.glb
+# public/assets/textures/*.ktx2
