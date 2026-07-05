@@ -39,9 +39,9 @@ export default function AboutSection() {
     <section
       id="about"
       ref={sectionRef}
-      className="relative min-h-screen w-full"
+      className="relative min-h-screen w-full py-24 lg:py-0"
     >
-      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-center px-16">
+      <div className="mx-auto flex min-h-screen w-full max-w-6xl items-start px-6 sm:px-10 lg:items-center lg:px-16">
         <div className="w-full grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
         {/* Left Column - Bio & Stats */}
         <div className="flex flex-col justify-center lg:pl-8">
@@ -57,10 +57,10 @@ export default function AboutSection() {
 
           {/* Stat Counters */}
           <div className="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-4">
-            <StatCounter value={93} label="数据分析项目" suffix="+" />
+            <StatCounter value={93} label="数据分析项目" suffix="" />
             <StatCounter value={619} label="过程与交付文件" suffix="" />
-            <StatCounter value={300} label="万行代码" suffix="+" />
-            <StatCounter value={6} label="历史消耗" suffix="B+" />
+            <StatCounter value={3} label="代码" suffix="M+" />
+            <StatCounter value={6} label="历史消耗 token" suffix="B+" />
           </div>
         </div>
 

@@ -51,7 +51,7 @@ void main() {
   }
 
   // Scroll drives object rotation and a vertical journey through the DNA.
-  float scrollAngle = uScrollProgress * 4.8 + uTime * 0.045;
+  float scrollAngle = uScrollProgress * 5.6 + uTime * 0.045;
   dnaPos.xz = rotate2d(scrollAngle) * dnaPos.xz;
   dnaPos.y -= uFocusY;
   dnaPos.y += (0.5 - uScrollProgress) * 1.2;
@@ -63,7 +63,7 @@ void main() {
   dnaPos.z += cos(dnaPos.y * 1.4 + noiseT * 1.2 + aRandomSeed * 4.7123) * noiseAmp;
 
   // Scene opacity drives formation so the first project key is already on the DNA.
-  float gather = smoothstep(0.0, 0.86, uSceneOpacity);
+  float gather = smoothstep(0.0, 0.42, uSceneOpacity);
   vec3 pos = mix(aInitialPosition, dnaPos, gather);
 
   vec4 probeMv = modelViewMatrix * vec4(pos, 1.0);
@@ -101,11 +101,13 @@ void main() {
   }
 
   if (aParticleType > 0.5 && aParticleType < 1.5) {
-    vAlpha *= 0.62;
+    vAlpha *= 0.56;
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
-    vAlpha *= 0.76;
+    vAlpha *= 0.7;
+  } else if (aParticleType > 3.5 && aParticleType < 4.5) {
+    vAlpha *= 0.34;
   } else if (aParticleType > 2.5) {
-    vAlpha *= 0.14;
+    vAlpha *= 0.1;
   }
 
   vAlpha *= uSceneOpacity;
@@ -119,6 +121,8 @@ void main() {
     baseSize *= 0.92 + keyWeight * 1.1;
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
     baseSize *= 1.25 + keyWeight * 0.95;
+  } else if (aParticleType > 3.5 && aParticleType < 4.5) {
+    baseSize *= 0.62;
   } else if (aParticleType > 2.5) {
     baseSize *= 0.36;
   }

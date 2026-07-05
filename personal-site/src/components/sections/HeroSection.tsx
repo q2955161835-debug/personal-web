@@ -51,7 +51,7 @@ export default function HeroSection() {
       >
         {/* Animated gradient text with glow */}
         <h1
-          className="iridescent-text text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl"
+          className="hero-iridescent-text text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl"
           style={{
             filter: "drop-shadow(0 0 20px rgba(73, 197, 182, 0.4)) drop-shadow(0 0 40px rgba(255, 147, 152, 0.2))",
           }}
@@ -59,7 +59,7 @@ export default function HeroSection() {
           FAN JUN JIE
         </h1>
         <p
-          className="iridescent-text mt-4 text-lg"
+          className="hero-iridescent-text mt-4 text-lg"
           style={{
             filter: "drop-shadow(0 0 8px rgba(73, 197, 182, 0.3))",
           }}
@@ -67,7 +67,7 @@ export default function HeroSection() {
           AI Product &amp; Data Analysis
         </p>
         <p
-          className="iridescent-text mt-2 text-sm"
+          className="hero-iridescent-text mt-2 text-sm"
           style={{
             filter: "drop-shadow(0 0 6px rgba(255, 147, 152, 0.25))",
           }}

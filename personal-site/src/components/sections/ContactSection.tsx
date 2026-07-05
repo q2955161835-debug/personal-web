@@ -8,7 +8,6 @@ const contactItems: ReadonlyArray<{ label: string; value: string; href?: string 
   { label: "Email", value: profile.email, href: `mailto:${profile.email}` },
   { label: "GitHub", value: "q2955161835-debug", href: profile.github },
   { label: "微信", value: profile.wechat },
-  { label: "所在地", value: profile.location },
 ];
 
 export default function ContactSection() {
@@ -117,7 +116,7 @@ export default function ContactSection() {
       </div>
 
       <footer className="relative z-10 mx-auto mt-16 flex max-w-6xl flex-col gap-3 border-t border-white/10 pt-6 text-sm text-white/35 sm:flex-row sm:items-center sm:justify-between">
-        <span>© 2026 范俊杰</span>
+        <span>© 2026 FAN JUN JIE</span>
         <span>AI Product / Data Analysis / Creative Engineering</span>
       </footer>
     </section>

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
 import ProjectDetail from "@/components/ui/ProjectDetail";
-import { InteractiveGlassButton } from "@/components/ui/InteractiveGlassPanel";
 import { useProjectScene } from "@/components/three/SceneContext";
 import type { Project } from "@/types";
 
@@ -36,8 +35,6 @@ export default function ProjectsSection() {
   const lastProgressRef = useRef(-1);
   const lastIndexRef = useRef(-1);
   const visibleProjects = projects.slice(0, STATION_COUNT);
-  const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
-  const activeThemeColor = STATION_HEX_COLORS[carouselActiveIndex % STATION_HEX_COLORS.length];
 
   // ─── Scroll-driven active section detection ──────────────────────
   useEffect(() => {
@@ -52,9 +49,9 @@ export default function ProjectsSection() {
       const sectionTop = rect.top;
       const sectionBottom = rect.bottom;
 
-      if (sectionTop < viewportHeight * 0.5 && sectionBottom > viewportHeight * 0.5) {
+      if (sectionTop < viewportHeight * 0.9 && sectionBottom > viewportHeight * 0.25) {
         setActiveSection("projects");
-      } else if (sectionTop >= viewportHeight * 0.5) {
+      } else if (sectionTop >= viewportHeight * 0.9) {
         // Before the section - could be hero or about
         // Let other sections handle their own activation
         if (activeSection === "projects") {
@@ -72,7 +69,7 @@ export default function ProjectsSection() {
         const totalHeight = section.offsetHeight;
         const scrolledInto = -sectionTop; // how far we've scrolled past the top
         const progress = Math.max(0, Math.min(1, scrolledInto / (totalHeight - viewportHeight)));
-        const index = Math.min(STATION_COUNT - 1, Math.round(progress * (STATION_COUNT - 1)));
+        const index = Math.min(STATION_COUNT - 1, Math.floor(progress * STATION_COUNT));
 
         if (Math.abs(progress - lastProgressRef.current) > 0.002) {
           lastProgressRef.current = progress;
@@ -144,7 +141,7 @@ export default function ProjectsSection() {
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 150}vh` }}
+      style={{ height: `${STATION_COUNT * 185}vh` }}
     >
       <div className="pointer-events-none sticky top-0 h-screen overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(73,197,182,0.08),transparent_28%,rgba(255,147,152,0.06)_72%,transparent)]" />
@@ -166,39 +163,20 @@ export default function ProjectsSection() {
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
             {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
           </p>
-          <p className="mt-4 hidden text-lg font-semibold text-white/85 sm:block">
-            {activeProject.name}
-          </p>
-          <p className="mt-2 hidden text-sm leading-relaxed text-white/45 sm:block">
-            {activeProject.subtitle}
+          <p className="mt-5 hidden max-w-48 text-sm leading-relaxed text-white/45 sm:block">
+            当前 DNA 键位 {String(carouselActiveIndex + 1).padStart(2, "0")}
           </p>
         </div>
-        <div
-          className="pointer-events-auto fixed w-[min(20rem,66vw)]"
+        <button
+          type="button"
+          aria-label={`Open active project ${String(carouselActiveIndex + 1).padStart(2, "0")}`}
+          className="cursor-target pointer-events-auto fixed left-1/2 top-[39%] h-28 w-[min(19rem,70vw)] -translate-x-1/2 -translate-y-1/2 bg-transparent"
           style={{
-            left: "50%",
-            top: "39%",
             opacity: activeSection === "projects" && !selectedProject ? 1 : 0,
-            transform: "translate(-50%, -50%)",
-            transition: "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1)",
             pointerEvents: activeSection === "projects" && !selectedProject ? "auto" : "none",
           }}
-        >
-          <InteractiveGlassButton
-            aria-label={`Open project ${activeProject.name}`}
-            glowColor={activeThemeColor}
-            intensity={8}
-            className="w-full rounded-lg px-4 py-3 text-left"
-            onClick={() => setHelixZoomedStation(carouselActiveIndex)}
-          >
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-white/48">
-              {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
-            </span>
-            <span className="block text-base font-bold leading-tight text-white">
-              {activeProject.name}
-            </span>
-          </InteractiveGlassButton>
-        </div>
+          onClick={() => setHelixZoomedStation(carouselActiveIndex)}
+        />
       </div>
 
       {/* ─── Scroll indicator dots (right side) ────────────────── */}

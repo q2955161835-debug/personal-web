@@ -17,37 +17,31 @@ export default function Navigation() {
   useEffect(() => {
     const handleScroll = () => {
       setVisible(window.scrollY > 80);
+      const viewportAnchor = window.innerHeight * 0.42;
+      let nextActive = activeHref;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      for (const link of NAV_LINKS) {
+        const section = document.querySelector(link.href);
+        if (!section) continue;
+        const rect = section.getBoundingClientRect();
+        if (rect.top > window.innerHeight || rect.bottom < 0) continue;
+        const distance = Math.abs(rect.top - viewportAnchor);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          nextActive = link.href;
+        }
+      }
+
+      if (nextActive !== activeHref) {
+        setActiveHref(nextActive);
+      }
     };
 
+    handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    const sections = NAV_LINKS.map((link) => document.querySelector(link.href)).filter(
-      (section): section is Element => section !== null
-    );
-    if (sections.length === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleEntry = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (visibleEntry?.target.id) {
-          setActiveHref(`#${visibleEntry.target.id}`);
-        }
-      },
-      {
-        rootMargin: "-36% 0px -46% 0px",
-        threshold: [0.08, 0.2, 0.42],
-      }
-    );
-
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
-  }, []);
+  }, [activeHref]);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -59,25 +53,35 @@ export default function Navigation() {
 
   return (
     <nav
-      className={`fixed left-4 right-4 top-5 z-50 rounded-full border px-4 py-3 backdrop-blur-xl transition-all duration-500 sm:left-auto sm:right-6 sm:px-6 ${
+      className={`fixed left-4 right-4 top-5 z-50 px-2 py-3 transition-all duration-500 sm:left-auto sm:right-8 sm:px-0 ${
         visible
-          ? "border-white/10 bg-black/55 opacity-100 shadow-[0_0_40px_rgba(73,197,182,0.08)]"
-          : "pointer-events-none border-white/5 bg-black/20 opacity-0"
+          ? "opacity-100"
+          : "pointer-events-none opacity-0"
       }`}
     >
-      <ul className="flex items-center justify-center gap-3 sm:gap-7">
+      <ul className="flex items-center justify-center gap-4 sm:gap-8">
         {NAV_LINKS.map((link) => (
           <li key={link.href}>
             <a
               href={link.href}
               onClick={(e) => handleClick(e, link.href)}
-              className="cursor-target text-xs font-medium transition-colors duration-200 sm:text-sm"
+              className="cursor-target group relative pb-2 text-xs font-medium transition-colors duration-200 sm:text-sm"
               style={{
                 color: activeHref === link.href ? "rgba(180,255,246,0.98)" : "rgba(255,255,255,0.62)",
                 textShadow: activeHref === link.href ? "0 0 14px rgba(73,197,182,0.38)" : "none",
               }}
             >
               {link.label}
+              <span
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-px origin-left transition-transform duration-300 group-hover:scale-x-100"
+                style={{
+                  transform: activeHref === link.href ? "scaleX(1)" : "scaleX(0)",
+                  background: activeHref === link.href
+                    ? "linear-gradient(90deg, #49c5b6, #ff9398)"
+                    : "rgba(255,255,255,0.55)",
+                  boxShadow: activeHref === link.href ? "0 0 12px rgba(73,197,182,0.55)" : "none",
+                }}
+              />
             </a>
           </li>
         ))}

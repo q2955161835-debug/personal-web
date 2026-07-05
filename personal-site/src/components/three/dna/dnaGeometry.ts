@@ -1,15 +1,17 @@
 import * as THREE from "three";
 
 export const HELIX_PARAMS = {
-  height: 30, // total helix height
-  turns: 3, // number of full helix turns
-  radius: 1.5, // helix strand radius
-  particleSpacing: 0.016, // distance between particles along strand
+  height: 42, // total helix height
+  turns: 4.6, // number of full helix turns
+  radius: 1.65, // helix strand radius
+  particleSpacing: 0.013, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 6,
-  cameraRadius: 9.2, // fixed camera distance
-  particlesPerBasePair: 650, // particles forming each rung
-  ambientParticleCount: 620, // floating ambient particles
+  cameraRadius: 10.4, // fixed camera distance
+  particlesPerBasePair: 520, // particles forming each station rung
+  fineBasePairCount: 82,
+  fineParticlesPerBasePair: 76,
+  ambientParticleCount: 360, // floating ambient particles
   scatterRadius: 0.24, // pointer scatter radius in screen space
   scatterStrength: 1.55, // pointer scatter strength
 } as const;
@@ -29,7 +31,7 @@ interface DNABuffers {
   colors: Float32Array;
   sizes: Float32Array;
   basePairIndices: Float32Array;
-  particleTypes: Float32Array; // 0 = backbone, 1 = base-pair rung, 2 = decoration, 3 = ambient
+  particleTypes: Float32Array; // 0 = backbone, 1 = station rung, 2 = decoration, 3 = ambient, 4 = fine rung
   randomSeeds: Float32Array;
 }
 
@@ -79,6 +81,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
   };
 
   // ─── Backbone particles (type 0) ────────────────────────────────
+  const tubeOffsets = [-0.075, 0, 0.075];
   for (let i = 0; i <= totalSteps; i++) {
     const t = i / totalSteps; // 0..1
     const y = halfHeight - t * HELIX_PARAMS.height;
@@ -86,56 +89,81 @@ export function generateDNAHelixBuffers(): DNABuffers {
 
     for (let strand = 0; strand < 2; strand++) {
       const strandAngle = angle + strand * Math.PI;
-      const x = HELIX_PARAMS.radius * Math.cos(strandAngle);
-      const z = HELIX_PARAMS.radius * Math.sin(strandAngle);
 
-      // Color gradient: teal at top, coral at bottom
-      const colorT = 1 - t;
-      const c = new THREE.Color().lerpColors(
-        new THREE.Color("#ff9398"),
-        new THREE.Color("#49c5b6"),
-        colorT
-      );
-      pushParticle(x, y, z, c, 0.38 + Math.random() * 0.55, -1, 0);
+      for (const offset of tubeOffsets) {
+        const radius = HELIX_PARAMS.radius + offset;
+        const jitter = (Math.random() - 0.5) * 0.045;
+        const x = radius * Math.cos(strandAngle) + Math.cos(strandAngle + Math.PI / 2) * jitter;
+        const z = radius * Math.sin(strandAngle) + Math.sin(strandAngle + Math.PI / 2) * jitter;
+
+        // Color gradient: teal at top, coral at bottom
+        const colorT = 1 - t;
+        const c = new THREE.Color().lerpColors(
+          new THREE.Color("#ff9398"),
+          new THREE.Color("#49c5b6"),
+          colorT
+        );
+        pushParticle(x, y + (Math.random() - 0.5) * 0.035, z, c, 0.2 + Math.random() * 0.38, -1, 0);
+      }
     }
   }
 
-  // ─── Base pair rung particles (type 1) ────────────────────────
+  // ─── Fine filler base pair rungs (type 4) ─────────────────────
+  for (let r = 0; r < HELIX_PARAMS.fineBasePairCount; r++) {
+    const fineT = (r + 0.5) / HELIX_PARAMS.fineBasePairCount;
+    const y = halfHeight - fineT * HELIX_PARAMS.height;
+    const angle = fineT * omega;
+    const x1 = HELIX_PARAMS.radius * Math.cos(angle);
+    const z1 = HELIX_PARAMS.radius * Math.sin(angle);
+    const x2 = HELIX_PARAMS.radius * Math.cos(angle + Math.PI);
+    const z2 = HELIX_PARAMS.radius * Math.sin(angle + Math.PI);
+    const stationBlend = new THREE.Color().lerpColors(
+      new THREE.Color("#bffbf5"),
+      new THREE.Color("#ffd4d6"),
+      fineT
+    );
+
+    for (let p = 0; p < HELIX_PARAMS.fineParticlesPerBasePair; p++) {
+      const pT = p / Math.max(1, HELIX_PARAMS.fineParticlesPerBasePair - 1);
+      const widthJitter = (Math.random() - 0.5) * 0.065;
+      const px = x1 + (x2 - x1) * pT + Math.cos(angle + Math.PI / 2) * widthJitter;
+      const pz = z1 + (z2 - z1) * pT + Math.sin(angle + Math.PI / 2) * widthJitter;
+      const py = y + (Math.random() - 0.5) * 0.12;
+
+      pushParticle(px, py, pz, stationBlend, 0.1 + Math.random() * 0.16, -1, 4);
+    }
+  }
+
+  // ─── Station base pair rung particles (type 1) ─────────────────
   for (let s = 0; s < HELIX_PARAMS.stationCount; s++) {
     const stationY = halfHeight - (s + 0.5) * (HELIX_PARAMS.height / HELIX_PARAMS.stationCount);
     const stationT = (s + 0.5) / HELIX_PARAMS.stationCount;
     const stationAngle = stationT * omega;
     const stationColor = STATION_COLORS[s % STATION_COLORS.length];
 
-    // Two backbone points at this Y
-    for (let strand = 0; strand < 2; strand++) {
-      const strandAngle = stationAngle + strand * Math.PI;
-      const bx = HELIX_PARAMS.radius * Math.cos(strandAngle);
-      const bz = HELIX_PARAMS.radius * Math.sin(strandAngle);
+    const bx = HELIX_PARAMS.radius * Math.cos(stationAngle);
+    const bz = HELIX_PARAMS.radius * Math.sin(stationAngle);
+    const ox = HELIX_PARAMS.radius * Math.cos(stationAngle + Math.PI);
+    const oz = HELIX_PARAMS.radius * Math.sin(stationAngle + Math.PI);
 
-      // Fill rung between the two backbone positions
-      const otherStrandAngle = stationAngle + (1 - strand) * Math.PI;
-      const ox = HELIX_PARAMS.radius * Math.cos(otherStrandAngle);
-      const oz = HELIX_PARAMS.radius * Math.sin(otherStrandAngle);
+    for (let p = 0; p < HELIX_PARAMS.particlesPerBasePair; p++) {
+      const pT = p / Math.max(1, HELIX_PARAMS.particlesPerBasePair - 1);
+      const widthJitter = (Math.random() - 0.5) * 0.18;
+      const px = bx + (ox - bx) * pT + Math.cos(stationAngle + Math.PI / 2) * widthJitter;
+      const pz = bz + (oz - bz) * pT + Math.sin(stationAngle + Math.PI / 2) * widthJitter;
+      const py = stationY + (Math.random() - 0.5) * 0.26;
 
-      for (let p = 0; p < HELIX_PARAMS.particlesPerBasePair; p++) {
-        const pT = p / HELIX_PARAMS.particlesPerBasePair;
-        const px = bx + (ox - bx) * pT;
-        const pz = bz + (oz - bz) * pT;
-        const py = stationY + (Math.random() - 0.5) * 0.2;
-
-        // Blend between strand color and station color
-        const rungColor = new THREE.Color().lerpColors(
-          stationColor,
-          new THREE.Color("#ffffff"),
-          0.16
-        );
-        pushParticle(px, py, pz, rungColor, 0.28 + Math.random() * 0.38, s, 1);
-      }
+      // Blend between strand color and station color
+      const rungColor = new THREE.Color().lerpColors(
+        stationColor,
+        new THREE.Color("#ffffff"),
+        0.18
+      );
+      pushParticle(px, py, pz, rungColor, 0.22 + Math.random() * 0.3, s, 1);
     }
 
     // ─── Decoration particles orbiting station (type 2) ─────────
-    const decorCount = 190;
+    const decorCount = 140;
     for (let d = 0; d < decorCount; d++) {
       const dAngle = Math.random() * Math.PI * 2;
       const dRadius = 0.3 + Math.random() * 0.8;

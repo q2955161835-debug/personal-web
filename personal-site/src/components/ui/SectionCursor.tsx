@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 
 type CursorMode = "hero" | "about" | "projects" | "analysis" | "timeline" | "contact";
@@ -93,7 +94,9 @@ export default function SectionCursor() {
     <>
       <div ref={trailRef} className={`section-cursor-trail section-cursor-${mode}`} aria-hidden="true" />
       <div ref={cursorRef} className={`section-cursor section-cursor-${mode}`} aria-hidden="true">
-        <span />
+        {Array.from({ length: 12 }, (_, index) => (
+          <span key={index} style={{ "--ripple-index": index } as CSSProperties} />
+        ))}
       </div>
     </>
   );

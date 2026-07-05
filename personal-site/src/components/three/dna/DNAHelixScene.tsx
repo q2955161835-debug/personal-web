@@ -7,7 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { projects } from "@/data/projects";
-import { InteractiveGlassButton } from "@/components/ui/InteractiveGlassPanel";
+import { FluidGlassButton } from "@/components/ui/FluidGlassPanel";
 import { useProjectScene } from "../SceneContext";
 import { generateDNAHelixBuffers, HELIX_PARAMS } from "./dnaGeometry";
 import { dnaFragmentShader } from "./shaders/dna-helix.frag";
@@ -45,7 +45,7 @@ function getFocusY(progress: number) {
 }
 
 function getScrollAngle(progress: number, time = 0) {
-  return progress * 4.8 + time * 0.045;
+  return progress * 5.6 + time * 0.045;
 }
 
 function DNAHelixParticles({
@@ -206,7 +206,7 @@ function DNAStationLabels({
             zIndexRange={[30, 0]}
             style={{ pointerEvents: visible ? "auto" : "none" }}
           >
-            <InteractiveGlassButton
+            <FluidGlassButton
               aria-label={`Open project ${project.name}`}
               onClick={(event) => {
                 event.stopPropagation();
@@ -214,23 +214,34 @@ function DNAStationLabels({
                 setHelixZoomedStation(index);
                 window.dispatchEvent(new CustomEvent("portfolio:open-project", { detail: index }));
               }}
-              glowColor={color}
-              intensity={7}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-center outline-none"
+              color={color}
+              variant="chip"
+              intensity={18}
+              className={`outline-none transition-all duration-300 ${
+                isActive
+                  ? "w-[min(17rem,66vw)] px-4 py-3 text-left"
+                  : "flex h-9 w-9 items-center justify-center rounded-full text-center"
+              }`}
               style={{
                 opacity,
                 transition: "opacity 300ms cubic-bezier(0.22, 1, 0.36, 1)",
                 color,
-                background: isActive
-                  ? `linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 42%, rgba(5,12,22,0.46)), radial-gradient(circle at 50% 0%, ${color}42, transparent 62%)`
-                  : `linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)), radial-gradient(circle at 50% 0%, ${color}2e, transparent 62%)`,
-                boxShadow: isActive ? `0 18px 60px ${color}24, 0 0 28px ${color}38` : undefined,
               }}
             >
-              <span className="block text-xs font-semibold text-white/55">
-                {String(index + 1).padStart(2, "0")}
+              <span className="block text-xs font-semibold uppercase tracking-[0.2em] text-white/52">
+                {String(index + 1).padStart(2, "0")} / {String(HELIX_PARAMS.stationCount).padStart(2, "0")}
               </span>
-            </InteractiveGlassButton>
+              {isActive && (
+                <>
+                  <span className="mt-2 block text-base font-bold leading-tight text-white">
+                    {project.name}
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-white/58">
+                    {project.subtitle}
+                  </span>
+                </>
+              )}
+            </FluidGlassButton>
           </Html>
         );
       })}

@@ -29,7 +29,7 @@ export default function StatCounter({
 
       gsap.to(obj, {
         val: value,
-        duration: 2,
+        duration: 1,
         ease: "power2.out",
         scrollTrigger: {
           trigger: containerRef.current,

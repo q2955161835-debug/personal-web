@@ -19,7 +19,7 @@ export const timelineEntries: TimelineEntry[] = [
     title: "数据分析项目交付",
     organization: "独立项目制",
     description:
-      "累计完成 93+ 数据分析项目与 619 份过程/交付文件，覆盖问卷、金融、医学、化学和社会科学场景。",
+      "累计完成 93 个数据分析项目与 619 份过程/交付文件，覆盖问卷、金融、医学、化学和社会科学场景。",
     tags: ["SPSS", "R", "Python", "交付体系"],
     type: "work",
   },

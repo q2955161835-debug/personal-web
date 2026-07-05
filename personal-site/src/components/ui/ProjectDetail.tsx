@@ -4,7 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import type { Project } from "@/types";
 import ProjectVisualBackdrop from "./ProjectVisualBackdrop";
-import { InteractiveGlassPanel } from "./InteractiveGlassPanel";
+import { FluidGlassPanel } from "./FluidGlassPanel";
 
 interface ProjectDetailProps {
   project: Project;
@@ -127,10 +127,11 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
           opacity: 0,
         }}
       >
-        <InteractiveGlassPanel
-          glowColor={project.scene === "chart" ? "#ff6b6b" : "#49c5b6"}
-          intensity={5}
-          className="max-h-[85vh] w-full rounded-lg p-7 shadow-2xl md:p-10"
+        <FluidGlassPanel
+          color={project.scene === "chart" ? "#ff6b6b" : "#49c5b6"}
+          intensity={18}
+          variant="detail"
+          className="max-h-[85vh] w-full p-7 shadow-2xl md:p-10"
           style={{
             overflowY: "auto",
             overflowX: "hidden",
@@ -306,7 +307,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
             )}
           </div>
         )}
-        </InteractiveGlassPanel>
+        </FluidGlassPanel>
       </div>
     </div>
   );

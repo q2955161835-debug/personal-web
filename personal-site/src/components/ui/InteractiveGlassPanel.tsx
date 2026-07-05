@@ -24,7 +24,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
-function useGlassTilt({ intensity = 10, glowColor = "#49c5b6" }: TiltOptions) {
+function useGlassTilt({ intensity = 16, glowColor = "#49c5b6" }: TiltOptions) {
   const ref = useRef<HTMLElement>(null);
 
   const handlePointerMove = useCallback(
@@ -41,11 +41,16 @@ function useGlassTilt({ intensity = 10, glowColor = "#49c5b6" }: TiltOptions) {
       const falloff = clamp(edgeDistance * 3.2, 0.18, 1);
       const rotateX = clamp(-ny * intensity * falloff, -intensity, intensity);
       const rotateY = clamp(nx * intensity * falloff, -intensity, intensity);
+      const highlightX = clamp(50 + rotateY * 2.3 + nx * 8, 8, 92);
+      const highlightY = clamp(50 - rotateX * 2.3 + ny * 8, 8, 92);
 
       element.style.setProperty("--tilt-x", `${rotateX.toFixed(2)}deg`);
       element.style.setProperty("--tilt-y", `${rotateY.toFixed(2)}deg`);
-      element.style.setProperty("--glare-x", `${(px * 100).toFixed(2)}%`);
-      element.style.setProperty("--glare-y", `${(py * 100).toFixed(2)}%`);
+      element.style.setProperty("--tilt-nx", nx.toFixed(3));
+      element.style.setProperty("--tilt-ny", ny.toFixed(3));
+      element.style.setProperty("--shine-angle", `${(115 + nx * 18).toFixed(2)}deg`);
+      element.style.setProperty("--glare-x", `${highlightX.toFixed(2)}%`);
+      element.style.setProperty("--glare-y", `${highlightY.toFixed(2)}%`);
       element.style.setProperty("--glass-falloff", falloff.toFixed(2));
     },
     [intensity]
@@ -57,6 +62,9 @@ function useGlassTilt({ intensity = 10, glowColor = "#49c5b6" }: TiltOptions) {
 
     element.style.setProperty("--tilt-x", "0deg");
     element.style.setProperty("--tilt-y", "0deg");
+    element.style.setProperty("--tilt-nx", "0");
+    element.style.setProperty("--tilt-ny", "0");
+    element.style.setProperty("--shine-angle", "115deg");
     element.style.setProperty("--glare-x", "50%");
     element.style.setProperty("--glare-y", "50%");
     element.style.setProperty("--glass-falloff", "0");
