@@ -6,6 +6,7 @@ import AnalysisSection from "@/components/sections/AnalysisSection";
 import TimelineSection from "@/components/sections/TimelineSection";
 import ContactSection from "@/components/sections/ContactSection";
 import { SceneProvider } from "@/components/three/SceneContext";
+import CosmicBackdrop from "@/components/ui/CosmicBackdrop";
 import SectionCursor from "@/components/ui/SectionCursor";
 
 export default function Home() {
@@ -16,10 +17,13 @@ export default function Home() {
         <SectionCursor />
         <HeroSection />
         <AboutSection />
-        <ProjectsSection />
-        <AnalysisSection />
-        <TimelineSection />
-        <ContactSection />
+        <div className="relative overflow-hidden">
+          <CosmicBackdrop />
+          <ProjectsSection />
+          <AnalysisSection />
+          <TimelineSection />
+          <ContactSection />
+        </div>
       </SceneProvider>
     </main>
   );

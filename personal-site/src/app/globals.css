@@ -274,11 +274,11 @@ html.lenis body {
   z-index: 80;
   opacity: 0;
   mix-blend-mode: screen;
-  width: 190px;
-  height: 190px;
+  width: 198px;
+  height: 198px;
   border-radius: 999px;
   background: transparent;
-  filter: saturate(1.18);
+  filter: saturate(1.16);
   transform: translate3d(-240px, -240px, 0);
   transition: opacity 220ms ease;
   will-change: transform;
@@ -286,7 +286,7 @@ html.lenis body {
 
 @media (pointer: fine) {
   .rainbow-cursor-lens[data-ready="true"] {
-    opacity: 0.34;
+    opacity: 0.32;
   }
 }
 
@@ -303,17 +303,18 @@ html.lenis body {
   background:
     conic-gradient(
       from calc(var(--cursor-angle) + 35deg),
-      rgba(255, 202, 122, 0.02),
-      rgba(255, 147, 152, 0.2),
-      rgba(167, 139, 250, 0.19),
-      rgba(0, 212, 255, 0.18),
-      rgba(73, 197, 182, 0.18),
-      rgba(255, 202, 122, 0.02)
+      rgba(255, 202, 122, 0.018),
+      rgba(255, 147, 152, 0.16),
+      rgba(255, 202, 122, 0.075),
+      rgba(73, 197, 182, 0.15),
+      rgba(0, 212, 255, 0.13),
+      rgba(167, 139, 250, 0.12),
+      rgba(255, 202, 122, 0.018)
     );
-  mask: radial-gradient(circle, transparent 51%, #000 59%, #000 64%, transparent 75%);
-  -webkit-mask: radial-gradient(circle, transparent 51%, #000 59%, #000 64%, transparent 75%);
-  filter: blur(calc(2.5px + var(--cursor-speed) * 2px));
-  transform: scaleX(calc(1 + var(--cursor-speed) * 0.09)) rotate(calc(var(--cursor-angle) * 0.16));
+  mask: radial-gradient(circle, transparent 52%, #000 61%, #000 64%, transparent 78%);
+  -webkit-mask: radial-gradient(circle, transparent 52%, #000 61%, #000 64%, transparent 78%);
+  filter: blur(calc(3.2px + var(--cursor-speed) * 2px));
+  transform: scaleX(calc(1 + var(--cursor-speed) * 0.11)) rotate(calc(var(--cursor-angle) * 0.1));
 }
 
 .rainbow-cursor-lens::after {
@@ -322,28 +323,40 @@ html.lenis body {
     conic-gradient(
       from calc(var(--cursor-angle) - 18deg),
       rgba(255, 255, 255, 0),
-      rgba(255, 147, 152, 0.08),
-      rgba(167, 139, 250, 0.075),
-      rgba(0, 212, 255, 0.08),
-      rgba(73, 197, 182, 0.075),
+      rgba(255, 147, 152, 0.075),
+      rgba(255, 202, 122, 0.055),
+      rgba(73, 197, 182, 0.072),
+      rgba(0, 212, 255, 0.068),
+      rgba(167, 139, 250, 0.065),
       rgba(255, 255, 255, 0)
     );
-  mask: radial-gradient(circle, transparent 55%, #000 65%, transparent 82%);
-  -webkit-mask: radial-gradient(circle, transparent 55%, #000 65%, transparent 82%);
-  filter: blur(calc(11px + var(--cursor-speed) * 4px));
-  opacity: calc(0.62 + var(--cursor-speed) * 0.12);
-  transform: scaleX(calc(1 + var(--cursor-speed) * 0.13)) rotate(calc(var(--cursor-angle) * -0.08));
+  mask: radial-gradient(circle, transparent 55%, #000 66%, transparent 84%);
+  -webkit-mask: radial-gradient(circle, transparent 55%, #000 66%, transparent 84%);
+  filter: blur(calc(12px + var(--cursor-speed) * 3.8px));
+  opacity: calc(0.54 + var(--cursor-speed) * 0.1);
+  transform: scaleX(calc(1 + var(--cursor-speed) * 0.12)) rotate(calc(var(--cursor-angle) * -0.06));
 }
 
 .fluid-glass-shell {
   --fluid-glass-color: #49c5b6;
+  --fluid-tilt-x: 0deg;
+  --fluid-tilt-y: 0deg;
+  --fluid-glare-x: 50%;
+  --fluid-glare-y: 50%;
+  --fluid-falloff: 0;
   position: relative;
   isolation: isolate;
   overflow: hidden;
   border: 0;
   background: transparent;
   color: inherit;
+  transform:
+    perspective(920px)
+    rotateX(var(--fluid-tilt-x))
+    rotateY(var(--fluid-tilt-y))
+    translateZ(calc(var(--fluid-falloff) * 8px));
   transform-style: preserve-3d;
+  transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .fluid-glass-shell[data-fluid-variant="bar"],
@@ -352,7 +365,7 @@ html.lenis body {
   border: 1px solid color-mix(in srgb, var(--fluid-glass-color) 58%, rgba(255, 255, 255, 0.22));
   background:
     linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.035) 42%, rgba(255, 255, 255, 0.09)),
-    radial-gradient(circle at var(--cursor-x, 50vw) var(--cursor-y, 50vh), color-mix(in srgb, var(--fluid-glass-color) 22%, transparent), transparent 34%),
+    radial-gradient(circle at var(--fluid-glare-x) var(--fluid-glare-y), color-mix(in srgb, var(--fluid-glass-color) 28%, transparent), transparent 34%),
     rgba(2, 8, 18, 0.24);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
@@ -363,7 +376,11 @@ html.lenis body {
 }
 
 .fluid-glass-shell[data-fluid-variant="bar"] {
-  border-radius: 16px;
+  border-radius: 18px;
+}
+
+.fluid-glass-shell[data-fluid-variant="chip"] {
+  border-radius: 22px;
 }
 
 .fluid-glass-shell::before,
@@ -405,6 +422,7 @@ html.lenis body {
 .fluid-glass-css-field {
   inset: 0;
   background:
+    radial-gradient(circle at var(--fluid-glare-x) var(--fluid-glare-y), rgba(255, 255, 255, 0.26), transparent 24%),
     radial-gradient(circle at 32% 34%, color-mix(in srgb, var(--fluid-glass-color) 38%, transparent), transparent 24%),
     radial-gradient(circle at 72% 62%, rgba(255, 255, 255, 0.18), transparent 28%),
     linear-gradient(145deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.035) 44%, rgba(0, 0, 0, 0.26));
@@ -532,6 +550,7 @@ html.lenis body {
 }
 
 .analysis-method-orbit {
+  color: var(--method-color);
   animation-name: bounded-drift-centered;
   animation-duration: var(--drift-duration, 5.8s);
   animation-delay: var(--drift-delay, 0s);
@@ -580,6 +599,274 @@ html.lenis body {
 
 .solar-planet:hover {
   transform: translate(-50%, -50%) scale(1.12) !important;
+}
+
+.project-narrative {
+  animation: project-narrative-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes project-narrative-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 22px, 0);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+    filter: blur(0);
+  }
+}
+
+.cosmic-backdrop {
+  z-index: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 16% 28%, rgba(73, 197, 182, 0.06), transparent 27%),
+    radial-gradient(circle at 82% 62%, rgba(255, 147, 152, 0.055), transparent 31%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(4, 1, 8, 0.18));
+}
+
+.cosmic-star {
+  animation-name: cosmic-updraft;
+  animation-duration: var(--particle-duration, 18s);
+  animation-delay: var(--particle-delay, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform, opacity;
+}
+
+.cosmic-constellation {
+  animation-name: cosmic-line-drift;
+  animation-duration: var(--particle-duration, 22s);
+  animation-delay: var(--particle-delay, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.analysis-axis-tick,
+.analysis-y-tick {
+  transition:
+    height 220ms ease,
+    width 220ms ease,
+    opacity 220ms ease,
+    box-shadow 220ms ease;
+  will-change: height, width, opacity;
+}
+
+.contact-meteor-scene {
+  perspective: 1200px;
+}
+
+.contact-meteor-trail {
+  pointer-events: none;
+  position: absolute;
+  right: 8%;
+  top: 6%;
+  width: min(52vw, 720px);
+  height: 28vh;
+  transform: rotate(-18deg);
+  background:
+    linear-gradient(90deg, transparent, rgba(73, 197, 182, 0.08) 36%, rgba(255, 147, 152, 0.16) 72%, transparent),
+    radial-gradient(ellipse at right, rgba(255, 255, 255, 0.16), transparent 58%);
+  filter: blur(16px);
+  animation: meteor-trail-breathe 4.6s ease-in-out infinite alternate;
+}
+
+.contact-meteor {
+  position: relative;
+  width: min(72vw, 860px);
+  min-height: min(68vh, 660px);
+  border-radius: 46% 54% 42% 58% / 50% 41% 59% 50%;
+  padding: clamp(2rem, 5vw, 5rem);
+  transform: rotateX(8deg) rotateY(-13deg) rotateZ(-4deg);
+  background:
+    radial-gradient(circle at 33% 24%, rgba(255, 255, 255, 0.34), transparent 10%),
+    radial-gradient(circle at 63% 66%, rgba(255, 147, 152, 0.22), transparent 19%),
+    radial-gradient(circle at 46% 48%, rgba(73, 197, 182, 0.24), transparent 26%),
+    linear-gradient(135deg, rgba(122, 121, 112, 0.88), rgba(36, 33, 43, 0.95) 46%, rgba(6, 5, 10, 0.98));
+  box-shadow:
+    0 0 92px rgba(255, 147, 152, 0.24),
+    0 36px 140px rgba(0, 0, 0, 0.68),
+    inset 18px 20px 42px rgba(255, 255, 255, 0.1),
+    inset -30px -42px 70px rgba(0, 0, 0, 0.62);
+  animation: meteor-approach 9s ease-in-out infinite alternate;
+}
+
+.contact-meteor::before,
+.contact-meteor::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 9%;
+  border-radius: inherit;
+}
+
+.contact-meteor::before {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.24), transparent 7%),
+    radial-gradient(circle at 72% 42%, rgba(0, 0, 0, 0.22), transparent 8%),
+    radial-gradient(circle at 55% 76%, rgba(255, 255, 255, 0.14), transparent 6%),
+    repeating-linear-gradient(128deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 18px);
+  mix-blend-mode: screen;
+  opacity: 0.8;
+}
+
+.contact-meteor::after {
+  inset: -10%;
+  background: radial-gradient(circle, rgba(255, 202, 122, 0.12), transparent 62%);
+  filter: blur(24px);
+}
+
+.meteor-surface-text {
+  position: relative;
+  z-index: 1;
+  transform: rotateZ(3deg);
+}
+
+.contact-meteor-link {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: baseline;
+  padding-bottom: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 220ms ease,
+    color 220ms ease,
+    opacity 220ms ease;
+}
+
+.contact-meteor-link:hover {
+  transform: translate3d(10px, -2px, 0);
+  color: #bffff7;
+}
+
+.contact-orbit-form {
+  position: absolute;
+  right: 0;
+  bottom: 12%;
+  z-index: 3;
+  width: min(390px, 34vw);
+  padding: 2.4rem 0 0;
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.contact-line-field {
+  display: grid;
+  gap: 0.55rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.56);
+}
+
+.contact-line-field input,
+.contact-line-field textarea {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0;
+  background: transparent;
+  padding: 0.55rem 0;
+  color: white;
+  outline: none;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.contact-line-field textarea {
+  resize: none;
+}
+
+.contact-line-field input:focus,
+.contact-line-field textarea:focus {
+  border-color: rgba(127, 255, 237, 0.68);
+  box-shadow: 0 14px 28px -22px rgba(127, 255, 237, 0.9);
+}
+
+.contact-submit {
+  margin-top: 0.7rem;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+  transition:
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.contact-submit:hover {
+  color: #bffff7;
+  transform: translate3d(8px, 0, 0);
+}
+
+@keyframes cosmic-updraft {
+  0% {
+    transform: translate3d(calc(var(--drift-x, 0px) * -0.35), calc(var(--drift-y, -30px) * 0.15), 0);
+  }
+  100% {
+    transform: translate3d(var(--drift-x, 0px), var(--drift-y, -30px), 0);
+  }
+}
+
+@keyframes cosmic-line-drift {
+  0% {
+    opacity: 0.16;
+    transform: translate3d(-0.6%, 0.7%, 0);
+  }
+  100% {
+    opacity: 0.42;
+    transform: translate3d(0.8%, -1.2%, 0);
+  }
+}
+
+@keyframes meteor-trail-breathe {
+  from {
+    opacity: 0.45;
+    transform: rotate(-18deg) translate3d(3%, -4%, 0) scaleX(0.9);
+  }
+  to {
+    opacity: 0.78;
+    transform: rotate(-18deg) translate3d(-2%, 2%, 0) scaleX(1.08);
+  }
+}
+
+@keyframes meteor-approach {
+  from {
+    transform: rotateX(8deg) rotateY(-13deg) rotateZ(-4deg) translate3d(2%, -2%, 0) scale(0.98);
+  }
+  to {
+    transform: rotateX(3deg) rotateY(-6deg) rotateZ(-2deg) translate3d(-1%, 1%, 0) scale(1.035);
+  }
+}
+
+@media (max-width: 900px) {
+  .contact-meteor-scene {
+    display: block;
+  }
+
+  .contact-meteor {
+    width: 100%;
+    min-height: 620px;
+    transform: rotateX(4deg) rotateY(-6deg) rotateZ(-2deg);
+  }
+
+  .contact-orbit-form {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    margin-top: 2rem;
+  }
+
+  .contact-meteor-link {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
 }
 
 /* ── Focus visible ── */

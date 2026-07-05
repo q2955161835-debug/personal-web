@@ -24,10 +24,19 @@ const STATION_HEX_COLORS = [
   "#00d4ff",
   "#ff6b6b",
   "#a78bfa",
+  "#ffca7a",
+  "#7dd3fc",
+  "#f0abfc",
+  "#86efac",
 ];
 
+const PROJECT_INTRO_PROGRESS = 0.12;
 const FIXED_CAMERA_POSITION = new THREE.Vector3(0, 0, HELIX_PARAMS.cameraRadius);
 const FIXED_CAMERA_TARGET = new THREE.Vector3(0, 0, 0);
+
+function normalizeProjectProgress(progress: number) {
+  return THREE.MathUtils.clamp((progress - PROJECT_INTRO_PROGRESS) / (1 - PROJECT_INTRO_PROGRESS), 0, 1);
+}
 
 function useViewportPointer() {
   const pointerRef = useRef(new THREE.Vector2(10, 10));
@@ -76,7 +85,7 @@ function getFocusY(progress: number) {
 }
 
 function getScrollAngle(progress: number, time = 0) {
-  return progress * 6.25 + time * 0.045;
+  return progress * 7.1 + time * 0.045;
 }
 
 function DNAHelixParticles({
@@ -85,12 +94,14 @@ function DNAHelixParticles({
   zoomedStation,
   pointerRef,
   pointerActiveRef,
+  dissolveProgress,
 }: {
   visible: boolean;
   hoveredStationRef: MutableRefObject<number>;
   zoomedStation: number | null;
   pointerRef: MutableRefObject<THREE.Vector2>;
   pointerActiveRef: MutableRefObject<number>;
+  dissolveProgress: number;
 }) {
   const pointsRef = useRef<THREE.Points>(null);
   const sceneOpacityRef = useRef(0);
@@ -117,6 +128,8 @@ function DNAHelixParticles({
         uPointer: { value: new THREE.Vector2() },
         uMouseActive: { value: 0 },
         uScrollProgress: { value: 0 },
+        uStationProgress: { value: 0 },
+        uDissolveProgress: { value: 1 },
         uFocusY: { value: 0 },
         uActiveStation: { value: 0 },
         uHoveredStation: { value: -1 },
@@ -137,6 +150,8 @@ function DNAHelixParticles({
   useFrame((state, delta) => {
     const targetSceneOpacity = visible ? 1 : 0;
     const targetZoomProgress = zoomedStation !== null ? 1 : 0;
+    const rawProgress = THREE.MathUtils.clamp(projectProgress, 0, 1);
+    const stationProgress = normalizeProjectProgress(rawProgress);
 
     sceneOpacityRef.current = THREE.MathUtils.lerp(
       sceneOpacityRef.current,
@@ -152,9 +167,11 @@ function DNAHelixParticles({
     material.uniforms.uTime.value = state.clock.elapsedTime;
     material.uniforms.uPointer.value.copy(pointerRef.current);
     material.uniforms.uMouseActive.value = visible ? pointerActiveRef.current : 0;
-    material.uniforms.uScrollProgress.value = THREE.MathUtils.clamp(projectProgress, 0, 1);
-    material.uniforms.uFocusY.value = getFocusY(projectProgress);
-    material.uniforms.uActiveStation.value = projectProgress * (HELIX_PARAMS.stationCount - 1);
+    material.uniforms.uScrollProgress.value = rawProgress;
+    material.uniforms.uStationProgress.value = stationProgress;
+    material.uniforms.uDissolveProgress.value = THREE.MathUtils.clamp(dissolveProgress, 0, 1);
+    material.uniforms.uFocusY.value = getFocusY(stationProgress);
+    material.uniforms.uActiveStation.value = stationProgress * (HELIX_PARAMS.stationCount - 1);
     material.uniforms.uHoveredStation.value = hoveredStationRef.current;
     material.uniforms.uZoomedStation.value = zoomedStation ?? -1;
     material.uniforms.uZoomProgress.value = zoomProgressRef.current;
@@ -194,7 +211,9 @@ function DNAStationLabels({
 }) {
   const labelsRef = useRef<THREE.Group>(null);
   const {
+    activeSection,
     carouselActiveIndex,
+    dnaDissolveProgress,
     projectProgress,
     setCarouselActiveIndex,
     setHelixZoomedStation,
@@ -221,9 +240,14 @@ function DNAStationLabels({
     const group = labelsRef.current;
     if (!group) return;
 
-    group.visible = visible;
-    group.rotation.y = getScrollAngle(projectProgress, state.clock.elapsedTime);
-    group.position.y = -getFocusY(projectProgress) + (0.5 - projectProgress) * 1.2;
+    const stationProgress = normalizeProjectProgress(projectProgress);
+    group.visible =
+      visible &&
+      activeSection === "projects" &&
+      dnaDissolveProgress < 0.04 &&
+      projectProgress > PROJECT_INTRO_PROGRESS * 0.48;
+    group.rotation.y = getScrollAngle(stationProgress, state.clock.elapsedTime);
+    group.position.y = -getFocusY(stationProgress) + (0.5 - stationProgress) * 1.2;
   });
 
   return (
@@ -242,12 +266,12 @@ function DNAStationLabels({
             style={{ pointerEvents: visible ? "auto" : "none" }}
           >
             <FluidGlassButton
-              aria-label={`Open project ${project.name}`}
+              aria-label={`Focus project ${project.name}`}
               onClick={(event) => {
                 event.stopPropagation();
                 setCarouselActiveIndex(index);
                 setHelixZoomedStation(index);
-                window.dispatchEvent(new CustomEvent("portfolio:open-project", { detail: index }));
+                window.dispatchEvent(new CustomEvent("portfolio:focus-project", { detail: index }));
               }}
               color={color}
               variant="chip"
@@ -286,7 +310,7 @@ function DNAStationLabels({
 
 export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
   const { camera } = useThree();
-  const { helixZoomedStation, projectProgress } = useProjectScene();
+  const { helixZoomedStation, projectProgress, dnaDissolveProgress } = useProjectScene();
   const hoveredStationRef = useRef(-1);
   const { pointerRef, activeRef: pointerActiveRef } = useViewportPointer();
 
@@ -315,8 +339,9 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
     }
 
     const pointer = pointerRef.current;
-    const angle = getScrollAngle(projectProgress, state.clock.elapsedTime);
-    const focusY = getFocusY(projectProgress);
+    const stationProgress = normalizeProjectProgress(projectProgress);
+    const angle = getScrollAngle(stationProgress, state.clock.elapsedTime);
+    const focusY = getFocusY(stationProgress);
     let closestStation = -1;
     let closestDistance = Infinity;
 
@@ -324,7 +349,7 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
       const projected = stationPositions[index].clone();
       const rotatedX = projected.x * Math.cos(angle) - projected.z * Math.sin(angle);
       const rotatedZ = projected.x * Math.sin(angle) + projected.z * Math.cos(angle);
-      projected.set(rotatedX, projected.y - focusY + (0.5 - projectProgress) * 1.2, rotatedZ);
+      projected.set(rotatedX, projected.y - focusY + (0.5 - stationProgress) * 1.2, rotatedZ);
       projected.project(camera);
 
       const dx = projected.x - pointer.x;
@@ -348,6 +373,7 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
         zoomedStation={helixZoomedStation}
         pointerRef={pointerRef}
         pointerActiveRef={pointerActiveRef}
+        dissolveProgress={dnaDissolveProgress}
       />
       <DNAStationLabels visible={visible} />
       <DNAHelixCamera visible={visible} />

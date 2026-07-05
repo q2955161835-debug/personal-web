@@ -40,7 +40,7 @@ export default function TimelineSection() {
     <section
       id="experience"
       ref={sectionRef}
-      className="relative z-10 bg-black"
+      className="relative z-10 bg-transparent"
       style={{ height: `${Math.max(320, timelineEntries.length * 92)}vh` }}
     >
       <div className="sticky top-0 h-screen overflow-hidden">

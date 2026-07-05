@@ -16,7 +16,14 @@ export interface Project {
 }
 
 /* ── Data Analysis Project ── */
-export type AnalysisCategory = "问卷调查" | "金融实证" | "医学统计" | "化学分析" | "社会科学";
+export type AnalysisCategory =
+  | "问卷调查"
+  | "金融实证"
+  | "医学统计"
+  | "化学分析"
+  | "社会科学"
+  | "数据工程"
+  | "论文辅助";
 
 export interface DataAnalysisProject {
   id: string;
