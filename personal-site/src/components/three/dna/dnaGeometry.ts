@@ -8,10 +8,10 @@ export const HELIX_PARAMS = {
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 6,
   cameraRadius: 8, // camera orbit radius
-  particlesPerBasePair: 40, // particles forming each rung
-  ambientParticleCount: 3000, // floating ambient particles
+  particlesPerBasePair: 32, // particles forming each rung
+  ambientParticleCount: 650, // floating ambient particles
   scatterRadius: 2.5, // mouse scatter radius
-  scatterStrength: 0.4, // mouse scatter strength
+  scatterStrength: 0.28, // mouse scatter strength
 } as const;
 
 const STATION_COLORS = [
@@ -119,7 +119,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
     }
 
     // ─── Decoration particles orbiting station (type 2) ─────────
-    const decorCount = 60;
+    const decorCount = 36;
     for (let d = 0; d < decorCount; d++) {
       const dAngle = Math.random() * Math.PI * 2;
       const dRadius = 0.3 + Math.random() * 0.8;
@@ -141,9 +141,9 @@ export function generateDNAHelixBuffers(): DNABuffers {
 
   // ─── Ambient floating particles (type 3) ──────────────────────
   for (let a = 0; a < HELIX_PARAMS.ambientParticleCount; a++) {
-    const ax = (Math.random() - 0.5) * 16;
+    const ax = (Math.random() - 0.5) * 13;
     const ay = (Math.random() - 0.5) * (HELIX_PARAMS.height + 6);
-    const az = (Math.random() - 0.5) * 16;
+    const az = (Math.random() - 0.5) * 13;
 
     positions.push(ax, ay, az);
 
@@ -155,13 +155,12 @@ export function generateDNAHelixBuffers(): DNABuffers {
     );
     colors.push(ambColor.r, ambColor.g, ambColor.b);
 
-    sizes.push(0.2 + Math.random() * 0.3);
+    sizes.push(0.12 + Math.random() * 0.18);
     basePairIndices.push(-1);
     particleTypes.push(3);
     randomSeeds.push(Math.random());
   }
 
-  const count = positions.length / 3;
   return {
     positions: new Float32Array(positions),
     colors: new Float32Array(colors),

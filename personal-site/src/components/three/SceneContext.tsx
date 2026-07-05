@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState } from "react";
 
 interface SceneContextValue {
   activeProjectScene: string | null;
@@ -9,6 +9,8 @@ interface SceneContextValue {
   setActiveSection: (section: string | null) => void;
   carouselActiveIndex: number;
   setCarouselActiveIndex: (index: number) => void;
+  projectProgress: number;
+  setProjectProgress: (progress: number) => void;
   carouselSelectedIndex: number | null;
   setCarouselSelectedIndex: (index: number | null) => void;
   helixZoomedStation: number | null;
@@ -22,6 +24,8 @@ const SceneContext = createContext<SceneContextValue>({
   setActiveSection: () => {},
   carouselActiveIndex: 0,
   setCarouselActiveIndex: () => {},
+  projectProgress: 0,
+  setProjectProgress: () => {},
   carouselSelectedIndex: null,
   setCarouselSelectedIndex: () => {},
   helixZoomedStation: null,
@@ -32,6 +36,7 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
   const [activeProjectScene, setActiveProjectScene] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [carouselActiveIndex, setCarouselActiveIndex] = useState(0);
+  const [projectProgress, setProjectProgress] = useState(0);
   const [carouselSelectedIndex, setCarouselSelectedIndex] = useState<number | null>(null);
   const [helixZoomedStation, setHelixZoomedStation] = useState<number | null>(null);
 
@@ -44,6 +49,8 @@ export function SceneProvider({ children }: { children: React.ReactNode }) {
         setActiveSection,
         carouselActiveIndex,
         setCarouselActiveIndex,
+        projectProgress,
+        setProjectProgress,
         carouselSelectedIndex,
         setCarouselSelectedIndex,
         helixZoomedStation,

@@ -1,4 +1,6 @@
 export const fragmentShader = /* glsl */ `
+uniform float uOpacity;
+
 varying vec3 vColor;
 
 void main() {
@@ -10,7 +12,9 @@ void main() {
   float alpha = 1.0 - smoothstep(0.3, 0.5, dist);
 
   // Discard fully transparent fragments for performance
-  if (alpha < 0.01) {
+  float finalAlpha = alpha * uOpacity;
+
+  if (finalAlpha < 0.01) {
     discard;
   }
 
@@ -19,6 +23,6 @@ void main() {
   vec3 finalColor = vColor + glow;
 
   // --- Premultiplied alpha for bloom compatibility ---
-  gl_FragColor = vec4(finalColor * alpha, alpha);
+  gl_FragColor = vec4(finalColor * finalAlpha, finalAlpha);
 }
 `;

@@ -27,10 +27,16 @@ export default function ProjectsSection() {
     setActiveSection,
     carouselActiveIndex,
     setCarouselActiveIndex,
+    setProjectProgress,
     helixZoomedStation,
     setHelixZoomedStation,
     setActiveProjectScene,
   } = useProjectScene();
+  const lastProgressRef = useRef(-1);
+  const lastIndexRef = useRef(-1);
+  const visibleProjects = projects.slice(0, STATION_COUNT);
+  const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
+  const activeThemeColor = STATION_HEX_COLORS[carouselActiveIndex % STATION_HEX_COLORS.length];
 
   // ─── Scroll-driven active section detection ──────────────────────
   useEffect(() => {
@@ -65,11 +71,16 @@ export default function ProjectsSection() {
         const totalHeight = section.offsetHeight;
         const scrolledInto = -sectionTop; // how far we've scrolled past the top
         const progress = Math.max(0, Math.min(1, scrolledInto / (totalHeight - viewportHeight)));
-        const index = Math.min(
-          STATION_COUNT - 1,
-          Math.floor(progress * STATION_COUNT)
-        );
-        setCarouselActiveIndex(index);
+        const index = Math.min(STATION_COUNT - 1, Math.round(progress * (STATION_COUNT - 1)));
+
+        if (Math.abs(progress - lastProgressRef.current) > 0.002) {
+          lastProgressRef.current = progress;
+          setProjectProgress(progress);
+        }
+        if (index !== lastIndexRef.current) {
+          lastIndexRef.current = index;
+          setCarouselActiveIndex(index);
+        }
       }
     };
 
@@ -80,15 +91,19 @@ export default function ProjectsSection() {
     return () => {
       gsap.ticker.remove(tickerCallback);
     };
-  }, [activeSection, setActiveSection, setCarouselActiveIndex]);
+  }, [activeSection, setActiveSection, setCarouselActiveIndex, setProjectProgress]);
 
   // ─── Handle project selection from DNA helix zoom ──────────────
   useEffect(() => {
     if (helixZoomedStation !== null) {
       const project = projects[helixZoomedStation];
       if (project) {
-        setSelectedProject(project);
         setActiveProjectScene(project.scene);
+        const timer = window.setTimeout(() => {
+          setSelectedProject(project);
+        }, 420);
+
+        return () => window.clearTimeout(timer);
       }
     }
   }, [helixZoomedStation, setActiveProjectScene]);
@@ -114,105 +129,67 @@ export default function ProjectsSection() {
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 100}vh` }}
+      style={{ height: `${STATION_COUNT * 110}vh` }}
     >
-      {/* ─── Section heading (fixed while in view) ──────────────── */}
+      {/* ─── Compact project status (fixed while in view) ───────── */}
       <div
-        className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-start justify-center"
+        className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.6s ease" }}
       >
-        <div className="mt-8 text-center">
+        <div className="ml-6 w-[min(320px,42vw)] md:ml-12">
           <h2
-            className="mb-2 text-2xl font-bold sm:text-3xl"
+            className="mb-3 text-2xl font-bold sm:text-3xl"
             style={gradientTextStyle}
           >
             Projects
           </h2>
-          <p className="text-sm text-gray-500">
-            Scroll to explore
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/35">
+            {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
+          </p>
+          <p className="mt-4 hidden text-lg font-semibold text-white/85 sm:block">
+            {activeProject.name}
+          </p>
+          <p className="mt-2 hidden text-sm leading-relaxed text-white/45 sm:block">
+            {activeProject.subtitle}
           </p>
         </div>
+        <button
+          type="button"
+          aria-label={`Open project ${activeProject.name}`}
+          className="pointer-events-auto fixed w-56 rounded-lg px-3 py-2 text-left shadow-2xl"
+          style={{
+            left: "50%",
+            top: "57%",
+            opacity: activeSection === "projects" && !selectedProject ? 1 : 0,
+            transform: "translate(-50%, -50%)",
+            transition:
+              "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.25, 1, 0.5, 1)",
+            background:
+              "linear-gradient(135deg, rgba(5, 12, 22, 0.86), rgba(5, 12, 22, 0.48))",
+            border: `1px solid ${activeThemeColor}cc`,
+            color: activeThemeColor,
+            backdropFilter: "blur(14px)",
+            WebkitBackdropFilter: "blur(14px)",
+            boxShadow: `0 18px 60px ${activeThemeColor}24, 0 0 24px ${activeThemeColor}35`,
+            pointerEvents: activeSection === "projects" && !selectedProject ? "auto" : "none",
+          }}
+          onClick={() => setHelixZoomedStation(carouselActiveIndex)}
+        >
+          <span className="mb-2 block text-xs font-semibold text-white/50">
+            {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
+          </span>
+          <span className="block text-sm font-bold leading-tight text-white">
+            {activeProject.name}
+          </span>
+        </button>
       </div>
-
-      {/* ─── DOM overlays for each project station ─────────────── */}
-      {projects.slice(0, STATION_COUNT).map((project, index) => {
-        const isActive = carouselActiveIndex === index;
-        const themeColor = STATION_HEX_COLORS[index % STATION_HEX_COLORS.length];
-
-        // Opacity based on distance from active index
-        const distance = Math.abs(carouselActiveIndex - index);
-        const opacity = activeSection === "projects"
-          ? distance === 0 ? 1 : distance === 1 ? 0.3 : 0
-          : 0;
-        const translateY = distance === 0 ? 0 : 20;
-
-        return (
-          <div
-            key={project.id}
-            className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-end justify-center"
-            style={{
-              opacity,
-              transform: `translateY(${translateY}px)`,
-              transition: "opacity 0.5s ease, transform 0.5s ease",
-              pointerEvents: isActive && selectedProject ? "none" : isActive ? "auto" : "none",
-            }}
-            onClick={() => {
-              setHelixZoomedStation(index);
-            }}
-          >
-            <div className="mb-[20vh] w-full max-w-lg px-6 text-center">
-              {/* Project name */}
-              <h3
-                className="mb-3 text-4xl font-bold"
-                style={{
-                  background: `linear-gradient(135deg, ${themeColor}, #ffffff)`,
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                {project.name}
-              </h3>
-
-              {/* Subtitle */}
-              <p className="mb-4 text-lg text-gray-300">
-                {project.subtitle}
-              </p>
-
-              {/* Tech stack pills */}
-              <div className="flex flex-wrap items-center justify-center gap-2">
-                {project.techStack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="rounded-full border px-3 py-1 text-sm transition-colors duration-300"
-                    style={{
-                      borderColor: `${themeColor}30`,
-                      color: `${themeColor}cc`,
-                      background: `${themeColor}10`,
-                    }}
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-
-              {/* Click hint */}
-              {isActive && (
-                <p className="mt-4 text-xs text-gray-600">
-                  Click to view details
-                </p>
-              )}
-            </div>
-          </div>
-        );
-      })}
 
       {/* ─── Scroll indicator dots (right side) ────────────────── */}
       <div
         className="fixed right-6 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3"
         style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.5s ease" }}
       >
-        {projects.slice(0, STATION_COUNT).map((project, index) => {
+        {visibleProjects.map((project, index) => {
           const isActive = carouselActiveIndex === index;
           const themeColor = STATION_HEX_COLORS[index % STATION_HEX_COLORS.length];
 
@@ -226,10 +203,8 @@ export default function ProjectsSection() {
                 const totalHeight = section.offsetHeight;
                 const viewportHeight = window.innerHeight;
                 const scrollableHeight = totalHeight - viewportHeight;
-                const targetScroll =
-                  section.offsetTop +
-                  (scrollableHeight / STATION_COUNT) * index +
-                  scrollableHeight / (STATION_COUNT * 2);
+                const targetProgress = index / (STATION_COUNT - 1);
+                const targetScroll = section.offsetTop + scrollableHeight * targetProgress;
 
                 window.scrollTo({
                   top: targetScroll,

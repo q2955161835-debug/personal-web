@@ -9,8 +9,9 @@ void main() {
 
   // Circular soft particles with smooth falloff
   float alpha = 1.0 - smoothstep(0.25, 0.5, dist);
+  float finalAlpha = alpha * vAlpha;
 
-  if (alpha < 0.01) {
+  if (finalAlpha < 0.01) {
     discard;
   }
 
@@ -18,6 +19,6 @@ void main() {
   float glow = exp(-dist * 5.0) * (0.3 + vGlow * 0.7);
   vec3 finalColor = vColor + glow;
 
-  gl_FragColor = vec4(finalColor * alpha * vAlpha, alpha * vAlpha);
+  gl_FragColor = vec4(finalColor * finalAlpha, finalAlpha);
 }
 `;

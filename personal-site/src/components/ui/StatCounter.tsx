@@ -43,7 +43,7 @@ export default function StatCounter({
     }, containerRef);
 
     return () => ctx.revert();
-  }, [value]);
+  }, [suffix, value]);
 
   return (
     <div ref={containerRef} className="flex flex-col items-center gap-2">

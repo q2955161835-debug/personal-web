@@ -11,6 +11,7 @@ import { fragmentShader } from "./shaders/particles.frag";
 interface ParticleFieldProps {
   mouse: THREE.Vector2;
   scrollProgress: number;
+  opacity: number;
 }
 
 const PARTICLE_COUNT = 4000;
@@ -19,8 +20,9 @@ const PARTICLE_COUNT = 4000;
 const COLOR_TEAL = new THREE.Color("#49c5b6");
 const COLOR_CORAL = new THREE.Color("#ff9398");
 
-export default function ParticleField({ mouse, scrollProgress }: ParticleFieldProps) {
+export default function ParticleField({ mouse, scrollProgress, opacity }: ParticleFieldProps) {
   const meshRef = useRef<THREE.Points>(null);
+  const opacityRef = useRef(opacity);
 
   const { geometry, material } = useMemo(() => {
     const positions = new Float32Array(PARTICLE_COUNT * 3);
@@ -66,6 +68,7 @@ export default function ParticleField({ mouse, scrollProgress }: ParticleFieldPr
         uMouse: { value: new THREE.Vector2(0, 0) },
         uResolution: { value: new THREE.Vector2(1, 1) },
         uScrollProgress: { value: 0 },
+        uOpacity: { value: 1 },
       },
       transparent: true,
       depthWrite: false,
@@ -76,8 +79,14 @@ export default function ParticleField({ mouse, scrollProgress }: ParticleFieldPr
   }, []);
 
   // --- Update uniforms every frame ---
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const uniforms = material.uniforms;
+
+    opacityRef.current = THREE.MathUtils.lerp(
+      opacityRef.current,
+      opacity,
+      1 - Math.exp(-delta * 5)
+    );
 
     uniforms.uTime.value = state.clock.elapsedTime;
     uniforms.uMouse.value.copy(mouse);
@@ -87,6 +96,10 @@ export default function ParticleField({ mouse, scrollProgress }: ParticleFieldPr
       state.size.height
     );
     uniforms.uScrollProgress.value = scrollProgress;
+    uniforms.uOpacity.value = opacityRef.current;
+    if (meshRef.current) {
+      meshRef.current.visible = opacityRef.current > 0.01;
+    }
   });
 
   return (

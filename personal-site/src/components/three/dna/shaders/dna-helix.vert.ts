@@ -8,6 +8,7 @@ uniform float uZoomedStation;
 uniform float uZoomProgress;
 uniform float uScatterRadius;
 uniform float uScatterStrength;
+uniform float uSceneOpacity;
 
 attribute vec3 aColor;
 attribute float aSize;
@@ -90,6 +91,14 @@ void main() {
   // --- Scroll-based vertical offset ---
   pos.y -= uScrollProgress * 2.0;
 
+  if (aParticleType > 1.5 && aParticleType < 2.5) {
+    vAlpha *= 0.72;
+  } else if (aParticleType > 2.5) {
+    vAlpha *= 0.24;
+  }
+
+  vAlpha *= uSceneOpacity;
+
   // --- Compute gl_PointSize based on distance from camera ---
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
   float distCam = -mvPosition.z;
@@ -102,7 +111,7 @@ void main() {
     baseSize *= 1.8;
   } else if (aParticleType > 2.5) {
     // Ambient particles: smaller
-    baseSize *= 0.5;
+    baseSize *= 0.38;
   }
 
   gl_PointSize = clamp(baseSize, 0.5, 48.0);

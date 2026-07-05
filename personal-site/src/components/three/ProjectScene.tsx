@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useCallback, useEffect, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Points, Line, MeshDistortMaterial, MeshWobbleMaterial } from "@react-three/drei";
+import { Points, Line, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
 // ─── Color palette ───────────────────────────────────────────────
@@ -228,37 +228,73 @@ function FlowScene() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Scene 4: Pulse (Delta Force Diagnostics) — pulsing wobble sphere
+// Scene 4: Pulse (Delta Force Diagnostics) — analytical main-line chart
 // ═══════════════════════════════════════════════════════════════════
 function PulseScene() {
-  const meshRef = useRef<THREE.Mesh>(null);
+  const groupRef = useRef<THREE.Group>(null);
   const mouse = useMouseOffset();
 
+  const chart = useMemo(() => {
+    const linePoints: THREE.Vector3[] = [];
+    const upperBand: THREE.Vector3[] = [];
+    const lowerBand: THREE.Vector3[] = [];
+    const count = 34;
+
+    for (let i = 0; i < count; i++) {
+      const t = i / (count - 1);
+      const x = -4.6 + t * 9.2;
+      const y =
+        Math.sin(t * Math.PI * 2.2) * 0.55 +
+        Math.cos(t * Math.PI * 5.4) * 0.16 +
+        (t - 0.45) * 1.2;
+
+      linePoints.push(new THREE.Vector3(x, y, 0));
+      upperBand.push(new THREE.Vector3(x, y + 0.48, -0.04));
+      lowerBand.push(new THREE.Vector3(x, y - 0.48, -0.04));
+    }
+
+    return {
+      linePoints,
+      upperBand,
+      lowerBand,
+      xAxis: [new THREE.Vector3(-5, -2.1, 0), new THREE.Vector3(5, -2.1, 0)],
+      yAxis: [new THREE.Vector3(-5, -2.1, 0), new THREE.Vector3(-5, 2.2, 0)],
+      trend: [linePoints[2], linePoints[linePoints.length - 3]],
+    };
+  }, []);
+
   useFrame((state) => {
-    if (!meshRef.current) return;
+    if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    const scale = 1 + Math.sin(t * 1.5) * 0.15;
-    meshRef.current.scale.setScalar(scale);
-    meshRef.current.rotation.y = t * 0.3;
-    meshRef.current.rotation.x = t * 0.15;
-    meshRef.current.position.x +=
-      (mouse.current.x * 0.4 - meshRef.current.position.x) * 0.04;
-    meshRef.current.position.y +=
-      (mouse.current.y * 0.3 - meshRef.current.position.y) * 0.04;
+    groupRef.current.rotation.y +=
+      (mouse.current.x * 0.05 - groupRef.current.rotation.y) * 0.03;
+    groupRef.current.rotation.x +=
+      (-mouse.current.y * 0.04 - groupRef.current.rotation.x) * 0.03;
+    groupRef.current.position.y = Math.sin(t * 0.75) * 0.08 - 0.1;
   });
 
   return (
-    <mesh ref={meshRef}>
-      <icosahedronGeometry args={[1.5, 4]} />
-      <MeshWobbleMaterial
-        color={CORAL}
-        factor={0.3}
-        speed={2}
-        transparent
-        opacity={0.8}
-        wireframe
-      />
-    </mesh>
+    <group ref={groupRef} position={[0, 0, -1.4]} rotation={[-0.12, 0, 0]}>
+      <Line points={chart.xAxis} color="#ffffff" lineWidth={1} transparent opacity={0.18} />
+      <Line points={chart.yAxis} color="#ffffff" lineWidth={1} transparent opacity={0.18} />
+      <Line points={chart.upperBand} color={PURPLE} lineWidth={1} transparent opacity={0.24} />
+      <Line points={chart.lowerBand} color={PURPLE} lineWidth={1} transparent opacity={0.18} />
+      <Line points={chart.trend} color={CORAL} lineWidth={2} transparent opacity={0.55} />
+      <Line points={chart.linePoints} color={TEAL} lineWidth={3} transparent opacity={0.92} />
+
+      {chart.linePoints.map((point, index) => (
+        <mesh key={index} position={point}>
+          <circleGeometry args={[index % 5 === 0 ? 0.075 : 0.045, 16]} />
+          <meshBasicMaterial
+            color={index % 5 === 0 ? CORAL : TEAL}
+            transparent
+            opacity={index % 5 === 0 ? 0.9 : 0.56}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+      ))}
+    </group>
   );
 }
 
@@ -313,24 +349,42 @@ function WaveScene() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Scene 6: Chart (Quant Trading) — floating bars with bobbing
+// Scene 6: Chart (Quant Trading) — candlestick market chart
 // ═══════════════════════════════════════════════════════════════════
 function ChartScene() {
   const groupRef = useRef<THREE.Group>(null);
   const mouse = useMouseOffset();
 
-  const bars = useMemo(() => {
-    const result: { height: number; x: number; phase: number }[] = [];
-    const count = 16;
-    const spacing = 0.6;
-    const startX = -(count * spacing) / 2;
+  const candles = useMemo(() => {
+    const result: {
+      x: number;
+      open: number;
+      close: number;
+      high: number;
+      low: number;
+      phase: number;
+    }[] = [];
+    const count = 24;
+    const spacing = 0.38;
+    const startX = -((count - 1) * spacing) / 2;
+    let price = -0.35;
 
     for (let i = 0; i < count; i++) {
+      const drift = Math.sin(i * 0.72) * 0.24 + Math.cos(i * 0.29) * 0.11;
+      const open = price;
+      const close = open + drift;
+      const high = Math.max(open, close) + 0.22 + (i % 4) * 0.03;
+      const low = Math.min(open, close) - 0.2 - (i % 3) * 0.035;
+
       result.push({
-        height: 0.4 + Math.random() * 2.5,
         x: startX + i * spacing,
-        phase: Math.random() * Math.PI * 2,
+        open,
+        close,
+        high,
+        low,
+        phase: i * 0.43,
       });
+      price = close;
     }
     return result;
   }, []);
@@ -344,33 +398,56 @@ function ChartScene() {
     groupRef.current.rotation.x +=
       (-mouse.current.y * 0.05 - groupRef.current.rotation.x) * 0.03;
 
-    // Bobbing each bar (skip the last child which is the base plane)
-    const barCount = bars.length;
     groupRef.current.children.forEach((child, i) => {
-      if (i >= barCount) return;
-      const bar = bars[i];
-      if (!bar) return;
-      const bob = Math.sin(t * 1.2 + bar.phase) * 0.15;
-      child.position.y = bob;
+      const candle = candles[Math.floor(i / 2)];
+      if (!candle) return;
+      child.position.z = Math.sin(t * 1.2 + candle.phase) * 0.035;
     });
   });
 
   return (
     <group ref={groupRef} position={[0, -0.5, 0]}>
-      {bars.map((bar, i) => (
-        <mesh key={i} position={[bar.x, 0, 0]}>
-          <boxGeometry args={[0.35, bar.height, 0.35]} />
-          <meshStandardMaterial
-            color={i % 3 === 0 ? TEAL : i % 3 === 1 ? PURPLE : CORAL}
-            transparent
-            opacity={0.75}
-            emissive={i % 3 === 0 ? TEAL : i % 3 === 1 ? PURPLE : CORAL}
-            emissiveIntensity={0.2}
-          />
-        </mesh>
-      ))}
+      <Line
+        points={candles.map((candle) => new THREE.Vector3(candle.x, candle.close, -0.08))}
+        color={PURPLE}
+        lineWidth={2}
+        transparent
+        opacity={0.42}
+      />
+
+      {candles.map((candle, i) => {
+        const rising = candle.close >= candle.open;
+        const color = rising ? TEAL : CORAL;
+        const bodyHeight = Math.max(Math.abs(candle.close - candle.open), 0.08);
+        const bodyY = (candle.open + candle.close) / 2;
+
+        return (
+          <group key={i}>
+            <Line
+              points={[
+                new THREE.Vector3(candle.x, candle.low, 0),
+                new THREE.Vector3(candle.x, candle.high, 0),
+              ]}
+              color={color}
+              lineWidth={1}
+              transparent
+              opacity={0.72}
+            />
+            <mesh position={[candle.x, bodyY, 0.03]}>
+              <boxGeometry args={[0.2, bodyHeight, 0.08]} />
+              <meshStandardMaterial
+                color={color}
+                transparent
+                opacity={0.78}
+                emissive={color}
+                emissiveIntensity={0.26}
+              />
+            </mesh>
+          </group>
+        );
+      })}
       <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[12, 0.5]} />
+        <planeGeometry args={[10, 0.35]} />
         <meshBasicMaterial color={TEAL} transparent opacity={0.15} />
       </mesh>
     </group>
@@ -406,9 +483,10 @@ function FadingScene({
   const doneRef = useRef(false);
 
   const SceneComponent = SCENE_MAP[sceneId];
-  if (!SceneComponent) return null;
 
   useFrame((_, delta) => {
+    if (!SceneComponent) return;
+
     const target = fadeIn ? 1 : 0;
     opacityRef.current += (target - opacityRef.current) * Math.min(delta * 5, 0.15);
 
@@ -429,6 +507,8 @@ function FadingScene({
       doneRef.current = false;
     }
   });
+
+  if (!SceneComponent) return null;
 
   return (
     <group ref={groupRef}>

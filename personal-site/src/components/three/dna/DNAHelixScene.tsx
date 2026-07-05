@@ -2,25 +2,44 @@
 
 import { useRef, useMemo, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import * as THREE from "three";
 
 import { dnaVertexShader } from "./shaders/dna-helix.vert";
 import { dnaFragmentShader } from "./shaders/dna-helix.frag";
 import { generateDNAHelixBuffers, HELIX_PARAMS } from "./dnaGeometry";
 import { useProjectScene } from "../SceneContext";
+import { projects } from "@/data/projects";
+
+interface DNAHelixSceneProps {
+  visible: boolean;
+}
+
+const STATION_HEX_COLORS = [
+  "#49c5b6",
+  "#ff9398",
+  "#8b5cf6",
+  "#00d4ff",
+  "#ff6b6b",
+  "#a78bfa",
+];
 
 // ═══════════════════════════════════════════════════════════════════
 // DNA Helix Particles
 // ═══════════════════════════════════════════════════════════════════
 
 function DNAHelixParticles({
+  visible,
   mouseActive,
   mouseWorld,
   hoveredStationRef,
+  zoomedStation,
 }: {
+  visible: boolean;
   mouseActive: React.MutableRefObject<boolean>;
   mouseWorld: React.MutableRefObject<THREE.Vector3>;
   hoveredStationRef: React.MutableRefObject<number>;
+  zoomedStation: number | null;
 }) {
   const meshRef = useRef<THREE.Points>(null);
 
@@ -48,6 +67,7 @@ function DNAHelixParticles({
         uZoomProgress: { value: 0 },
         uScatterRadius: { value: HELIX_PARAMS.scatterRadius },
         uScatterStrength: { value: HELIX_PARAMS.scatterStrength },
+        uSceneOpacity: { value: 0 },
       },
       transparent: true,
       depthWrite: false,
@@ -59,15 +79,36 @@ function DNAHelixParticles({
 
   // Track zoom progress state locally
   const zoomProgressRef = useRef(0);
+  const sceneOpacityRef = useRef(0);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     const { clock } = state;
     const uniforms = material.uniforms;
+    const targetSceneOpacity = visible ? 1 : 0;
+    const targetZoomProgress = zoomedStation !== null ? 1 : 0;
+
+    sceneOpacityRef.current = THREE.MathUtils.lerp(
+      sceneOpacityRef.current,
+      targetSceneOpacity,
+      1 - Math.exp(-delta * 5)
+    );
+    zoomProgressRef.current = THREE.MathUtils.lerp(
+      zoomProgressRef.current,
+      targetZoomProgress,
+      1 - Math.exp(-delta * 5)
+    );
 
     uniforms.uTime.value = clock.elapsedTime;
     uniforms.uMouseWorld.value.copy(mouseWorld.current);
     uniforms.uMouseActive.value = mouseActive.current ? 1.0 : 0.0;
     uniforms.uHoveredStation.value = hoveredStationRef.current;
+    uniforms.uZoomedStation.value = zoomedStation ?? -1;
+    uniforms.uZoomProgress.value = zoomProgressRef.current;
+    uniforms.uSceneOpacity.value = sceneOpacityRef.current;
+
+    if (meshRef.current) {
+      meshRef.current.visible = sceneOpacityRef.current > 0.01;
+    }
   });
 
   return (
@@ -79,22 +120,24 @@ function DNAHelixParticles({
 // DNA Helix Camera
 // ═══════════════════════════════════════════════════════════════════
 
-function DNAHelixCamera() {
+function DNAHelixCamera({ visible }: { visible: boolean }) {
   const { camera } = useThree();
-  const { carouselActiveIndex, helixZoomedStation } = useProjectScene();
+  const { projectProgress, helixZoomedStation } = useProjectScene();
 
   // Zoom progress tracked locally for smooth lerp
   const zoomProgressRef = useRef(0);
   const currentYRef = useRef(HELIX_PARAMS.height / 2 + 2);
 
   useFrame((state, delta) => {
-    const { pointer, clock } = state;
+    if (!visible) return;
+
+    const { pointer } = state;
     const halfHeight = HELIX_PARAMS.height / 2;
     const R = HELIX_PARAMS.cameraRadius;
     const omega = HELIX_PARAMS.turns * 2 * Math.PI;
 
     // Compute helix path position
-    const t = carouselActiveIndex / (HELIX_PARAMS.stationCount - 1);
+    const t = THREE.MathUtils.clamp(projectProgress, 0, 1);
     const yStart = halfHeight + 2;
     const yEnd = -(halfHeight + 2);
 
@@ -104,6 +147,7 @@ function DNAHelixCamera() {
       targetY,
       R * Math.sin(omega * t - Math.PI / 2)
     );
+    let targetLookAtY = targetY;
 
     // Smooth zoom progress
     const targetZoomProgress = helixZoomedStation !== null ? 1.0 : 0.0;
@@ -127,19 +171,13 @@ function DNAHelixCamera() {
       // Lerp toward zoom position
       const zoomLerpFactor = zoomProgressRef.current;
       targetPos.lerp(zoomPos, zoomLerpFactor);
-
-      // Update current Y for lookAt
-      currentYRef.current = THREE.MathUtils.lerp(
-        currentYRef.current,
-        zoomY,
-        Math.min(delta * 4, 0.12)
-      );
+      targetLookAtY = zoomY;
     }
 
     // Smooth Y interpolation for lookAt
     currentYRef.current = THREE.MathUtils.lerp(
       currentYRef.current,
-      targetY,
+      targetLookAtY,
       Math.min(delta * 4, 0.12)
     );
 
@@ -158,11 +196,80 @@ function DNAHelixCamera() {
   return null;
 }
 
+function DNAStationLabels({ visible }: { visible: boolean }) {
+  const labelsRef = useRef<THREE.Group>(null);
+  const { carouselActiveIndex } = useProjectScene();
+
+  const stationPositions = useMemo(() => {
+    const halfHeight = HELIX_PARAMS.height / 2;
+    const omega = HELIX_PARAMS.turns * 2 * Math.PI;
+
+    return projects.slice(0, HELIX_PARAMS.stationCount).map((_, index) => {
+      const stationT = (index + 0.5) / HELIX_PARAMS.stationCount;
+      const stationY = halfHeight - stationT * HELIX_PARAMS.height + 0.9;
+      const stationAngle = stationT * omega + 0.32;
+      const labelRadius = HELIX_PARAMS.radius + 1.45;
+
+      return new THREE.Vector3(
+        labelRadius * Math.cos(stationAngle),
+        stationY,
+        labelRadius * Math.sin(stationAngle)
+      );
+    });
+  }, []);
+
+  useFrame((state) => {
+    if (!labelsRef.current) return;
+    labelsRef.current.rotation.y = state.clock.elapsedTime * 0.08;
+  });
+
+  return (
+    <group ref={labelsRef}>
+      {projects.slice(0, HELIX_PARAMS.stationCount).map((project, index) => {
+        const isActive = carouselActiveIndex === index;
+        const color = STATION_HEX_COLORS[index % STATION_HEX_COLORS.length];
+        const opacity = visible ? (isActive ? 1 : 0.36) : 0;
+        const position = stationPositions[index];
+
+        return (
+          <Html
+            key={project.id}
+            position={position}
+            center
+            zIndexRange={[30, 0]}
+            style={{ pointerEvents: "none" }}
+          >
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold"
+              style={{
+                opacity,
+                transform: isActive ? "translateY(-6px) scale(1)" : "scale(0.82)",
+                transition:
+                  "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.25, 1, 0.5, 1)",
+                background: isActive
+                  ? "linear-gradient(135deg, rgba(5, 12, 22, 0.86), rgba(5, 12, 22, 0.48))"
+                  : "rgba(5, 12, 22, 0.58)",
+                border: `1px solid ${color}${isActive ? "cc" : "55"}`,
+                color,
+                backdropFilter: "blur(14px)",
+                WebkitBackdropFilter: "blur(14px)",
+                boxShadow: isActive ? `0 18px 60px ${color}24, 0 0 24px ${color}35` : "none",
+              }}
+            >
+              {String(index + 1).padStart(2, "0")}
+            </div>
+          </Html>
+        );
+      })}
+    </group>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // Main DNA Helix Scene
 // ═══════════════════════════════════════════════════════════════════
 
-export default function DNAHelixScene() {
+export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
   const { camera, pointer, gl } = useThree();
   const { helixZoomedStation, setHelixZoomedStation } = useProjectScene();
 
@@ -186,8 +293,9 @@ export default function DNAHelixScene() {
 
   // Pointer enter/leave tracking
   const onPointerOver = useCallback(() => {
+    if (!visible) return;
     mouseActive.current = true;
-  }, []);
+  }, [visible]);
 
   const onPointerLeave = useCallback(() => {
     mouseActive.current = false;
@@ -196,13 +304,20 @@ export default function DNAHelixScene() {
 
   // Pointer click handler for station selection
   const onPointerClick = useCallback(() => {
+    if (!visible) return;
     if (hoveredStationRef.current >= 0) {
       setHelixZoomedStation(hoveredStationRef.current);
     }
-  }, [setHelixZoomedStation]);
+  }, [visible, setHelixZoomedStation]);
 
   // Each frame: compute mouse world position and hovered station
   useFrame(() => {
+    if (!visible) {
+      mouseActive.current = false;
+      hoveredStationRef.current = -1;
+      return;
+    }
+
     // Track pointer NDC
     pointerNDCRef.current.set(pointer.x, pointer.y);
 
@@ -286,11 +401,14 @@ export default function DNAHelixScene() {
       onClick={onPointerClick}
     >
       <DNAHelixParticles
+        visible={visible}
         mouseActive={mouseActive}
         mouseWorld={mouseWorld}
         hoveredStationRef={hoveredStationRef}
+        zoomedStation={helixZoomedStation}
       />
-      <DNAHelixCamera />
+      <DNAStationLabels visible={visible} />
+      <DNAHelixCamera visible={visible} />
     </group>
   );
 }

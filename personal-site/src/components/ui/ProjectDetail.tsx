@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import type { Project } from "@/types";
+import ProjectVisualBackdrop from "./ProjectVisualBackdrop";
 
 interface ProjectDetailProps {
   project: Project;
@@ -109,20 +110,25 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        backgroundColor: "rgba(2, 6, 18, 0.68)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
         opacity: 0,
       }}
       onClick={handleBackdropClick}
     >
+      <ProjectVisualBackdrop project={project} />
       <div
         ref={contentRef}
-        className="relative max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-white/10 bg-black/90 p-10"
+        className="relative z-10 max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-white/10 p-10 shadow-2xl"
         style={{
           opacity: 0,
+          background:
+            "linear-gradient(135deg, rgba(5, 12, 22, 0.88), rgba(8, 16, 28, 0.76))",
           scrollbarWidth: "thin",
           scrollbarColor: "rgba(73, 197, 182, 0.3) transparent",
+          boxShadow:
+            "0 24px 80px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
         }}
       >
         {/* Close button */}

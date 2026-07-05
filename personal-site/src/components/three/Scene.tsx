@@ -7,13 +7,15 @@ import * as THREE from "three";
 import ParticleField from "./ParticleField";
 import PostProcessing from "./PostProcessing";
 import ProjectScene from "./ProjectScene";
-import ProjectCarousel from "./ProjectCarousel";
 import DNAHelixScene from "./dna/DNAHelixScene";
 import { useProjectScene } from "./SceneContext";
 
 interface SceneProps {
   className?: string;
 }
+
+const CAMERA_HOME_POSITION = new THREE.Vector3(0, 0, 5);
+const CAMERA_HOME_TARGET = new THREE.Vector3(0, 0, 0);
 
 /** Inner component that reads window scroll and updates a shared scroll ref */
 function ScrollTracker({
@@ -41,6 +43,19 @@ function CanvasResizer() {
   return null;
 }
 
+function CameraHomeController({ enabled }: { enabled: boolean }) {
+  const { camera } = useThree();
+
+  useFrame((_, delta) => {
+    if (!enabled) return;
+    const lerpFactor = 1 - Math.exp(-delta * 3);
+    camera.position.lerp(CAMERA_HOME_POSITION, lerpFactor);
+    camera.lookAt(CAMERA_HOME_TARGET);
+  });
+
+  return null;
+}
+
 /**
  * Wrapper that fades ParticleField in/out based on activeSection.
  * When "projects" section is active, the hero particles fade to make
@@ -59,7 +74,8 @@ function FadeableParticleField({
   return (
     <ParticleField
       mouse={mouse}
-      scrollProgress={isProjectsActive ? 1.0 : scrollProgress}
+      scrollProgress={scrollProgress}
+      opacity={isProjectsActive ? 0 : 1}
     />
   );
 }
@@ -68,6 +84,7 @@ export default function Scene({ className }: SceneProps) {
   const mouseRef = useRef(new THREE.Vector2(0, 0));
   const [scrollProgress, setScrollProgress] = useState(0);
   const { activeProjectScene, activeSection } = useProjectScene();
+  const isProjectsActive = activeSection === "projects";
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLDivElement>) => {
@@ -96,9 +113,10 @@ export default function Scene({ className }: SceneProps) {
     >
       <CanvasResizer />
       <ScrollTracker onScroll={setScrollProgress} />
+      <CameraHomeController enabled={!isProjectsActive} />
       <FadeableParticleField mouse={mouseRef.current} scrollProgress={scrollProgress} />
       <ProjectScene activeScene={activeProjectScene} visible={activeProjectScene != null} />
-      {activeSection === "projects" ? <DNAHelixScene /> : <ProjectCarousel />}
+      <DNAHelixScene visible={isProjectsActive} />
       <PostProcessing />
     </Canvas>
   );
