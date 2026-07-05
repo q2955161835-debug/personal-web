@@ -21,13 +21,15 @@
 }
 
 /* ── Base reset ── */
-*,
-*::before,
-*::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 }
+
+/* Tailwind v4: padding/margin reset handled by preflight, not manual reset */
 
 html {
   scroll-behavior: smooth;
