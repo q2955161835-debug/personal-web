@@ -72,7 +72,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Git 与安全
 - Git 根目录为 `D:\0文件夹\个人站`，本项目目录为 `D:\0文件夹\个人站\personal-site`。
-- 用户提供的 GitHub 地址：`https://github.com/q2955161835-debug/personal-web`；仓库公开/私有状态未在本地确认。
+- GitHub remote：`origin` 指向 `https://github.com/q2955161835-debug/personal-web.git`；仓库公开/私有状态未在本地确认。
 - `.env` 是真实敏感配置账本，禁止提交；`.env.example` 只允许占位值和说明。
 - 禁止把真实密钥、token、cookie、数据库密码、私有地址写入文档、代码块、进展记录或提交历史。
 - 工作区外常用备份目录：`D:\0文件夹\备份`。
