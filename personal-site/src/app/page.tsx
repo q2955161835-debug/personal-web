@@ -6,12 +6,14 @@ import AnalysisSection from "@/components/sections/AnalysisSection";
 import TimelineSection from "@/components/sections/TimelineSection";
 import ContactSection from "@/components/sections/ContactSection";
 import { SceneProvider } from "@/components/three/SceneContext";
+import SectionCursor from "@/components/ui/SectionCursor";
 
 export default function Home() {
   return (
     <main>
       <SceneProvider>
         <Navigation />
+        <SectionCursor />
         <HeroSection />
         <AboutSection />
         <ProjectsSection />

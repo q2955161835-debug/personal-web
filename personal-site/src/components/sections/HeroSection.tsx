@@ -37,7 +37,7 @@ export default function HeroSection() {
   }, []);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
+    <section id="hero" className="relative h-screen w-full overflow-hidden">
       {/* R3F Canvas - full background */}
       <div className="absolute inset-0 z-0">
         <Scene />
@@ -51,42 +51,24 @@ export default function HeroSection() {
       >
         {/* Animated gradient text with glow */}
         <h1
-          className="text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl"
+          className="iridescent-text text-5xl font-bold tracking-tight sm:text-7xl md:text-8xl"
           style={{
-            background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
-            backgroundSize: "300% 100%",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            animation: "gradient-flow 4s ease-in-out infinite",
             filter: "drop-shadow(0 0 20px rgba(73, 197, 182, 0.4)) drop-shadow(0 0 40px rgba(255, 147, 152, 0.2))",
           }}
         >
           FAN JUN JIE
         </h1>
         <p
-          className="mt-4 text-lg"
+          className="iridescent-text mt-4 text-lg"
           style={{
-            background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
-            backgroundSize: "300% 100%",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            animation: "gradient-flow 4s ease-in-out infinite",
             filter: "drop-shadow(0 0 8px rgba(73, 197, 182, 0.3))",
           }}
         >
           AI Product &amp; Data Analysis
         </p>
         <p
-          className="mt-2 text-sm"
+          className="iridescent-text mt-2 text-sm"
           style={{
-            background: "linear-gradient(90deg, #ff9398, #8b5cf6, #49c5b6, #ff9398)",
-            backgroundSize: "300% 100%",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            backgroundClip: "text",
-            animation: "gradient-flow 5s ease-in-out infinite",
             filter: "drop-shadow(0 0 6px rgba(255, 147, 152, 0.25))",
           }}
         >
@@ -115,21 +97,6 @@ export default function HeroSection() {
           </svg>
         </div>
       </div>
-
-      {/* Gradient flow keyframes */}
-      <style jsx global>{`
-        @keyframes gradient-flow {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-      `}</style>
     </section>
   );
 }

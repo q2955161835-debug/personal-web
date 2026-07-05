@@ -7,6 +7,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 import { projects } from "@/data/projects";
+import { InteractiveGlassButton } from "@/components/ui/InteractiveGlassPanel";
 import { useProjectScene } from "../SceneContext";
 import { generateDNAHelixBuffers, HELIX_PARAMS } from "./dnaGeometry";
 import { dnaFragmentShader } from "./shaders/dna-helix.frag";
@@ -153,10 +154,8 @@ function DNAHelixCamera({ visible }: { visible: boolean }) {
 
 function DNAStationLabels({
   visible,
-  hoveredStationRef,
 }: {
   visible: boolean;
-  hoveredStationRef: MutableRefObject<number>;
 }) {
   const labelsRef = useRef<THREE.Group>(null);
   const {
@@ -173,12 +172,12 @@ function DNAStationLabels({
       const stationT = (index + 0.5) / HELIX_PARAMS.stationCount;
       const stationY = getStationY(index);
       const stationAngle = stationT * omega;
-      const labelRadius = HELIX_PARAMS.radius + 1.38;
+      const midpointOffset = 0.08;
 
       return new THREE.Vector3(
-        labelRadius * Math.cos(stationAngle),
-        stationY,
-        labelRadius * Math.sin(stationAngle)
+        midpointOffset * Math.cos(stationAngle),
+        stationY + 0.64,
+        midpointOffset * Math.sin(stationAngle)
       );
     });
   }, []);
@@ -196,7 +195,6 @@ function DNAStationLabels({
     <group ref={labelsRef}>
       {projects.slice(0, HELIX_PARAMS.stationCount).map((project, index) => {
         const isActive = carouselActiveIndex === index;
-        const isHovered = hoveredStationRef.current === index;
         const color = STATION_HEX_COLORS[index % STATION_HEX_COLORS.length];
         const opacity = visible ? (isActive ? 1 : 0.34) : 0;
 
@@ -208,32 +206,31 @@ function DNAStationLabels({
             zIndexRange={[30, 0]}
             style={{ pointerEvents: visible ? "auto" : "none" }}
           >
-            <button
-              type="button"
+            <InteractiveGlassButton
               aria-label={`Open project ${project.name}`}
               onClick={(event) => {
                 event.stopPropagation();
                 setCarouselActiveIndex(index);
                 setHelixZoomedStation(index);
+                window.dispatchEvent(new CustomEvent("portfolio:open-project", { detail: index }));
               }}
-              className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-semibold outline-none"
+              glowColor={color}
+              intensity={7}
+              className="flex h-10 w-10 items-center justify-center rounded-full text-center outline-none"
               style={{
                 opacity,
-                transform: isActive || isHovered ? "translateY(-5px) scale(1.08)" : "scale(0.82)",
-                transition:
-                  "opacity 300ms cubic-bezier(0.22, 1, 0.36, 1), transform 300ms cubic-bezier(0.25, 1, 0.5, 1)",
-                background: isActive
-                  ? "linear-gradient(135deg, rgba(5, 12, 22, 0.88), rgba(5, 12, 22, 0.52))"
-                  : "rgba(5, 12, 22, 0.48)",
-                border: `1px solid ${color}${isActive ? "dd" : "55"}`,
+                transition: "opacity 300ms cubic-bezier(0.22, 1, 0.36, 1)",
                 color,
-                backdropFilter: "blur(14px)",
-                WebkitBackdropFilter: "blur(14px)",
-                boxShadow: isActive ? `0 18px 60px ${color}24, 0 0 24px ${color}35` : "none",
+                background: isActive
+                  ? `linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06) 42%, rgba(5,12,22,0.46)), radial-gradient(circle at 50% 0%, ${color}42, transparent 62%)`
+                  : `linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04)), radial-gradient(circle at 50% 0%, ${color}2e, transparent 62%)`,
+                boxShadow: isActive ? `0 18px 60px ${color}24, 0 0 28px ${color}38` : undefined,
               }}
             >
-              {String(index + 1).padStart(2, "0")}
-            </button>
+              <span className="block text-xs font-semibold text-white/55">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+            </InteractiveGlassButton>
           </Html>
         );
       })}
@@ -297,7 +294,7 @@ export default function DNAHelixScene({ visible }: DNAHelixSceneProps) {
         hoveredStationRef={hoveredStationRef}
         zoomedStation={helixZoomedStation}
       />
-      <DNAStationLabels visible={visible} hoveredStationRef={hoveredStationRef} />
+      <DNAStationLabels visible={visible} />
       <DNAHelixCamera visible={visible} />
     </group>
   );

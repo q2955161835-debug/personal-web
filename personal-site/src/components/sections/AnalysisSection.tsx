@@ -1,49 +1,179 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import {
-  analysisCategories,
   analysisCategorySummary,
   analysisMethodNodes,
   analysisProjects,
 } from "@/data/analysis-projects";
+import type { DataAnalysisProject } from "@/types";
+import { InteractiveGlassButton, InteractiveGlassPanel } from "@/components/ui/InteractiveGlassPanel";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const ALL_CATEGORY = "全部";
-const tabs = [ALL_CATEGORY, ...analysisCategories] as const;
+const xAxisParticles = Array.from({ length: 92 }, (_, index) => index);
+const yAxisParticles = Array.from({ length: 34 }, (_, index) => index);
+const fieldParticles = Array.from({ length: 130 }, (_, index) => index);
 
-function buildPieGradient() {
-  const total = analysisCategorySummary.reduce((sum, item) => sum + item.count, 0);
-  let cursor = 0;
+function pct(value: number) {
+  return `${value.toFixed(4)}%`;
+}
 
-  return analysisCategorySummary
-    .map((item) => {
-      const start = (cursor / total) * 360;
-      cursor += item.count;
-      const end = (cursor / total) * 360;
-      return `${item.color} ${start.toFixed(1)}deg ${end.toFixed(1)}deg`;
-    })
-    .join(", ");
+function categoryPosition(index: number, total: number) {
+  const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+  return {
+    left: pct(50 + Math.cos(angle) * 38),
+    top: pct(50 + Math.sin(angle) * 34),
+  };
+}
+
+function MethodParticleCloud() {
+  return (
+    <div className="pointer-events-none absolute right-4 top-12 hidden h-72 w-80 lg:block">
+      {analysisMethodNodes.map((node, index) => {
+        const position = categoryPosition(index, analysisMethodNodes.length);
+        const size = 9 + node.count * 0.75;
+        return (
+          <div
+            key={node.name}
+            className="analysis-method-node cursor-target pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2"
+            style={{
+              ...position,
+              color: analysisCategorySummary.find((item) => item.category === node.category)?.color ?? "#49c5b6",
+            }}
+            title={`${node.name} / ${node.count} 次`}
+          >
+            <span
+              className="block rounded-full"
+              style={{
+                width: size,
+                height: size,
+                background: "currentColor",
+                boxShadow: "0 0 22px currentColor",
+              }}
+            />
+            <span className="mt-2 block whitespace-nowrap text-[11px] font-semibold text-white/62">
+              {node.name}
+            </span>
+          </div>
+        );
+      })}
+      <div className="absolute left-1/2 top-1/2 h-px w-52 -translate-x-1/2 bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+      <div className="absolute left-1/2 top-1/2 h-52 w-px -translate-y-1/2 bg-gradient-to-b from-transparent via-white/18 to-transparent" />
+    </div>
+  );
+}
+
+function CategoryParticleRing() {
+  return (
+    <div className="pointer-events-none absolute bottom-10 right-8 hidden h-64 w-64 lg:block">
+      {analysisCategorySummary.map((item, index) => {
+        const position = categoryPosition(index, analysisCategorySummary.length);
+        return (
+          <div
+            key={item.category}
+            className="cursor-target pointer-events-auto absolute -translate-x-1/2 -translate-y-1/2 text-center transition-transform duration-300 hover:scale-110"
+            style={{ ...position, color: item.color }}
+          >
+            <span
+              className="mx-auto block h-3 w-3 rounded-full"
+              style={{ background: item.color, boxShadow: `0 0 20px ${item.color}` }}
+            />
+            <span className="mt-2 block whitespace-nowrap text-xs font-semibold text-white/65">
+              {item.category}
+            </span>
+            <span className="block text-[11px] text-white/38">{item.count} 个</span>
+          </div>
+        );
+      })}
+      {Array.from({ length: 48 }, (_, index) => {
+        const angle = (index / 48) * Math.PI * 2;
+        return (
+          <span
+            key={index}
+            className="twinkle-particle absolute h-1 w-1 rounded-full bg-white/45"
+            style={{
+              left: pct(50 + Math.cos(angle) * 36),
+              top: pct(50 + Math.sin(angle) * 36),
+              "--particle-duration": `${(2 + (index % 5) * 0.35).toFixed(2)}s`,
+            } as CSSProperties}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ProjectDetailPanel({ project }: { project: DataAnalysisProject }) {
+  return (
+    <InteractiveGlassPanel
+      glowColor={project.color}
+      intensity={5}
+      className="w-full rounded-lg p-5 md:p-6"
+    >
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-white/38">
+            Selected Case
+          </p>
+          <h3 className="mt-2 text-xl font-bold leading-snug text-white">{project.title}</h3>
+        </div>
+        <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/50">
+          {project.year}
+        </span>
+      </div>
+      <p className="text-sm leading-6 text-white/58">{project.description}</p>
+      <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+          <p className="text-xl font-bold text-white">{project.impactScore}</p>
+          <p className="mt-1 text-[11px] text-white/38">含金量</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+          <p className="text-xl font-bold text-white">{project.deliverables}</p>
+          <p className="mt-1 text-[11px] text-white/38">交付件</p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-white/[0.035] p-3">
+          <p className="text-xl font-bold text-white">{project.valueLabel}</p>
+          <p className="mt-1 text-[11px] text-white/38">价值点</p>
+        </div>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-2">
+        {project.method.map((method) => (
+          <span key={method} className="cursor-target rounded-full bg-white/[0.055] px-3 py-1 text-xs text-white/62">
+            {method}
+          </span>
+        ))}
+      </div>
+      <ul className="mt-5 space-y-2 text-sm leading-6 text-white/58">
+        {project.highlights.map((highlight) => (
+          <li key={highlight} className="flex gap-2">
+            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
+            <span>{highlight}</span>
+          </li>
+        ))}
+      </ul>
+    </InteractiveGlassPanel>
+  );
 }
 
 export default function AnalysisSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [activeCategory, setActiveCategory] = useState<(typeof tabs)[number]>(ALL_CATEGORY);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [selectedProject, setSelectedProject] = useState<DataAnalysisProject>(analysisProjects[0]);
 
-  const filteredProjects = useMemo(() => {
-    if (activeCategory === ALL_CATEGORY) return analysisProjects;
-    return analysisProjects.filter((project) => project.category === activeCategory);
-  }, [activeCategory]);
-
-  const pieGradient = useMemo(() => buildPieGradient(), []);
+  const maxScore = useMemo(
+    () => Math.max(...analysisProjects.map((project) => project.impactScore)),
+    []
+  );
 
   useEffect(() => {
     const section = sectionRef.current;
-    if (!section) return;
+    const track = trackRef.current;
+    if (!section || !track) return;
 
     const ctx = gsap.context(() => {
       gsap.fromTo(
@@ -63,6 +193,29 @@ export default function AnalysisSection() {
           },
         }
       );
+
+      const mm = gsap.matchMedia();
+      mm.add("(min-width: 768px)", () => {
+        const distance = () => Math.max(0, track.scrollWidth - window.innerWidth + window.innerWidth * 0.14);
+        const tween = gsap.to(track, {
+          x: () => -distance(),
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: () => `+=${distance() + window.innerHeight * 0.95}`,
+            scrub: 0.9,
+            pin: true,
+            anticipatePin: 1,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        return () => {
+          tween.scrollTrigger?.kill();
+          tween.kill();
+        };
+      });
     }, section);
 
     return () => ctx.revert();
@@ -72,178 +225,104 @@ export default function AnalysisSection() {
     <section
       id="data-analysis"
       ref={sectionRef}
-      className="relative z-10 min-h-screen overflow-hidden px-6 py-28 md:px-12"
+      className="relative z-10 min-h-screen overflow-hidden bg-black px-5 py-24 md:px-10"
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-teal-300/40 to-transparent" />
-      <div className="mx-auto max-w-7xl">
-        <div className="analysis-reveal mb-12 grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
-          <div>
-            <p className="mb-4 text-xs font-semibold uppercase tracking-[0.34em] text-white/35">
-              93+ cases / 619 deliverables
-            </p>
-            <h2
-              className="text-4xl font-bold sm:text-5xl"
-              style={{
-                background: "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
-                backgroundSize: "300% 100%",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-                animation: "gradient-flow 4s ease-in-out infinite",
-              }}
-            >
-              Data Analysis
-            </h2>
-            <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
-              精选跨问卷、金融、医学、化学与社会科学的代表性项目，把统计方法、复现实验和业务解释压缩成可交付的分析作品集。
-            </p>
-          </div>
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[linear-gradient(115deg,rgba(0,212,255,0.1),transparent_28%,rgba(255,147,152,0.08)_64%,transparent)]" />
+        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:68px_68px]" />
+        {fieldParticles.map((index) => (
+          <span
+            key={index}
+            className="twinkle-particle absolute h-1 w-1 rounded-full bg-white/45"
+            style={{
+              left: `${(index * 37) % 100}%`,
+              top: `${(index * 53) % 100}%`,
+              "--particle-duration": `${(2.2 + (index % 6) * 0.28).toFixed(2)}s`,
+              "--particle-delay": `${(index % 11) * 0.12}s`,
+            } as CSSProperties}
+          />
+        ))}
+      </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            {[
-              ["93+", "总项目数"],
-              ["90%", "单项目交付成功率"],
-              ["7", "覆盖领域"],
-            ].map(([value, label]) => (
-              <div key={label} className="rounded-lg border border-white/10 bg-white/[0.035] p-5">
-                <p className="text-3xl font-bold text-white">{value}</p>
-                <p className="mt-2 text-xs uppercase tracking-[0.22em] text-white/35">{label}</p>
-              </div>
-            ))}
-          </div>
+      <div className="analysis-reveal relative z-10 mx-auto mb-10 max-w-7xl">
+        <p className="mb-4 text-xs font-semibold uppercase tracking-[0.34em] text-white/35">
+          93+ cases / ranked by practical value
+        </p>
+        <h2 className="iridescent-text text-4xl font-bold sm:text-5xl">Data Analysis</h2>
+        <p className="mt-5 max-w-2xl text-sm leading-7 text-white/55">
+          每根玻璃柱代表一个精选分析项目，按含金量从左到右排序。滚动到本区后页面固定，鼠标滚轮会推动图表横向移动，点击柱体查看方法、样本和关键结论。
+        </p>
+      </div>
+
+      <div className="relative z-10 h-[calc(100vh-7rem)] min-h-[620px] overflow-hidden">
+        <MethodParticleCloud />
+        <CategoryParticleRing />
+
+        <div className="absolute left-0 top-0 z-20 w-[min(420px,92vw)]">
+          <ProjectDetailPanel project={selectedProject} />
         </div>
 
-        <div className="analysis-reveal mb-10 flex flex-wrap gap-3">
-          {tabs.map((category) => {
-            const active = activeCategory === category;
-            return (
-              <button
-                key={category}
-                type="button"
-                onClick={() => setActiveCategory(category)}
-                className="rounded-full border px-4 py-2 text-sm transition-all duration-300"
+        <div
+          ref={trackRef}
+          className="analysis-chart-track absolute bottom-8 left-[min(460px,96vw)] flex h-[520px] min-w-max items-end gap-9 pr-[28vw]"
+        >
+          <div className="pointer-events-none absolute bottom-0 left-0 h-px w-full">
+            {xAxisParticles.map((index) => (
+              <span
+                key={index}
+                className="analysis-axis-particle absolute top-0 h-1.5 w-1.5 rounded-full"
                 style={{
-                  borderColor: active ? "rgba(73,197,182,0.65)" : "rgba(255,255,255,0.12)",
-                  background: active ? "rgba(73,197,182,0.14)" : "rgba(255,255,255,0.035)",
-                  color: active ? "rgba(180,255,246,0.95)" : "rgba(255,255,255,0.58)",
-                  boxShadow: active ? "0 0 24px rgba(73,197,182,0.14)" : "none",
+                  left: `${(index / (xAxisParticles.length - 1)) * 100}%`,
+                  background: index % 7 === 0 ? "#00d4ff" : "rgba(255,255,255,0.42)",
+                  boxShadow: index % 7 === 0 ? "0 0 16px #00d4ff" : "0 0 9px rgba(255,255,255,0.35)",
                 }}
-              >
-                {category}
-              </button>
+              />
+            ))}
+          </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 h-full w-px">
+            {yAxisParticles.map((index) => (
+              <span
+                key={index}
+                className="analysis-axis-particle absolute left-0 h-1.5 w-1.5 rounded-full"
+                style={{
+                  bottom: `${(index / (yAxisParticles.length - 1)) * 100}%`,
+                  background: index % 5 === 0 ? "#ff9398" : "rgba(255,255,255,0.38)",
+                  boxShadow: index % 5 === 0 ? "0 0 16px #ff9398" : "0 0 9px rgba(255,255,255,0.3)",
+                }}
+              />
+            ))}
+          </div>
+
+          {analysisProjects.map((project, index) => {
+            const height = 150 + (project.impactScore / maxScore) * 310;
+            const active = selectedProject.id === project.id;
+
+            return (
+              <div key={project.id} className="analysis-reveal relative flex w-[112px] flex-col items-center">
+                <InteractiveGlassButton
+                  aria-label={`查看 ${project.title}`}
+                  glowColor={project.color}
+                  intensity={9}
+                  onClick={() => setSelectedProject(project)}
+                  className="analysis-bar-glass flex w-[92px] flex-col justify-between rounded-lg px-3 py-4 text-left"
+                  style={{
+                    height,
+                    color: project.color,
+                    boxShadow: active
+                      ? `0 28px 90px ${project.color}38, inset 0 0 32px rgba(255,255,255,0.08)`
+                      : undefined,
+                  }}
+                >
+                  <span className="text-xs font-semibold text-white/58">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="text-2xl font-bold text-white">{project.impactScore}</span>
+                </InteractiveGlassButton>
+                <div className="mt-4 min-h-24 w-[132px] text-center">
+                  <p className="text-xs font-semibold leading-5 text-white/72">{project.title}</p>
+                  <p className="mt-1 text-[11px] text-white/36">{project.category}</p>
+                </div>
+              </div>
             );
           })}
-        </div>
-
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filteredProjects.map((project) => (
-              <article
-                key={project.id}
-                className="analysis-reveal group rounded-lg border border-white/10 bg-black/35 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-teal-300/45 hover:bg-white/[0.055]"
-                style={{ contentVisibility: "auto", containIntrinsicSize: "360px" }}
-              >
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <h3 className="text-lg font-semibold leading-snug text-white">{project.title}</h3>
-                  <span className="shrink-0 rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/45">
-                    {project.year}
-                  </span>
-                </div>
-
-                <p className="mb-4 text-sm leading-6 text-white/55">{project.description}</p>
-
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {project.method.map((method) => (
-                    <span key={method} className="rounded-full bg-teal-300/10 px-3 py-1 text-xs text-teal-100/80">
-                      {method}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mb-5 flex flex-wrap gap-2">
-                  {project.tools.map((tool) => (
-                    <span key={tool} className="rounded-full border border-white/10 px-2.5 py-1 text-xs text-white/45">
-                      {tool}
-                    </span>
-                  ))}
-                </div>
-
-                <ul className="space-y-2 text-sm leading-6 text-white/58">
-                  {project.highlights.slice(0, 3).map((highlight) => (
-                    <li key={highlight} className="flex gap-2">
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#49c5b6]" />
-                      <span>{highlight}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
-
-          <aside className="analysis-reveal space-y-4 lg:sticky lg:top-28 lg:self-start">
-            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-6 backdrop-blur-md">
-              <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/45">
-                方法论图谱
-              </h3>
-              <div className="relative mx-auto h-72 w-full max-w-[320px]">
-                {analysisMethodNodes.map((node, index) => {
-                  const angle = (index / analysisMethodNodes.length) * Math.PI * 2 - Math.PI / 2;
-                  const radius = 104;
-                  const size = 34 + node.count * 1.6;
-                  const left = 50 + (Math.cos(angle) * radius) / 3.2;
-                  const top = 50 + (Math.sin(angle) * radius) / 2.72;
-                  return (
-                    <div
-                      key={node.name}
-                      className="group absolute flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/10 bg-black/65 text-center text-[11px] leading-tight text-white/70 shadow-2xl transition-all duration-300 hover:z-10 hover:scale-110 hover:border-teal-300/60"
-                      style={{
-                        left: `${left}%`,
-                        top: `${top}%`,
-                        width: size,
-                        height: size,
-                        boxShadow: "0 0 26px rgba(73,197,182,0.11)",
-                      }}
-                      title={`${node.category} / ${node.count} 次`}
-                    >
-                      {node.name}
-                    </div>
-                  );
-                })}
-                <div className="absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-teal-300/35 bg-teal-300/10 text-center text-xs font-semibold leading-5 text-teal-100">
-                  方法
-                  <br />
-                  复用频率
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-white/10 bg-white/[0.035] p-6 backdrop-blur-md">
-              <h3 className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-white/45">
-                领域分布
-              </h3>
-              <div className="grid items-center gap-6 sm:grid-cols-[130px_1fr] lg:grid-cols-1">
-                <div
-                  className="mx-auto h-32 w-32 rounded-full"
-                  style={{
-                    background: `conic-gradient(${pieGradient})`,
-                    boxShadow: "0 0 38px rgba(73,197,182,0.12)",
-                  }}
-                  aria-hidden="true"
-                />
-                <div className="space-y-3">
-                  {analysisCategorySummary.map((item) => (
-                    <div key={item.category} className="flex items-center justify-between gap-4 text-sm">
-                      <span className="flex items-center gap-2 text-white/58">
-                        <span className="h-2 w-2 rounded-full" style={{ background: item.color }} />
-                        {item.category}
-                      </span>
-                      <span className="font-semibold text-white/75">{item.count}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </div>
     </section>

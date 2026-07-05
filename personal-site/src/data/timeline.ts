@@ -3,8 +3,8 @@ import type { TimelineEntry } from "@/types";
 export const timelineEntries: TimelineEntry[] = [
   {
     id: "statistics-major",
-    year: 2022,
-    period: "2022.09-至今",
+    year: 2023,
+    period: "2023.09-至今",
     title: "统计学本科训练",
     organization: "统计学专业",
     description:
@@ -14,8 +14,8 @@ export const timelineEntries: TimelineEntry[] = [
   },
   {
     id: "analysis-delivery",
-    year: 2024,
-    period: "2024.06-至今",
+    year: 2025,
+    period: "2025.06-至今",
     title: "数据分析项目交付",
     organization: "独立项目制",
     description:
@@ -25,8 +25,8 @@ export const timelineEntries: TimelineEntry[] = [
   },
   {
     id: "ai-products",
-    year: 2025,
-    period: "2025.01-至今",
+    year: 2026,
+    period: "2026.01-至今",
     title: "AI 产品独立开发",
     organization: "个人产品线",
     description:
@@ -36,8 +36,8 @@ export const timelineEntries: TimelineEntry[] = [
   },
   {
     id: "agent-workflow",
-    year: 2025,
-    period: "2025.03-至今",
+    year: 2026,
+    period: "2026.03-至今",
     title: "AI Agent 工程工作流",
     organization: "Claude Code / Codex / Cursor",
     description:

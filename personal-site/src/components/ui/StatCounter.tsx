@@ -46,19 +46,13 @@ export default function StatCounter({
   }, [suffix, value]);
 
   return (
-    <div ref={containerRef} className="flex flex-col items-center gap-2">
+    <div
+      ref={containerRef}
+      className="cursor-target flex flex-col items-center gap-2 rounded-lg px-2 py-3 transition-transform duration-300 hover:-translate-y-1"
+    >
       <span
         ref={counterRef}
-        className="text-4xl font-bold"
-        style={{
-          background:
-            "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
-          backgroundSize: "300% 100%",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-          backgroundClip: "text",
-          animation: "gradient-flow 4s ease-in-out infinite",
-        }}
+        className="iridescent-text text-4xl font-bold"
       >
         0{suffix}
       </span>

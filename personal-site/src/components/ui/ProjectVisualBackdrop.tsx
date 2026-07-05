@@ -206,15 +206,16 @@ export default function ProjectVisualBackdrop({ project }: ProjectVisualBackdrop
   const gradientId = `project-visual-${project.id}`;
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-lg" aria-hidden="true">
+    <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <div
         className="absolute inset-0"
         style={{
-          background: `radial-gradient(circle at 72% 24%, ${colors.dim}, transparent 34%), radial-gradient(circle at 18% 76%, ${colors.secondary}1f, transparent 32%)`,
+          background: `linear-gradient(115deg, ${colors.dim}, transparent 28%, ${colors.secondary}18 72%, transparent), radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 56%)`,
         }}
       />
+      <div className="absolute inset-0 opacity-45 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:76px_76px]" />
       <svg
-        className="absolute right-[-6%] top-[-10%] h-[52%] w-[62%] min-w-[520px] opacity-85"
+        className="absolute right-[4%] top-[8%] h-[48%] w-[50%] min-w-[440px] opacity-80"
         viewBox="0 0 340 190"
         fill="none"
       >

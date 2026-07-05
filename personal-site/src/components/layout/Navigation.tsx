@@ -71,7 +71,7 @@ export default function Navigation() {
             <a
               href={link.href}
               onClick={(e) => handleClick(e, link.href)}
-              className="text-xs font-medium transition-colors duration-200 sm:text-sm"
+              className="cursor-target text-xs font-medium transition-colors duration-200 sm:text-sm"
               style={{
                 color: activeHref === link.href ? "rgba(180,255,246,0.98)" : "rgba(255,255,255,0.62)",
                 textShadow: activeHref === link.href ? "0 0 14px rgba(73,197,182,0.38)" : "none",

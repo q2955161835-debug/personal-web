@@ -62,8 +62,8 @@ void main() {
   dnaPos.x += sin(dnaPos.y * 1.2 + noiseT + aRandomSeed * 6.2831) * noiseAmp;
   dnaPos.z += cos(dnaPos.y * 1.4 + noiseT * 1.2 + aRandomSeed * 4.7123) * noiseAmp;
 
-  // Particles start as a loose field and gather into the DNA near the project section.
-  float gather = smoothstep(0.005, 0.11, uScrollProgress) * uSceneOpacity;
+  // Scene opacity drives formation so the first project key is already on the DNA.
+  float gather = smoothstep(0.0, 0.86, uSceneOpacity);
   vec3 pos = mix(aInitialPosition, dnaPos, gather);
 
   vec4 probeMv = modelViewMatrix * vec4(pos, 1.0);
@@ -88,7 +88,7 @@ void main() {
 
   if (keyWeight > 0.01) {
     float pulse = sin(uTime * 3.0 + aRandomSeed * 2.0) * 0.5 + 0.5;
-    vGlow += keyWeight * (0.65 + pulse * 0.35);
+    vGlow += keyWeight * (0.2 + pulse * 0.16);
   }
 
   if (uZoomProgress > 0.01) {
@@ -100,7 +100,9 @@ void main() {
     }
   }
 
-  if (aParticleType > 1.5 && aParticleType < 2.5) {
+  if (aParticleType > 0.5 && aParticleType < 1.5) {
+    vAlpha *= 0.62;
+  } else if (aParticleType > 1.5 && aParticleType < 2.5) {
     vAlpha *= 0.76;
   } else if (aParticleType > 2.5) {
     vAlpha *= 0.14;
@@ -114,14 +116,14 @@ void main() {
   float baseSize = aSize * (150.0 / max(distCam, 0.1));
 
   if (aParticleType > 0.5 && aParticleType < 1.5) {
-    baseSize *= 1.0 + keyWeight * 1.6;
+    baseSize *= 0.92 + keyWeight * 1.1;
   } else if (aParticleType > 1.5 && aParticleType < 2.5) {
-    baseSize *= 1.6 + keyWeight * 1.25;
+    baseSize *= 1.25 + keyWeight * 0.95;
   } else if (aParticleType > 2.5) {
     baseSize *= 0.36;
   }
 
-  gl_PointSize = clamp(baseSize, 0.45, 58.0);
+  gl_PointSize = clamp(baseSize, 0.35, 42.0);
   gl_Position = projectionMatrix * mvPosition;
 }
 `;

@@ -4,14 +4,14 @@ export const HELIX_PARAMS = {
   height: 30, // total helix height
   turns: 3, // number of full helix turns
   radius: 1.5, // helix strand radius
-  particleSpacing: 0.15, // distance between particles along strand
+  particleSpacing: 0.016, // distance between particles along strand
   basePairSpacing: 2.5, // vertical distance between base pairs (stations)
   stationCount: 6,
   cameraRadius: 9.2, // fixed camera distance
-  particlesPerBasePair: 38, // particles forming each rung
-  ambientParticleCount: 760, // floating ambient particles
-  scatterRadius: 0.22, // pointer scatter radius in screen space
-  scatterStrength: 1.35, // pointer scatter strength
+  particlesPerBasePair: 650, // particles forming each rung
+  ambientParticleCount: 620, // floating ambient particles
+  scatterRadius: 0.24, // pointer scatter radius in screen space
+  scatterStrength: 1.55, // pointer scatter strength
 } as const;
 
 const STATION_COLORS = [
@@ -96,7 +96,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
         new THREE.Color("#49c5b6"),
         colorT
       );
-      pushParticle(x, y, z, c, 0.6 + Math.random() * 0.8, -1, 0);
+      pushParticle(x, y, z, c, 0.38 + Math.random() * 0.55, -1, 0);
     }
   }
 
@@ -126,16 +126,16 @@ export function generateDNAHelixBuffers(): DNABuffers {
 
         // Blend between strand color and station color
         const rungColor = new THREE.Color().lerpColors(
-          new THREE.Color("#ffffff"),
           stationColor,
-          0.6
+          new THREE.Color("#ffffff"),
+          0.16
         );
-        pushParticle(px, py, pz, rungColor, 0.48 + Math.random() * 0.68, s, 1);
+        pushParticle(px, py, pz, rungColor, 0.28 + Math.random() * 0.38, s, 1);
       }
     }
 
     // ─── Decoration particles orbiting station (type 2) ─────────
-    const decorCount = 36;
+    const decorCount = 190;
     for (let d = 0; d < decorCount; d++) {
       const dAngle = Math.random() * Math.PI * 2;
       const dRadius = 0.3 + Math.random() * 0.8;
@@ -144,7 +144,7 @@ export function generateDNAHelixBuffers(): DNABuffers {
       const dy = stationY + (Math.random() - 0.5) * 1.0;
 
       const decorColor = stationColor.clone().multiplyScalar(1.3);
-      pushParticle(dx, dy, dz, decorColor, 0.3 + Math.random() * 0.5, s, 2);
+      pushParticle(dx, dy, dz, decorColor, 0.22 + Math.random() * 0.32, s, 2);
     }
   }
 

@@ -27,6 +27,11 @@ export interface DataAnalysisProject {
   description: string;
   year: number;
   highlights: string[];
+  impactScore: number;
+  deliverables: number;
+  sampleSize: string;
+  valueLabel: string;
+  color: string;
 }
 
 export interface AnalysisMethodNode {

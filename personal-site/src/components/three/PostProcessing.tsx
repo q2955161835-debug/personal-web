@@ -10,8 +10,8 @@ export default function PostProcessing() {
   return (
     <EffectComposer multisampling={0} enabled>
       <Bloom
-        intensity={0.6}
-        luminanceThreshold={0.3}
+        intensity={0.44}
+        luminanceThreshold={0.42}
         luminanceSmoothing={0.9}
         mipmapBlur
       />

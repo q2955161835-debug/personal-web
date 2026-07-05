@@ -45,18 +45,7 @@ export default function AboutSection() {
         <div className="w-full grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
         {/* Left Column - Bio & Stats */}
         <div className="flex flex-col justify-center lg:pl-8">
-          <h2
-            className="mb-8 text-3xl font-bold"
-            style={{
-              background:
-                "linear-gradient(90deg, #49c5b6, #ff9398, #8b5cf6, #49c5b6)",
-              backgroundSize: "300% 100%",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              animation: "gradient-flow 4s ease-in-out infinite",
-            }}
-          >
+          <h2 className="iridescent-text mb-8 text-3xl font-bold">
             About Me
           </h2>
 
@@ -71,7 +60,7 @@ export default function AboutSection() {
             <StatCounter value={93} label="数据分析项目" suffix="+" />
             <StatCounter value={619} label="过程与交付文件" suffix="" />
             <StatCounter value={300} label="万行代码" suffix="+" />
-            <StatCounter value={60} label="历史 Token 消耗" suffix="亿+" />
+            <StatCounter value={6} label="历史消耗" suffix="B+" />
           </div>
         </div>
 

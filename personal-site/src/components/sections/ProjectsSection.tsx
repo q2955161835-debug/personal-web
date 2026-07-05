@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
 import ProjectDetail from "@/components/ui/ProjectDetail";
+import { InteractiveGlassButton } from "@/components/ui/InteractiveGlassPanel";
 import { useProjectScene } from "@/components/three/SceneContext";
 import type { Project } from "@/types";
 
@@ -124,13 +125,32 @@ export default function ProjectsSection() {
     animation: "gradient-flow 4s ease-in-out infinite",
   };
 
+  useEffect(() => {
+    const handleOpenProject = (event: Event) => {
+      const projectIndex = (event as CustomEvent<number>).detail;
+      if (typeof projectIndex !== "number") return;
+
+      const boundedIndex = Math.max(0, Math.min(STATION_COUNT - 1, projectIndex));
+      setCarouselActiveIndex(boundedIndex);
+      setHelixZoomedStation(boundedIndex);
+    };
+
+    window.addEventListener("portfolio:open-project", handleOpenProject);
+    return () => window.removeEventListener("portfolio:open-project", handleOpenProject);
+  }, [setCarouselActiveIndex, setHelixZoomedStation]);
+
   return (
     <section
       id="projects"
       ref={sectionRef}
       className="relative"
-      style={{ height: `${STATION_COUNT * 125}vh` }}
+      style={{ height: `${STATION_COUNT * 150}vh` }}
     >
+      <div className="pointer-events-none sticky top-0 h-screen overflow-hidden">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(73,197,182,0.08),transparent_28%,rgba(255,147,152,0.06)_72%,transparent)]" />
+        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:84px_84px]" />
+      </div>
+
       {/* ─── Compact project status (fixed while in view) ───────── */}
       <div
         className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center"
@@ -153,35 +173,32 @@ export default function ProjectsSection() {
             {activeProject.subtitle}
           </p>
         </div>
-        <button
-          type="button"
-          aria-label={`Open project ${activeProject.name}`}
-          className="pointer-events-auto fixed w-[min(17rem,58vw)] rounded-lg px-3 py-2 text-left shadow-2xl"
+        <div
+          className="pointer-events-auto fixed w-[min(20rem,66vw)]"
           style={{
             left: "50%",
-            top: "57%",
+            top: "39%",
             opacity: activeSection === "projects" && !selectedProject ? 1 : 0,
             transform: "translate(-50%, -50%)",
-            transition:
-              "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1), transform 320ms cubic-bezier(0.25, 1, 0.5, 1)",
-            background:
-              "linear-gradient(135deg, rgba(5, 12, 22, 0.86), rgba(5, 12, 22, 0.48))",
-            border: `1px solid ${activeThemeColor}cc`,
-            color: activeThemeColor,
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            boxShadow: `0 18px 60px ${activeThemeColor}24, 0 0 24px ${activeThemeColor}35`,
+            transition: "opacity 320ms cubic-bezier(0.22, 1, 0.36, 1)",
             pointerEvents: activeSection === "projects" && !selectedProject ? "auto" : "none",
           }}
-          onClick={() => setHelixZoomedStation(carouselActiveIndex)}
         >
-          <span className="mb-2 block text-xs font-semibold text-white/50">
-            {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
-          </span>
-          <span className="block text-sm font-bold leading-tight text-white">
-            {activeProject.name}
-          </span>
-        </button>
+          <InteractiveGlassButton
+            aria-label={`Open project ${activeProject.name}`}
+            glowColor={activeThemeColor}
+            intensity={8}
+            className="w-full rounded-lg px-4 py-3 text-left"
+            onClick={() => setHelixZoomedStation(carouselActiveIndex)}
+          >
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.22em] text-white/48">
+              {String(carouselActiveIndex + 1).padStart(2, "0")} / {String(STATION_COUNT).padStart(2, "0")}
+            </span>
+            <span className="block text-base font-bold leading-tight text-white">
+              {activeProject.name}
+            </span>
+          </InteractiveGlassButton>
+        </div>
       </div>
 
       {/* ─── Scroll indicator dots (right side) ────────────────── */}
@@ -211,7 +228,7 @@ export default function ProjectsSection() {
                   behavior: "smooth",
                 });
               }}
-              className="group flex items-center gap-2"
+              className="cursor-target group flex items-center gap-2"
               aria-label={`Go to project: ${project.name}`}
             >
               {/* Dot */}

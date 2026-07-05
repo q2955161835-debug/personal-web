@@ -4,6 +4,7 @@ import { useEffect, useRef, useCallback } from "react";
 import gsap from "gsap";
 import type { Project } from "@/types";
 import ProjectVisualBackdrop from "./ProjectVisualBackdrop";
+import { InteractiveGlassPanel } from "./InteractiveGlassPanel";
 
 interface ProjectDetailProps {
   project: Project;
@@ -110,7 +111,8 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{
-        backgroundColor: "rgba(2, 6, 18, 0.68)",
+        background:
+          "linear-gradient(120deg, rgba(2, 6, 18, 0.72), rgba(5, 18, 26, 0.58) 42%, rgba(18, 7, 20, 0.68))",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         opacity: 0,
@@ -120,21 +122,26 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
       <ProjectVisualBackdrop project={project} />
       <div
         ref={contentRef}
-        className="relative z-10 max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-lg border border-white/10 p-10 shadow-2xl"
+        className="relative z-10 w-full max-w-4xl px-4"
         style={{
           opacity: 0,
-          background:
-            "linear-gradient(135deg, rgba(5, 12, 22, 0.88), rgba(8, 16, 28, 0.76))",
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(73, 197, 182, 0.3) transparent",
-          boxShadow:
-            "0 24px 80px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
         }}
       >
+        <InteractiveGlassPanel
+          glowColor={project.scene === "chart" ? "#ff6b6b" : "#49c5b6"}
+          intensity={5}
+          className="max-h-[85vh] w-full rounded-lg p-7 shadow-2xl md:p-10"
+          style={{
+            overflowY: "auto",
+            overflowX: "hidden",
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(73, 197, 182, 0.3) transparent",
+          }}
+        >
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-400 transition-colors duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white"
+          className="cursor-target absolute right-6 top-6 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-gray-400 transition-colors duration-200 hover:border-white/20 hover:bg-white/10 hover:text-white"
           aria-label="Close"
         >
           <svg
@@ -154,11 +161,11 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
 
         {/* Category & Year badges */}
         <div className="mb-6 flex items-center gap-3">
-          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400">
+          <span className="cursor-target rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-400">
             {project.year}
           </span>
           <span
-            className="rounded-full px-3 py-1 text-xs"
+            className="cursor-target rounded-full px-3 py-1 text-xs"
             style={{
               background:
                 "linear-gradient(135deg, rgba(73, 197, 182, 0.2), rgba(139, 92, 246, 0.2))",
@@ -176,7 +183,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
         </div>
 
         {/* Project name */}
-        <h2 className="mb-4 text-4xl font-bold" style={gradientTextStyle}>
+        <h2 className="iridescent-text mb-4 text-4xl font-bold" style={gradientTextStyle}>
           {project.name}
         </h2>
 
@@ -197,7 +204,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
             {project.techStack.map((tech) => (
               <span
                 key={tech}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 transition-colors duration-200 hover:border-white/20 hover:bg-white/10"
+                className="cursor-target rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-gray-300 transition-colors duration-200 hover:border-white/20 hover:bg-white/10"
               >
                 {tech}
               </span>
@@ -214,7 +221,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
             {project.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full px-3 py-1 text-sm"
+                className="cursor-target rounded-full px-3 py-1 text-sm"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(73, 197, 182, 0.15), rgba(139, 92, 246, 0.15))",
@@ -235,7 +242,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/btn relative inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium text-white transition-all duration-300"
+                className="cursor-target group/btn relative inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-white transition-all duration-300"
                 style={{
                   background: "rgba(255, 255, 255, 0.05)",
                   border: "1px solid rgba(73, 197, 182, 0.3)",
@@ -254,7 +261,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
                 </svg>
                 GitHub
                 <span
-                  className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100"
+                  className="pointer-events-none absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100"
                   style={{
                     boxShadow:
                       "0 0 20px rgba(73, 197, 182, 0.15), inset 0 0 20px rgba(73, 197, 182, 0.05)",
@@ -267,7 +274,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
                 href={project.demoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/btn relative inline-flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-medium text-white transition-all duration-300"
+                className="cursor-target group/btn relative inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-medium text-white transition-all duration-300"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(73, 197, 182, 0.15), rgba(139, 92, 246, 0.15))",
@@ -289,7 +296,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
                 </svg>
                 Demo
                 <span
-                  className="pointer-events-none absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100"
+                  className="pointer-events-none absolute inset-0 rounded-lg opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100"
                   style={{
                     boxShadow:
                       "0 0 20px rgba(139, 92, 246, 0.15), inset 0 0 20px rgba(139, 92, 246, 0.05)",
@@ -299,6 +306,7 @@ export default function ProjectDetail({ project, onClose }: ProjectDetailProps) 
             )}
           </div>
         )}
+        </InteractiveGlassPanel>
       </div>
     </div>
   );
