@@ -20,9 +20,11 @@ const stars = Array.from({ length: 42 }, (_, index) => ({
 }));
 
 const glowSpots = [
-  { id: "teal", left: "12%", top: "20%", width: "40vw", height: "34vh", color: "rgba(73,197,182,0.26)" },
-  { id: "rose", left: "66%", top: "30%", width: "42vw", height: "36vh", color: "rgba(255,147,152,0.22)" },
-  { id: "violet", left: "38%", top: "76%", width: "38vw", height: "30vh", color: "rgba(139,92,246,0.2)" },
+  { id: "teal", left: "13%", top: "20%", width: "48vw", height: "40vh", color: "rgba(73,197,182,0.34)" },
+  { id: "rose", left: "70%", top: "26%", width: "46vw", height: "40vh", color: "rgba(255,147,152,0.31)" },
+  { id: "violet", left: "37%", top: "76%", width: "44vw", height: "34vh", color: "rgba(139,92,246,0.29)" },
+  { id: "gold", left: "78%", top: "72%", width: "34vw", height: "28vh", color: "rgba(255,202,122,0.22)" },
+  { id: "cyan", left: "24%", top: "54%", width: "36vw", height: "30vh", color: "rgba(0,212,255,0.24)" },
 ];
 
 export default function CosmicBackdrop() {

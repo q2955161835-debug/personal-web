@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { profile } from "@/data/profile";
+import AnimatedText from "@/components/ui/AnimatedText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,18 +27,18 @@ export default function ContactSection() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".section-transition-reveal",
-        { opacity: 0, filter: "blur(9px)" },
+        { autoAlpha: 0, filter: "blur(13px)" },
         {
-          opacity: 1,
+          autoAlpha: 1,
           filter: "blur(0px)",
-          duration: 0.9,
+          duration: 1.05,
           ease: "power3.out",
           stagger: 0.1,
           scrollTrigger: {
             trigger: section,
-            start: "top 96%",
-            end: "top 52%",
-            scrub: 0.45,
+            start: "top 98%",
+            end: "top 50%",
+            scrub: 0.72,
           },
         }
       );
@@ -59,21 +60,30 @@ export default function ContactSection() {
         <div className="section-transition-reveal contact-meteor cursor-target">
           <div className="meteor-surface-text">
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/58">
-              Contact
+              <AnimatedText text="Contact" staggerMs={10} />
             </p>
             <h2 className="iridescent-text mt-4 max-w-3xl text-4xl font-bold leading-tight md:text-6xl">
-              让数据、AI 产品和工程交付进入同一个闭环。
+              <AnimatedText text="让数据、AI 产品和工程交付进入同一个闭环。" staggerMs={12} />
             </h2>
             <p className="mt-7 max-w-xl text-sm leading-7 text-white/68">
-              适合交流 AI 产品开发、统计建模、自动化工具、量化研究和个人项目合作。正式沟通请使用 Email 或 GitHub。
+              <AnimatedText
+                text="适合交流 AI 产品开发、统计建模、自动化工具、量化研究和个人项目合作。正式沟通请使用 Email 或 GitHub。"
+                delay={0.08}
+                duration={820}
+                staggerMs={7}
+              />
             </p>
 
             <div className="mt-9 grid max-w-2xl gap-4">
               {contactItems.map((item) => {
                 const content = (
                   <>
-                    <span className="text-[11px] uppercase tracking-[0.26em] text-white/38">{item.label}</span>
-                    <span className="break-words text-sm font-semibold text-white/82">{item.value}</span>
+                    <span className="text-[11px] uppercase tracking-[0.26em] text-white/38">
+                      <AnimatedText text={item.label} staggerMs={10} />
+                    </span>
+                    <span className="break-words text-sm font-semibold text-white/82">
+                      <AnimatedText text={item.value} delay={0.04} duration={720} staggerMs={6} />
+                    </span>
                   </>
                 );
 
@@ -99,30 +109,40 @@ export default function ContactSection() {
 
         <form onSubmit={handleSubmit} className="section-transition-reveal contact-orbit-form pointer-events-auto">
           <p className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-white/38">
-            Message
+            <AnimatedText text="Message" staggerMs={10} />
           </p>
           <label className="contact-line-field">
-            <span>姓名</span>
+            <span>
+              <AnimatedText text="姓名" staggerMs={10} />
+            </span>
             <input name="name" required placeholder="你的名字" />
           </label>
           <label className="contact-line-field">
-            <span>邮箱</span>
+            <span>
+              <AnimatedText text="邮箱" staggerMs={10} />
+            </span>
             <input name="email" type="email" required placeholder="name@example.com" />
           </label>
           <label className="contact-line-field">
-            <span>消息</span>
+            <span>
+              <AnimatedText text="消息" staggerMs={10} />
+            </span>
             <textarea name="message" required rows={4} placeholder="想聊的项目、问题或合作方向" />
           </label>
           <button type="submit" className="cursor-target contact-submit">
-            发送消息
+            <AnimatedText text="发送消息" staggerMs={10} />
           </button>
           {sent && <p className="mt-5 text-sm font-semibold text-teal-100">消息已发送</p>}
         </form>
       </div>
 
       <footer className="section-transition-reveal relative z-10 mx-auto flex max-w-7xl flex-col gap-3 pt-6 text-sm text-white/34 sm:flex-row sm:items-center sm:justify-between">
-        <span>© 2026 FAN JUN JIE</span>
-        <span>AI Product / Data Analysis / Creative Engineering</span>
+        <span>
+          <AnimatedText text="© 2026 FAN JUN JIE" staggerMs={8} />
+        </span>
+        <span>
+          <AnimatedText text="AI Product / Data Analysis / Creative Engineering" delay={0.06} duration={720} staggerMs={6} />
+        </span>
       </footer>
     </section>
   );

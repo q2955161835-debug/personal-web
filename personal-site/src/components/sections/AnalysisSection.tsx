@@ -215,49 +215,70 @@ function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
   return (
     <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,88vw)] md:left-12 md:max-w-[min(560px,45vw)]">
       <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/34">
-        93 Cases / Ranked By Practical Value
+        <AnimatedText text="93 Cases / Ranked By Practical Value" staggerMs={10} />
       </p>
       <h2 className="iridescent-text mt-3 text-4xl font-bold leading-none sm:text-5xl md:text-6xl">
         Data Analysis
       </h2>
       <p className="mt-4 max-w-xl text-xs leading-6 text-white/58 sm:text-sm sm:leading-7">
-        每根玻璃柱代表一个精选项目。进入本区后页面固定，滚轮推动柱状图横向移动，当前详情与方法星云同步切换。
+        <AnimatedText
+          text="每根玻璃柱代表一个精选项目。进入本区后页面固定，滚轮推动柱状图横向移动，当前详情与方法星云同步切换。"
+          delay={0.06}
+          duration={780}
+          staggerMs={7}
+        />
       </p>
 
       <div key={project.id} className="analysis-detail-swap mt-6 md:mt-9">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
-            Selected Case
+            <AnimatedText text="Selected Case" staggerMs={12} />
           </p>
           <h3 className="mt-3 max-w-xl text-2xl font-bold leading-tight text-white md:text-3xl">
             <AnimatedText text={project.title} />
           </h3>
-          <p className="mt-4 max-w-xl text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">{project.description}</p>
+          <p className="mt-4 max-w-xl text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">
+            <AnimatedText text={project.description} delay={0.04} duration={760} staggerMs={7} />
+          </p>
         </div>
 
         <div className="mt-4 grid max-w-xl grid-cols-3 gap-4 md:mt-6 md:gap-6">
           <div>
-            <p className="text-xl font-bold text-white md:text-2xl">{project.valueLabel}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">核心</p>
+            <p className="text-xl font-bold text-white md:text-2xl">
+              <AnimatedText text={project.valueLabel} staggerMs={12} />
+            </p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
+              <AnimatedText text="核心" delay={0.04} staggerMs={12} />
+            </p>
           </div>
           <div>
-            <p className="text-xl font-bold text-white md:text-2xl">{project.method.length}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">方法</p>
+            <p className="text-xl font-bold text-white md:text-2xl">
+              <AnimatedText text={`${project.method.length}`} staggerMs={12} />
+            </p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
+              <AnimatedText text="方法" delay={0.04} staggerMs={12} />
+            </p>
           </div>
           <div>
-            <p className="text-xl font-bold text-white md:text-2xl">{project.tools.length}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">工具</p>
+            <p className="text-xl font-bold text-white md:text-2xl">
+              <AnimatedText text={`${project.tools.length}`} staggerMs={12} />
+            </p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
+              <AnimatedText text="工具" delay={0.04} staggerMs={12} />
+            </p>
           </div>
         </div>
 
         <p className="mt-4 max-w-xl text-xs font-medium leading-6 sm:text-sm sm:leading-7" style={{ color: project.color }}>
-          {project.sampleSize}
+          <AnimatedText text={project.sampleSize} delay={0.06} staggerMs={8} />
         </p>
         <ul className="mt-4 hidden max-w-3xl gap-2 text-sm leading-6 text-white/58 sm:grid md:grid-cols-3">
-          {project.highlights.map((highlight) => (
+          {project.highlights.map((highlight, index) => (
             <li key={highlight} className="flex gap-2">
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
-              <span>{highlight}</span>
+              <span>
+                <AnimatedText text={highlight} delay={0.08 + index * 0.05} duration={740} staggerMs={6} />
+              </span>
             </li>
           ))}
         </ul>
@@ -304,35 +325,38 @@ export default function AnalysisSection() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         ".analysis-reveal",
-        { opacity: 0, y: 32 },
+        { autoAlpha: 0, y: 58, filter: "blur(12px)" },
         {
-          opacity: 1,
+          autoAlpha: 1,
           y: 0,
-          duration: 0.72,
+          filter: "blur(0px)",
+          duration: 0.92,
           ease: "power3.out",
           stagger: 0.08,
           scrollTrigger: {
             trigger: section,
-            start: "top 74%",
-            end: "top 30%",
-            toggleActions: "play none none reverse",
+            start: "top 96%",
+            end: "top 42%",
+            scrub: 0.55,
           },
         }
       );
 
       gsap.fromTo(
         ".analysis-transition-reveal",
-        { opacity: 0 },
+        { autoAlpha: 0, y: 38, filter: "blur(10px)" },
         {
-          opacity: 1,
-          duration: 0.9,
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 1,
           ease: "power3.out",
           stagger: 0.08,
           scrollTrigger: {
             trigger: section,
-            start: "top 82%",
-            end: "top 35%",
-            toggleActions: "play none none reverse",
+            start: "top 98%",
+            end: "top 46%",
+            scrub: 0.6,
           },
         }
       );
