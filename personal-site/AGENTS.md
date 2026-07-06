@@ -22,6 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `playwright` 作为本地视觉验收脚本的开发依赖，验收证据放在 `try/`。
 - Tailwind CSS 4 与全局样式位于 `src/app/globals.css`。
 - 标题字体栈优先使用 `Bahnschrift`、`Agency FB`、`DIN Alternate` 等棱角分明的系统字体候选；不依赖远程字体加载。
+- GitHub Pages 部署使用 Next.js 静态导出，CI 通过 `GITHUB_PAGES=true` 启用 `/personal-web` 子路径。
 
 ## 目录结构与职责
 - `src/app/`：Next.js 根布局、页面入口、全局样式与站点元数据。
@@ -36,6 +37,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - `src/lib/`：通用工具函数。
 - `src/types/`：共享 TypeScript 类型。
 - `public/`：静态资源。
+- `../.github/workflows/deploy-pages.yml`：GitHub Pages 自动构建与发布流程。
+- `.env.example`：环境变量假账本，只记录占位值与说明。
 - `doc/验收标准.md`：功能、视觉、交互与测试验收清单。
 - `doc/进展记录/`：按日期记录阶段性修改、验证、异常与回退信息。
 - `try/`：仅存放本地调试、测试日志、临时截图或实验文件，已加入 `.gitignore`，可清空删除。
@@ -52,6 +55,13 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - 开发服务：`npm run dev -- -p 3000`
 - 代码检查：`npm run lint`
 - 生产构建：`npm run build`
+- GitHub Pages 静态导出复现：PowerShell 中执行 `$env:GITHUB_PAGES="true"; npm run build; Remove-Item Env:\GITHUB_PAGES`
+
+## 运行与部署
+- 本地开发默认不设置 `GITHUB_PAGES`，页面运行在根路径 `/`。
+- GitHub Pages CI 设置 `GITHUB_PAGES=true`，`next.config.ts` 会启用 `output: "export"`、`trailingSlash`、`basePath: "/personal-web"` 与 `assetPrefix: "/personal-web/"`。
+- GitHub Actions 从 `personal-site/out` 上传 Pages artifact，并额外生成 `.nojekyll`，避免 `_next` 静态资源被 Jekyll 忽略。
+- 公开访问地址：`https://q2955161835-debug.github.io/personal-web/`。
 
 ## 修改边界
 - 允许修改：本轮需求直接涉及的组件、数据、样式、文档与验收记录。
@@ -80,7 +90,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Git 与安全
 - Git 根目录为 `D:\0文件夹\个人站`，本项目目录为 `D:\0文件夹\个人站\personal-site`。
-- GitHub remote：`origin` 指向 `https://github.com/q2955161835-debug/personal-web.git`；仓库公开/私有状态未在本地确认。
+- GitHub remote：`origin` 指向 `https://github.com/q2955161835-debug/personal-web.git`；仓库状态为公开仓库。
 - `.env` 是真实敏感配置账本，禁止提交；`.env.example` 只允许占位值和说明。
 - 禁止把真实密钥、token、cookie、数据库密码、私有地址写入文档、代码块、进展记录或提交历史。
 - 工作区外常用备份目录：`D:\0文件夹\备份`。

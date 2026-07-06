@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FAN JUN JIE Personal Site
+
+Next.js 16 personal portfolio for AI product, data analysis, automation tools, and creative engineering work.
 
 ## Getting Started
 
@@ -6,31 +8,32 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Local Checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+## GitHub Pages Deployment
 
-To learn more about Next.js, take a look at the following resources:
+The public project site is deployed as a GitHub Pages sub-site:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Repository: [q2955161835-debug/personal-web](https://github.com/q2955161835-debug/personal-web)
+- URL: [https://q2955161835-debug.github.io/personal-web/](https://q2955161835-debug.github.io/personal-web/)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+GitHub Actions builds the static export from `personal-site/` with `GITHUB_PAGES=true`, which enables the `/personal-web` `basePath` and asset prefix in `next.config.ts`.
 
-## Deploy on Vercel
+To reproduce the GitHub Pages build locally in PowerShell:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```powershell
+$env:GITHUB_PAGES = "true"
+npm run build
+Remove-Item Env:\GITHUB_PAGES
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The workflow file is `../.github/workflows/deploy-pages.yml` from this project directory.
