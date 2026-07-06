@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { profile } from "@/data/profile";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const contactItems: ReadonlyArray<{ label: string; value: string; href?: string }> = [
   { label: "Email", value: profile.email, href: `mailto:${profile.email}` },
@@ -12,7 +16,35 @@ const contactItems: ReadonlyArray<{ label: string; value: string; href?: string 
 ];
 
 export default function ContactSection() {
+  const sectionRef = useRef<HTMLElement>(null);
   const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".section-transition-reveal",
+        { opacity: 0, filter: "blur(9px)" },
+        {
+          opacity: 1,
+          filter: "blur(0px)",
+          duration: 0.9,
+          ease: "power3.out",
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: section,
+            start: "top 96%",
+            end: "top 52%",
+            scrub: 0.45,
+          },
+        }
+      );
+    }, section);
+
+    return () => ctx.revert();
+  }, []);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -21,10 +53,10 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative z-10 min-h-screen overflow-hidden bg-transparent px-6 py-24 md:px-12">
+    <section id="contact" ref={sectionRef} className="relative z-10 min-h-screen overflow-hidden bg-transparent px-6 py-24 md:px-12">
       <div className="contact-meteor-scene relative mx-auto flex min-h-[78vh] max-w-7xl items-center">
-        <div className="contact-meteor-trail" aria-hidden="true" />
-        <div className="contact-meteor cursor-target">
+        <div className="section-transition-reveal contact-meteor-trail" aria-hidden="true" />
+        <div className="section-transition-reveal contact-meteor cursor-target">
           <div className="meteor-surface-text">
             <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/58">
               Contact
@@ -65,7 +97,7 @@ export default function ContactSection() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="contact-orbit-form pointer-events-auto">
+        <form onSubmit={handleSubmit} className="section-transition-reveal contact-orbit-form pointer-events-auto">
           <p className="mb-7 text-xs font-semibold uppercase tracking-[0.3em] text-white/38">
             Message
           </p>
@@ -88,7 +120,7 @@ export default function ContactSection() {
         </form>
       </div>
 
-      <footer className="relative z-10 mx-auto flex max-w-7xl flex-col gap-3 pt-6 text-sm text-white/34 sm:flex-row sm:items-center sm:justify-between">
+      <footer className="section-transition-reveal relative z-10 mx-auto flex max-w-7xl flex-col gap-3 pt-6 text-sm text-white/34 sm:flex-row sm:items-center sm:justify-between">
         <span>© 2026 FAN JUN JIE</span>
         <span>AI Product / Data Analysis / Creative Engineering</span>
       </footer>

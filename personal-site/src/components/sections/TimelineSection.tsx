@@ -1,10 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { timelineEntries } from "@/data/timeline";
 import SolarTimelineScene from "@/components/three/timeline/SolarTimelineScene";
 import AnimatedText from "@/components/ui/AnimatedText";
+
+gsap.registerPlugin(ScrollTrigger);
 
 const typeLabel = {
   education: "教育",
@@ -52,6 +56,34 @@ export default function TimelineSection() {
     };
   }, []);
 
+  useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".section-transition-reveal",
+        { opacity: 0, y: 34, filter: "blur(8px)" },
+        {
+          opacity: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.86,
+          ease: "power3.out",
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: section,
+            start: "top 96%",
+            end: "top 54%",
+            scrub: 0.45,
+          },
+        }
+      );
+    }, section);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
     <section
       id="experience"
@@ -68,7 +100,7 @@ export default function TimelineSection() {
           onSelect={setActiveIndex}
         />
 
-        <div className="pointer-events-none absolute left-6 top-24 z-10 max-w-[min(520px,84vw)] md:left-12">
+        <div className="section-transition-reveal pointer-events-none absolute left-6 top-24 z-10 max-w-[min(520px,84vw)] md:left-12">
           <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/35">
             Experience Solar System
           </p>
@@ -78,7 +110,7 @@ export default function TimelineSection() {
           </p>
         </div>
 
-        <div className="pointer-events-none absolute right-6 top-[24vh] z-10 max-w-[min(460px,82vw)] text-right md:right-12">
+        <div className="section-transition-reveal pointer-events-none absolute right-6 top-[24vh] z-10 max-w-[min(460px,82vw)] text-right md:right-12">
           <div key={activeEntry.id} className="timeline-detail-swap">
             <div className="mb-5 flex flex-wrap justify-end gap-3 text-xs text-white/48">
               <span>{activeEntry.period}</span>
@@ -99,7 +131,7 @@ export default function TimelineSection() {
           </div>
         </div>
 
-        <div className="absolute bottom-10 left-6 right-6 z-20 flex flex-wrap items-end gap-5 md:left-12 md:right-12">
+        <div className="section-transition-reveal absolute bottom-10 left-6 right-6 z-20 flex flex-wrap items-end gap-5 md:left-12 md:right-12">
           {timelineEntries.map((entry, index) => {
             const active = activeIndex === index;
             return (

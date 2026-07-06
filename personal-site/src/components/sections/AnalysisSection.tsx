@@ -22,6 +22,8 @@ function normalizedPseudo(index: number, salt: number) {
 }
 
 const X_AXIS_TICK_COUNT = 124;
+const WAVE_START_RATIO = 0.16;
+const WAVE_END_RATIO = 0.84;
 
 const xAxisTicks = Array.from({ length: X_AXIS_TICK_COUNT }, (_, index) => {
   const ratio = index / (X_AXIS_TICK_COUNT - 1);
@@ -153,9 +155,14 @@ function normalBarHeight(index: number, total: number) {
   return Math.max(88, Math.min(382, 92 + gaussian * 252 + shoulder * 92 + localVariance));
 }
 
+function waveRatioForProgress(progress: number) {
+  const bounded = Math.max(0, Math.min(1, progress));
+  return WAVE_START_RATIO + (WAVE_END_RATIO - WAVE_START_RATIO) * bounded;
+}
+
 function MethodNebula({ project }: { project: DataAnalysisProject }) {
   return (
-    <div className="pointer-events-none absolute right-[4vw] top-[8vh] hidden h-[38vh] min-h-80 w-[34vw] max-w-[500px] lg:block">
+    <div className="analysis-transition-reveal pointer-events-none absolute right-[4vw] top-[8vh] hidden h-[38vh] min-h-80 w-[34vw] max-w-[500px] lg:block">
       {analysisMethodNodes.map((node, index) => {
         const active = methodIsActive(project, node.name);
         const color = analysisCategorySummary.find((item) => item.category === node.category)?.color ?? "#49c5b6";
@@ -263,9 +270,9 @@ export default function AnalysisSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
-  const waveRatioRef = useRef(0.5);
+  const waveRatioRef = useRef(WAVE_START_RATIO);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [waveRatio, setWaveRatio] = useState(0.5);
+  const [waveRatio, setWaveRatio] = useState(WAVE_START_RATIO);
   const { setActiveSection, setDnaDissolveProgress } = useProjectScene();
 
   const selectedProject = analysisProjects[activeIndex] ?? analysisProjects[0];
@@ -275,19 +282,9 @@ export default function AnalysisSection() {
     const track = trackRef.current;
     if (!section || !track) return;
 
-    const updateWaveRatio = (index = activeIndexRef.current) => {
-      const axis = section.querySelector<HTMLElement>(".analysis-axis-baseline");
-      const activeBar = section.querySelector<HTMLElement>(`[data-analysis-index="${index}"] .analysis-fluid-bar`);
-      if (!axis || !activeBar) return;
-
-      const axisRect = axis.getBoundingClientRect();
-      const barRect = activeBar.getBoundingClientRect();
-      const nextRatio = Math.max(
-        0,
-        Math.min(1, (barRect.left + barRect.width / 2 - axisRect.left) / Math.max(1, axisRect.width))
-      );
-
-      if (Math.abs(nextRatio - waveRatioRef.current) < 0.004) return;
+    const syncWaveRatio = (progress: number) => {
+      const nextRatio = waveRatioForProgress(progress);
+      if (Math.abs(nextRatio - waveRatioRef.current) < 0.002) return;
       waveRatioRef.current = nextRatio;
       setWaveRatio(nextRatio);
     };
@@ -323,6 +320,23 @@ export default function AnalysisSection() {
         }
       );
 
+      gsap.fromTo(
+        ".analysis-transition-reveal",
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.9,
+          ease: "power3.out",
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: section,
+            start: "top 82%",
+            end: "top 35%",
+            toggleActions: "play none none reverse",
+          },
+        }
+      );
+
       const horizontalTravel = () => Math.max(0, track.scrollWidth - window.innerWidth * 0.74);
       const tween = gsap.to(track, {
         x: () => -horizontalTravel(),
@@ -348,13 +362,13 @@ export default function AnalysisSection() {
           onUpdate: (self) => {
             setActiveSection("data-analysis");
             setDnaDissolveProgress(1);
-            const nextIndex = setProjectByProgress(self.progress);
-            updateWaveRatio(nextIndex);
+            setProjectByProgress(self.progress);
+            syncWaveRatio(self.progress);
           },
         },
       });
 
-      window.requestAnimationFrame(() => updateWaveRatio(activeIndexRef.current));
+      window.requestAnimationFrame(() => syncWaveRatio(0));
 
       return () => {
         tween.scrollTrigger?.kill();
@@ -391,7 +405,7 @@ export default function AnalysisSection() {
         <FloatingProjectDetail project={selectedProject} />
         <MethodNebula project={selectedProject} />
 
-        <div className="pointer-events-none absolute inset-x-[2.4vw] bottom-[1.5vh] z-20 h-[38vh] min-h-[300px]">
+        <div className="analysis-transition-reveal pointer-events-none absolute inset-x-[2.4vw] bottom-[1.5vh] z-20 h-[38vh] min-h-[300px]">
           <div className="absolute bottom-[46px] left-0 right-0 h-[116px]">
             <span className="analysis-axis-baseline absolute bottom-0 left-0 w-full" />
             {xAxisTicks.map((tick) => {
@@ -413,7 +427,9 @@ export default function AnalysisSection() {
                   className="analysis-axis-tick absolute bottom-0 w-px rounded-full"
                   style={{
                     left: `${(tick.ratio * 100).toFixed(4)}%`,
-                    height: `${Math.max(2, height).toFixed(2)}px`,
+                    height: "104px",
+                    transform: `scaleY(${Math.max(0.02, height / 104).toFixed(4)})`,
+                    transformOrigin: "bottom center",
                     "--tick-color": tick.color,
                     background: "var(--tick-color)",
                     boxShadow: wave > 0.28 ? `0 0 ${(7 + wave * 22).toFixed(3)}px var(--tick-color)` : "none",
@@ -445,7 +461,7 @@ export default function AnalysisSection() {
 
         <div
           ref={trackRef}
-          className="analysis-chart-track absolute bottom-[calc(1.5vh+46px)] left-[calc(2.4vw+92px)] z-10 flex h-[calc(43vh-70px)] min-h-[252px] min-w-max items-end gap-12 pr-[42vw] md:left-[36vw]"
+          className="analysis-transition-reveal analysis-chart-track absolute bottom-[calc(1.5vh+46px)] left-[calc(2.4vw+92px)] z-10 flex h-[calc(43vh-70px)] min-h-[252px] min-w-max items-end gap-12 pr-[42vw] md:left-[36vw]"
         >
           {analysisProjects.map((project, index) => {
             const isActive = activeIndex === index;
@@ -472,22 +488,9 @@ export default function AnalysisSection() {
                   onClick={() => {
                     activeIndexRef.current = index;
                     setActiveIndex(index);
-                    window.requestAnimationFrame(() => {
-                      const axis = sectionRef.current?.querySelector<HTMLElement>(".analysis-axis-baseline");
-                      const activeBar = sectionRef.current?.querySelector<HTMLElement>(
-                        `[data-analysis-index="${index}"] .analysis-fluid-bar`
-                      );
-                      if (!axis || !activeBar) return;
-
-                      const axisRect = axis.getBoundingClientRect();
-                      const barRect = activeBar.getBoundingClientRect();
-                      const nextRatio = Math.max(
-                        0,
-                        Math.min(1, (barRect.left + barRect.width / 2 - axisRect.left) / Math.max(1, axisRect.width))
-                      );
-                      waveRatioRef.current = nextRatio;
-                      setWaveRatio(nextRatio);
-                    });
+                    const nextRatio = waveRatioForProgress(index / Math.max(1, analysisProjects.length - 1));
+                    waveRatioRef.current = nextRatio;
+                    setWaveRatio(nextRatio);
                   }}
                   className={`analysis-fluid-bar w-[92px] px-0 py-0 ${isActive ? "analysis-fluid-bar-active" : ""}`}
                   style={{

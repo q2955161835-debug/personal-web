@@ -517,6 +517,11 @@ html.lenis body {
   will-change: transform, opacity;
 }
 
+.section-transition-reveal,
+.analysis-transition-reveal {
+  will-change: opacity, transform, filter;
+}
+
 .analysis-method-node {
   transition: transform 260ms ease, filter 260ms ease;
 }
@@ -652,26 +657,27 @@ html.lenis body {
   z-index: 0;
   overflow: hidden;
   background:
-    linear-gradient(125deg, rgba(73, 197, 182, 0.035), transparent 32%, rgba(255, 147, 152, 0.032) 70%, transparent),
-    linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(4, 1, 8, 0.2));
+    linear-gradient(125deg, rgba(73, 197, 182, 0.07), transparent 32%, rgba(255, 147, 152, 0.065) 70%, transparent),
+    linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(8, 1, 10, 0.3));
 }
 
 .cosmic-backdrop::before {
   content: "";
   position: absolute;
   inset: -18%;
-  opacity: 0.5;
+  opacity: 0.72;
   background:
-    linear-gradient(115deg, rgba(73, 197, 182, 0.045), transparent 28%, rgba(139, 92, 246, 0.028) 48%, transparent 68%),
-    linear-gradient(245deg, transparent 26%, rgba(255, 147, 152, 0.038), transparent 72%);
+    linear-gradient(115deg, rgba(73, 197, 182, 0.075), transparent 28%, rgba(139, 92, 246, 0.052) 48%, transparent 68%),
+    linear-gradient(245deg, transparent 26%, rgba(255, 147, 152, 0.068), transparent 72%);
   animation: cosmic-gradient-flow 22s ease-in-out infinite alternate;
   will-change: transform, opacity;
 }
 
 .cosmic-ambient-glow {
+  position: fixed;
   border-radius: 999px;
-  opacity: 0.78;
-  filter: blur(38px);
+  opacity: 0.96;
+  filter: blur(48px) saturate(1.28);
   mix-blend-mode: screen;
   transform: translate3d(-50%, -50%, 0);
   animation: cosmic-glow-float var(--glow-duration, 20s) ease-in-out var(--glow-delay, 0s) infinite alternate;
@@ -700,11 +706,10 @@ html.lenis body {
 .analysis-axis-tick,
 .analysis-y-tick {
   transition:
-    height 220ms ease,
-    width 220ms ease,
+    transform 220ms ease,
     opacity 220ms ease,
     box-shadow 220ms ease;
-  will-change: height, width, opacity;
+  will-change: transform, opacity;
 }
 
 .analysis-axis-baseline {
@@ -915,11 +920,11 @@ html.lenis body {
 @keyframes cosmic-glow-float {
   from {
     transform: translate3d(-50%, -50%, 0) scale(0.92);
-    opacity: 0.52;
+    opacity: 0.76;
   }
   to {
     transform: translate3d(calc(-50% + var(--glow-x, 0vw)), calc(-50% + var(--glow-y, 0vh)), 0) scale(1.08);
-    opacity: 0.82;
+    opacity: 0.96;
   }
 }
 

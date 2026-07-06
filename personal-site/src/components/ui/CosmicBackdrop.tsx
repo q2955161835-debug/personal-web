@@ -20,9 +20,9 @@ const stars = Array.from({ length: 42 }, (_, index) => ({
 }));
 
 const glowSpots = [
-  { id: "teal", left: "10%", top: "18%", width: "34vw", height: "28vh", color: "rgba(73,197,182,0.14)" },
-  { id: "rose", left: "62%", top: "26%", width: "36vw", height: "32vh", color: "rgba(255,147,152,0.12)" },
-  { id: "violet", left: "34%", top: "72%", width: "32vw", height: "24vh", color: "rgba(139,92,246,0.1)" },
+  { id: "teal", left: "12%", top: "20%", width: "40vw", height: "34vh", color: "rgba(73,197,182,0.26)" },
+  { id: "rose", left: "66%", top: "30%", width: "42vw", height: "36vh", color: "rgba(255,147,152,0.22)" },
+  { id: "violet", left: "38%", top: "76%", width: "38vw", height: "30vh", color: "rgba(139,92,246,0.2)" },
 ];
 
 export default function CosmicBackdrop() {
@@ -37,7 +37,7 @@ export default function CosmicBackdrop() {
             top: spot.top,
             width: spot.width,
             height: spot.height,
-            background: `radial-gradient(ellipse at center, ${spot.color}, transparent 68%)`,
+            background: `radial-gradient(ellipse at center, ${spot.color}, color-mix(in srgb, ${spot.color} 38%, transparent) 38%, transparent 72%)`,
             "--glow-x": `${((normalizedPseudo(index, 10.2) - 0.5) * 9).toFixed(2)}vw`,
             "--glow-y": `${((normalizedPseudo(index, 11.4) - 0.5) * 8).toFixed(2)}vh`,
             "--glow-duration": `${(18 + index * 4).toFixed(2)}s`,
