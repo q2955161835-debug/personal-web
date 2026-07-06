@@ -11,6 +11,7 @@ import {
   analysisProjects,
 } from "@/data/analysis-projects";
 import type { DataAnalysisProject } from "@/types";
+import AnimatedText from "@/components/ui/AnimatedText";
 import { FluidGlassButton } from "@/components/ui/FluidGlassPanel";
 import { useProjectScene } from "@/components/three/SceneContext";
 
@@ -214,63 +215,70 @@ function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
   return (
     <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,88vw)] md:left-12 md:max-w-[min(560px,45vw)]">
       <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/34">
-        93 Cases / Ranked By Practical Value
+        <AnimatedText text="93 Cases / Ranked By Practical Value" duration={760} staggerMs={8} />
       </p>
       <h2 className="iridescent-text mt-3 text-4xl font-bold leading-none sm:text-5xl md:text-6xl">
-        Data Analysis
+        <AnimatedText text="Data Analysis" duration={780} />
       </h2>
       <p className="mt-4 max-w-xl text-xs leading-6 text-white/58 sm:text-sm sm:leading-7">
-        30 个精选案例按实践价值展开，覆盖实证建模、问卷量表、数据工程与论文交付。
+        <AnimatedText
+          text="30 个精选案例按实践价值展开，覆盖实证建模、问卷量表、数据工程与论文交付。"
+          delay={0.04}
+          duration={780}
+          staggerMs={8}
+        />
       </p>
 
       <div key={project.id} className="analysis-detail-swap mt-6 md:mt-9">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
-            Selected Case
+            <AnimatedText text="Selected Case" duration={720} staggerMs={8} />
           </p>
           <h3 className="mt-3 max-w-xl text-2xl font-bold leading-tight text-white md:text-3xl">
-            {project.title}
+            <AnimatedText text={project.title} duration={780} />
           </h3>
           <p className="mt-4 max-w-xl text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">
-            {project.description}
+            <AnimatedText text={project.description} delay={0.04} duration={780} staggerMs={7} />
           </p>
         </div>
 
         <div className="mt-4 grid max-w-xl grid-cols-3 gap-4 md:mt-6 md:gap-6">
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              {project.valueLabel}
+              <AnimatedText text={project.valueLabel} duration={720} staggerMs={6} />
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              核心
+              <AnimatedText text="核心" duration={680} staggerMs={6} />
             </p>
           </div>
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              {project.category}
+              <AnimatedText text={project.category} duration={720} staggerMs={6} />
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              赛道
+              <AnimatedText text="赛道" duration={680} staggerMs={6} />
             </p>
           </div>
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              {project.tools[0] ?? "Python"}
+              <AnimatedText text={project.tools[0] ?? "Python"} duration={720} staggerMs={6} />
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              主工具
+              <AnimatedText text="主工具" duration={680} staggerMs={6} />
             </p>
           </div>
         </div>
 
         <p className="mt-4 max-w-xl text-xs font-medium leading-6 sm:text-sm sm:leading-7" style={{ color: project.color }}>
-          {project.sampleSize}
+          <AnimatedText text={project.sampleSize} duration={760} staggerMs={7} />
         </p>
         <ul className="mt-4 hidden max-w-3xl gap-2 text-sm leading-6 text-white/58 sm:grid md:grid-cols-3">
-          {project.highlights.map((highlight) => (
+          {project.highlights.map((highlight, index) => (
             <li key={highlight} className="flex gap-2">
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
-              <span>{highlight}</span>
+              <span>
+                <AnimatedText text={highlight} delay={0.04 + index * 0.03} duration={760} staggerMs={6} />
+              </span>
             </li>
           ))}
         </ul>

@@ -203,6 +203,19 @@ html.lenis body {
   will-change: background-position;
 }
 
+.iridescent-text .animated-text,
+.iridescent-text .animated-text-glyph,
+.hero-iridescent-text .animated-text,
+.hero-iridescent-text .animated-text-glyph {
+  background-image: inherit;
+  background-position: inherit;
+  background-repeat: inherit;
+  background-size: inherit;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .interactive-glass {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
