@@ -60,7 +60,7 @@ export default function TimelineSection() {
       style={{ height: `${Math.max(360, timelineEntries.length * 115)}vh` }}
     >
       <div className="timeline-pin sticky top-0 h-screen overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_24%,rgba(255,202,122,0.12),transparent_28%),radial-gradient(circle_at_78%_18%,rgba(73,197,182,0.08),transparent_30%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(125deg,rgba(255,202,122,0.045),transparent_34%,rgba(73,197,182,0.035)_68%,transparent)]" />
         <SolarTimelineScene
           entries={timelineEntries}
           activeIndex={activeIndex}
@@ -79,21 +79,23 @@ export default function TimelineSection() {
         </div>
 
         <div className="pointer-events-none absolute right-6 top-[24vh] z-10 max-w-[min(460px,82vw)] text-right md:right-12">
-          <div className="mb-5 flex flex-wrap justify-end gap-3 text-xs text-white/48">
-            <span>{activeEntry.period}</span>
-            <span>{typeLabel[activeEntry.type]}</span>
-            <span>{activeEntry.organization}</span>
-          </div>
-          <h3 className="text-3xl font-bold leading-tight text-white md:text-4xl">
-            <AnimatedText text={activeEntry.title} />
-          </h3>
-          <p className="mt-5 text-sm leading-7 text-white/62">{activeEntry.description}</p>
-          <div className="mt-6 flex flex-wrap justify-end gap-3">
-            {activeEntry.tags.map((tag) => (
-              <span key={tag} className="cursor-target text-xs font-semibold text-white/46 transition-colors hover:text-teal-100">
-                {tag}
-              </span>
-            ))}
+          <div key={activeEntry.id} className="timeline-detail-swap">
+            <div className="mb-5 flex flex-wrap justify-end gap-3 text-xs text-white/48">
+              <span>{activeEntry.period}</span>
+              <span>{typeLabel[activeEntry.type]}</span>
+              <span>{activeEntry.organization}</span>
+            </div>
+            <h3 className="text-3xl font-bold leading-tight text-white md:text-4xl">
+              <AnimatedText text={activeEntry.title} />
+            </h3>
+            <p className="mt-5 text-sm leading-7 text-white/62">{activeEntry.description}</p>
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+              {activeEntry.tags.map((tag) => (
+                <span key={tag} className="cursor-target text-xs font-semibold text-white/46 transition-colors hover:text-teal-100">
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 

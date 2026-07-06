@@ -48,7 +48,7 @@ const yAxisTicks = Array.from({ length: 22 }, (_, index) => ({
   color: index % 10 === 0 ? "#49c5b6" : index % 7 === 0 ? "#8b5cf6" : "rgba(255,255,255,0.42)",
 }));
 
-const fieldParticles = Array.from({ length: 82 }, (_, index) => ({
+const fieldParticles = Array.from({ length: 38 }, (_, index) => ({
   id: index,
   left: `${(normalizedPseudo(index, 44.1) * 100).toFixed(3)}%`,
   top: `${(normalizedPseudo(index, 46.9) * 100).toFixed(3)}%`,
@@ -206,53 +206,55 @@ function MethodNebula({ project }: { project: DataAnalysisProject }) {
 
 function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
   return (
-    <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,45vw)] md:left-12">
+    <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,88vw)] md:left-12 md:max-w-[min(560px,45vw)]">
       <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/34">
         93 Cases / Ranked By Practical Value
       </p>
-      <h2 className="iridescent-text mt-3 text-5xl font-bold leading-none md:text-6xl">
+      <h2 className="iridescent-text mt-3 text-4xl font-bold leading-none sm:text-5xl md:text-6xl">
         Data Analysis
       </h2>
-      <p className="mt-5 max-w-xl text-sm leading-7 text-white/58">
+      <p className="mt-4 max-w-xl text-xs leading-6 text-white/58 sm:text-sm sm:leading-7">
         每根玻璃柱代表一个精选项目。进入本区后页面固定，滚轮推动柱状图横向移动，当前详情与方法星云同步切换。
       </p>
 
-      <div className="mt-9">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
-          Selected Case
+      <div key={project.id} className="analysis-detail-swap mt-6 md:mt-9">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
+            Selected Case
+          </p>
+          <h3 className="mt-3 max-w-xl text-2xl font-bold leading-tight text-white md:text-3xl">
+            <AnimatedText text={project.title} />
+          </h3>
+          <p className="mt-4 max-w-xl text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">{project.description}</p>
+        </div>
+
+        <div className="mt-4 grid max-w-xl grid-cols-3 gap-4 md:mt-6 md:gap-6">
+          <div>
+            <p className="text-xl font-bold text-white md:text-2xl">{project.valueLabel}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">核心</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-white md:text-2xl">{project.method.length}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">方法</p>
+          </div>
+          <div>
+            <p className="text-xl font-bold text-white md:text-2xl">{project.tools.length}</p>
+            <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">工具</p>
+          </div>
+        </div>
+
+        <p className="mt-4 max-w-xl text-xs font-medium leading-6 sm:text-sm sm:leading-7" style={{ color: project.color }}>
+          {project.sampleSize}
         </p>
-        <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight text-white">
-          <AnimatedText text={project.title} />
-        </h3>
-        <p className="mt-5 max-w-xl text-sm leading-7 text-white/62">{project.description}</p>
+        <ul className="mt-4 hidden max-w-3xl gap-2 text-sm leading-6 text-white/58 sm:grid md:grid-cols-3">
+          {project.highlights.map((highlight) => (
+            <li key={highlight} className="flex gap-2">
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
+              <span>{highlight}</span>
+            </li>
+          ))}
+        </ul>
       </div>
-
-      <div className="mt-6 grid max-w-xl grid-cols-3 gap-6">
-        <div>
-          <p className="text-2xl font-bold text-white">{project.valueLabel}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">核心</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-white">{project.method.length}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">方法</p>
-        </div>
-        <div>
-          <p className="text-2xl font-bold text-white">{project.tools.length}</p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">工具</p>
-        </div>
-      </div>
-
-      <p className="mt-5 max-w-xl text-sm font-medium leading-7" style={{ color: project.color }}>
-        {project.sampleSize}
-      </p>
-      <ul className="mt-4 grid max-w-3xl gap-2 text-sm leading-6 text-white/58 md:grid-cols-3">
-        {project.highlights.map((highlight) => (
-          <li key={highlight} className="flex gap-2">
-            <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
-            <span>{highlight}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -261,10 +263,11 @@ export default function AnalysisSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const activeIndexRef = useRef(0);
+  const waveRatioRef = useRef(0.5);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [waveRatio, setWaveRatio] = useState(0.5);
   const { setActiveSection, setDnaDissolveProgress } = useProjectScene();
 
-  const activeRatio = analysisProjects.length <= 1 ? 0.5 : activeIndex / (analysisProjects.length - 1);
   const selectedProject = analysisProjects[activeIndex] ?? analysisProjects[0];
 
   useEffect(() => {
@@ -272,14 +275,33 @@ export default function AnalysisSection() {
     const track = trackRef.current;
     if (!section || !track) return;
 
+    const updateWaveRatio = (index = activeIndexRef.current) => {
+      const axis = section.querySelector<HTMLElement>(".analysis-axis-baseline");
+      const activeBar = section.querySelector<HTMLElement>(`[data-analysis-index="${index}"] .analysis-fluid-bar`);
+      if (!axis || !activeBar) return;
+
+      const axisRect = axis.getBoundingClientRect();
+      const barRect = activeBar.getBoundingClientRect();
+      const nextRatio = Math.max(
+        0,
+        Math.min(1, (barRect.left + barRect.width / 2 - axisRect.left) / Math.max(1, axisRect.width))
+      );
+
+      if (Math.abs(nextRatio - waveRatioRef.current) < 0.004) return;
+      waveRatioRef.current = nextRatio;
+      setWaveRatio(nextRatio);
+    };
+
     const setProjectByProgress = (progress: number) => {
       const nextIndex = Math.min(
         analysisProjects.length - 1,
         Math.max(0, Math.floor(progress * analysisProjects.length))
       );
-      if (nextIndex === activeIndexRef.current) return;
-      activeIndexRef.current = nextIndex;
-      setActiveIndex(nextIndex);
+      if (nextIndex !== activeIndexRef.current) {
+        activeIndexRef.current = nextIndex;
+        setActiveIndex(nextIndex);
+      }
+      return nextIndex;
     };
 
     const ctx = gsap.context(() => {
@@ -326,10 +348,13 @@ export default function AnalysisSection() {
           onUpdate: (self) => {
             setActiveSection("data-analysis");
             setDnaDissolveProgress(1);
-            setProjectByProgress(self.progress);
+            const nextIndex = setProjectByProgress(self.progress);
+            updateWaveRatio(nextIndex);
           },
         },
       });
+
+      window.requestAnimationFrame(() => updateWaveRatio(activeIndexRef.current));
 
       return () => {
         tween.scrollTrigger?.kill();
@@ -370,7 +395,7 @@ export default function AnalysisSection() {
           <div className="absolute bottom-[46px] left-0 right-0 h-[116px]">
             <span className="analysis-axis-baseline absolute bottom-0 left-0 w-full" />
             {xAxisTicks.map((tick) => {
-              const distance = tick.ratio - activeRatio;
+              const distance = tick.ratio - waveRatio;
               const primaryWave = Math.exp(-Math.pow(distance * 34, 2));
               const trailingWave = Math.exp(-Math.pow((distance + 0.038) * 44, 2)) * 0.34;
               const leadingWave = Math.exp(-Math.pow((distance - 0.026) * 48, 2)) * 0.22;
@@ -430,6 +455,7 @@ export default function AnalysisSection() {
             return (
               <div
                 key={project.id}
+                data-analysis-index={index}
                 className="analysis-drift relative h-full w-[154px] shrink-0"
                 style={{
                   "--drift-x": `${((normalizedPseudo(index, 60.1) - 0.5) * 16).toFixed(4)}px`,
@@ -446,6 +472,22 @@ export default function AnalysisSection() {
                   onClick={() => {
                     activeIndexRef.current = index;
                     setActiveIndex(index);
+                    window.requestAnimationFrame(() => {
+                      const axis = sectionRef.current?.querySelector<HTMLElement>(".analysis-axis-baseline");
+                      const activeBar = sectionRef.current?.querySelector<HTMLElement>(
+                        `[data-analysis-index="${index}"] .analysis-fluid-bar`
+                      );
+                      if (!axis || !activeBar) return;
+
+                      const axisRect = axis.getBoundingClientRect();
+                      const barRect = activeBar.getBoundingClientRect();
+                      const nextRatio = Math.max(
+                        0,
+                        Math.min(1, (barRect.left + barRect.width / 2 - axisRect.left) / Math.max(1, axisRect.width))
+                      );
+                      waveRatioRef.current = nextRatio;
+                      setWaveRatio(nextRatio);
+                    });
                   }}
                   className={`analysis-fluid-bar w-[92px] px-0 py-0 ${isActive ? "analysis-fluid-bar-active" : ""}`}
                   style={{
