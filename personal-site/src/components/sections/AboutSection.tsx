@@ -59,8 +59,8 @@ export default function AboutSection() {
           <div className="mt-12 grid grid-cols-2 gap-8 sm:grid-cols-4">
             <StatCounter value={93} label="数据分析项目" suffix="" />
             <StatCounter value={619} label="过程与交付文件" suffix="" />
-            <StatCounter value={3} label="代码" suffix="M+" />
-            <StatCounter value={6} label="历史消耗 token" suffix="B+" />
+            <StatCounter value={30} label="代码行数" suffix="M+" />
+            <StatCounter value={16} label="历史消耗 token" suffix="B+" />
           </div>
         </div>
 

@@ -87,16 +87,31 @@ function ProjectNarrative({
           </span>
         ))}
       </div>
-      {project.githubUrl && (
-        <a
-          href={project.githubUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="cursor-target pointer-events-auto mt-7 inline-flex items-center gap-2 text-sm font-semibold text-white/78 transition-colors hover:text-white"
-        >
-          GitHub
-          <span aria-hidden="true">↗</span>
-        </a>
+      {(project.demoUrl || project.githubUrl) && (
+        <div className="mt-7 flex flex-wrap justify-end gap-4">
+          {project.demoUrl && (
+            <a
+              href={project.demoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-target pointer-events-auto inline-flex items-center gap-2 text-sm font-semibold text-white/86 transition-colors hover:text-white"
+            >
+              Demo
+              <span aria-hidden="true">↗</span>
+            </a>
+          )}
+          {project.githubUrl && (
+            <a
+              href={project.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cursor-target pointer-events-auto inline-flex items-center gap-2 text-sm font-semibold text-white/70 transition-colors hover:text-white"
+            >
+              GitHub
+              <span aria-hidden="true">↗</span>
+            </a>
+          )}
+        </div>
       )}
     </div>
   );

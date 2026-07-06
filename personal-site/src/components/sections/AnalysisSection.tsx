@@ -13,7 +13,6 @@ import {
 import type { DataAnalysisProject } from "@/types";
 import { FluidGlassButton } from "@/components/ui/FluidGlassPanel";
 import { useProjectScene } from "@/components/three/SceneContext";
-import AnimatedText from "@/components/ui/AnimatedText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -215,70 +214,63 @@ function FloatingProjectDetail({ project }: { project: DataAnalysisProject }) {
   return (
     <div className="analysis-reveal pointer-events-none absolute left-6 top-14 z-20 max-w-[min(560px,88vw)] md:left-12 md:max-w-[min(560px,45vw)]">
       <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/34">
-        <AnimatedText text="93 Cases / Ranked By Practical Value" staggerMs={10} />
+        93 Cases / Ranked By Practical Value
       </p>
       <h2 className="iridescent-text mt-3 text-4xl font-bold leading-none sm:text-5xl md:text-6xl">
         Data Analysis
       </h2>
       <p className="mt-4 max-w-xl text-xs leading-6 text-white/58 sm:text-sm sm:leading-7">
-        <AnimatedText
-          text="每根玻璃柱代表一个精选项目。进入本区后页面固定，滚轮推动柱状图横向移动，当前详情与方法星云同步切换。"
-          delay={0.06}
-          duration={780}
-          staggerMs={7}
-        />
+        30 个精选案例按实践价值展开，覆盖实证建模、问卷量表、数据工程与论文交付。
       </p>
 
       <div key={project.id} className="analysis-detail-swap mt-6 md:mt-9">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/34">
-            <AnimatedText text="Selected Case" staggerMs={12} />
+            Selected Case
           </p>
           <h3 className="mt-3 max-w-xl text-2xl font-bold leading-tight text-white md:text-3xl">
-            <AnimatedText text={project.title} />
+            {project.title}
           </h3>
           <p className="mt-4 max-w-xl text-xs leading-6 text-white/62 sm:text-sm sm:leading-7">
-            <AnimatedText text={project.description} delay={0.04} duration={760} staggerMs={7} />
+            {project.description}
           </p>
         </div>
 
         <div className="mt-4 grid max-w-xl grid-cols-3 gap-4 md:mt-6 md:gap-6">
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              <AnimatedText text={project.valueLabel} staggerMs={12} />
+              {project.valueLabel}
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              <AnimatedText text="核心" delay={0.04} staggerMs={12} />
+              核心
             </p>
           </div>
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              <AnimatedText text={`${project.method.length}`} staggerMs={12} />
+              {project.category}
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              <AnimatedText text="方法" delay={0.04} staggerMs={12} />
+              赛道
             </p>
           </div>
           <div>
             <p className="text-xl font-bold text-white md:text-2xl">
-              <AnimatedText text={`${project.tools.length}`} staggerMs={12} />
+              {project.tools[0] ?? "Python"}
             </p>
             <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/35">
-              <AnimatedText text="工具" delay={0.04} staggerMs={12} />
+              主工具
             </p>
           </div>
         </div>
 
         <p className="mt-4 max-w-xl text-xs font-medium leading-6 sm:text-sm sm:leading-7" style={{ color: project.color }}>
-          <AnimatedText text={project.sampleSize} delay={0.06} staggerMs={8} />
+          {project.sampleSize}
         </p>
         <ul className="mt-4 hidden max-w-3xl gap-2 text-sm leading-6 text-white/58 sm:grid md:grid-cols-3">
-          {project.highlights.map((highlight, index) => (
+          {project.highlights.map((highlight) => (
             <li key={highlight} className="flex gap-2">
               <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
-              <span>
-                <AnimatedText text={highlight} delay={0.08 + index * 0.05} duration={740} staggerMs={6} />
-              </span>
+              <span>{highlight}</span>
             </li>
           ))}
         </ul>

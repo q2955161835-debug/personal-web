@@ -6,7 +6,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { timelineEntries } from "@/data/timeline";
 import SolarTimelineScene from "@/components/three/timeline/SolarTimelineScene";
-import AnimatedText from "@/components/ui/AnimatedText";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -102,37 +101,31 @@ export default function TimelineSection() {
 
         <div className="section-transition-reveal pointer-events-none absolute left-6 top-24 z-10 max-w-[min(520px,84vw)] md:left-12">
           <p className="text-xs font-semibold uppercase tracking-[0.34em] text-white/35">
-            <AnimatedText text="Experience Solar System" staggerMs={10} />
+            Experience Solar System
           </p>
           <h2 className="iridescent-text mt-3 text-4xl font-bold sm:text-5xl">Timeline</h2>
           <p className="mt-5 max-w-xl text-sm leading-7 text-white/55">
-            <AnimatedText text="一个阶段对应一颗星球，轨道深度表示经历递进。" delay={0.06} duration={740} staggerMs={8} />
+            从统计训练到 AI 产品、数据交付与商业化实验的阶段轨迹。
           </p>
         </div>
 
         <div className="section-transition-reveal pointer-events-none absolute right-6 top-[24vh] z-10 max-w-[min(460px,82vw)] text-right md:right-12">
           <div key={activeEntry.id} className="timeline-detail-swap">
             <div className="mb-5 flex flex-wrap justify-end gap-3 text-xs text-white/48">
-              <span>
-                <AnimatedText text={activeEntry.period} staggerMs={10} />
-              </span>
-              <span>
-                <AnimatedText text={typeLabel[activeEntry.type]} delay={0.04} staggerMs={10} />
-              </span>
-              <span>
-                <AnimatedText text={activeEntry.organization} delay={0.08} staggerMs={10} />
-              </span>
+              <span>{activeEntry.period}</span>
+              <span>{typeLabel[activeEntry.type]}</span>
+              <span>{activeEntry.organization}</span>
             </div>
             <h3 className="text-3xl font-bold leading-tight text-white md:text-4xl">
-              <AnimatedText text={activeEntry.title} />
+              {activeEntry.title}
             </h3>
             <p className="mt-5 text-sm leading-7 text-white/62">
-              <AnimatedText text={activeEntry.description} delay={0.06} duration={780} staggerMs={7} />
+              {activeEntry.description}
             </p>
             <div className="mt-6 flex flex-wrap justify-end gap-3">
-              {activeEntry.tags.map((tag, index) => (
+              {activeEntry.tags.map((tag) => (
                 <span key={tag} className="cursor-target text-xs font-semibold text-white/46 transition-colors hover:text-teal-100">
-                  <AnimatedText text={tag} delay={0.1 + index * 0.04} duration={680} staggerMs={8} />
+                  {tag}
                 </span>
               ))}
             </div>
@@ -151,10 +144,10 @@ export default function TimelineSection() {
                 style={{ color: active ? "rgba(180,255,246,0.96)" : undefined }}
               >
                 <span className="font-mono text-[11px]">
-                  <AnimatedText text={`${entry.year}`} staggerMs={8} />
+                  {entry.year}
                 </span>
                 <span className="font-semibold">
-                  <AnimatedText text={entry.title} delay={0.03} duration={700} staggerMs={7} />
+                  {entry.title}
                 </span>
                 <span
                   className="absolute bottom-0 left-0 h-px w-full origin-left transition-transform duration-300 group-hover:scale-x-100"
