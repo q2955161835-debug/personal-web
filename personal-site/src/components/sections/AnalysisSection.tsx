@@ -344,7 +344,7 @@ export default function AnalysisSection() {
             setDnaDissolveProgress(1);
           },
           onLeave: () => setDnaDissolveProgress(1),
-          onLeaveBack: () => setDnaDissolveProgress(0),
+          onLeaveBack: () => setDnaDissolveProgress(1),
           onUpdate: (self) => {
             setActiveSection("data-analysis");
             setDnaDissolveProgress(1);

@@ -55,7 +55,7 @@ function useViewportPointer() {
       }
       timeoutRef.current = window.setTimeout(() => {
         activeRef.current = 0;
-      }, 420);
+      }, 4200);
     };
     const handlePointerLeave = () => {
       activeRef.current = 0;
@@ -126,6 +126,7 @@ function DNAHelixParticles({
   const pointsRef = useRef<THREE.Points>(null);
   const sceneOpacityRef = useRef(0);
   const zoomProgressRef = useRef(0);
+  const pointerScatterRef = useRef(0);
   const { carouselActiveIndex, projectProgress } = useProjectScene();
 
   const { geometry, material } = useMemo(() => {
@@ -183,10 +184,17 @@ function DNAHelixParticles({
       targetZoomProgress,
       1 - Math.exp(-delta * 5)
     );
+    const targetPointerScatter = visible ? pointerActiveRef.current : 0;
+    const pointerScatterRate = targetPointerScatter > pointerScatterRef.current ? 1.15 : 0.28;
+    pointerScatterRef.current = THREE.MathUtils.lerp(
+      pointerScatterRef.current,
+      targetPointerScatter,
+      1 - Math.exp(-delta * pointerScatterRate)
+    );
 
     material.uniforms.uTime.value = state.clock.elapsedTime;
     material.uniforms.uPointer.value.copy(pointerRef.current);
-    material.uniforms.uMouseActive.value = visible ? pointerActiveRef.current : 0;
+    material.uniforms.uMouseActive.value = pointerScatterRef.current;
     material.uniforms.uScrollProgress.value = rawProgress;
     material.uniforms.uStationProgress.value = stationProgress;
     material.uniforms.uDissolveProgress.value = THREE.MathUtils.clamp(dissolveProgress, 0, 1);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import gsap from "gsap";
 import { projects } from "@/data/projects";
 import { useProjectScene } from "@/components/three/SceneContext";
@@ -116,10 +116,13 @@ export default function ProjectsSection() {
   } = useProjectScene();
   const lastProgressRef = useRef(-1);
   const lastIndexRef = useRef(-1);
+  const lastUiOpacityRef = useRef(-1);
+  const [projectsUiOpacity, setProjectsUiOpacity] = useState(0);
   const visibleProjects = useMemo(() => projects.slice(0, STATION_COUNT), []);
   const activeProject = visibleProjects[carouselActiveIndex] ?? visibleProjects[0];
   const showProjectContent = normalizeProjectProgress(projectProgress) > 0.045;
-  const projectContentOpacity = showProjectContent ? Math.max(0, 1 - dnaDissolveProgress * 1.45) : 0;
+  const projectContentOpacity =
+    projectsUiOpacity * (showProjectContent ? Math.max(0, 1 - dnaDissolveProgress * 1.45) : 0);
 
   useEffect(() => {
     const section = sectionRef.current;
@@ -133,11 +136,25 @@ export default function ProjectsSection() {
       const upperTransitionDistance = viewportHeight * 1.08;
       const mainProjectsView = sectionTop <= viewportHeight * 0.05 && sectionBottom > viewportHeight * 0.18;
       const upperTransitionView = sectionTop > 0 && sectionTop < upperTransitionDistance && sectionBottom > 0;
+      const inScrollRange = sectionTop < viewportHeight && sectionBottom > 0;
+      const scrollable = Math.max(1, section.offsetHeight - viewportHeight);
+      const rawProgress = inScrollRange ? Math.max(0, Math.min(1, -sectionTop / scrollable)) : 0;
+      const dissolveForRawProgress = getDnaDissolveForProgress(rawProgress);
+      const nextUiOpacity = mainProjectsView ? Math.max(0, 1 - dissolveForRawProgress * 1.8) : 0;
+
+      if (Math.abs(nextUiOpacity - lastUiOpacityRef.current) > 0.01) {
+        lastUiOpacityRef.current = nextUiOpacity;
+        setProjectsUiOpacity(nextUiOpacity);
+      }
 
       if (mainProjectsView) {
         setActiveSection("projects");
       } else if (upperTransitionView) {
         const gatherProgress = Math.max(0, Math.min(1, (upperTransitionDistance - sectionTop) / upperTransitionDistance));
+        if (lastProgressRef.current !== 0) {
+          lastProgressRef.current = 0;
+          setProjectProgress(0);
+        }
         setDnaDissolveProgress(1 - gatherProgress);
         if (activeSection === "projects") setActiveSection(null);
       } else {
@@ -149,9 +166,7 @@ export default function ProjectsSection() {
         setActiveSection(null);
       }
 
-      if (sectionTop < viewportHeight && sectionBottom > 0) {
-        const scrollable = Math.max(1, section.offsetHeight - viewportHeight);
-        const rawProgress = Math.max(0, Math.min(1, -sectionTop / scrollable));
+      if (inScrollRange) {
         const index = getActiveProjectIndex(rawProgress);
 
         if (Math.abs(rawProgress - lastProgressRef.current) > 0.002) {
@@ -214,8 +229,8 @@ export default function ProjectsSection() {
       </div>
 
       <div
-        className="pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center justify-between px-6 md:px-12"
-        style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.6s ease" }}
+        className="projects-hud-layer pointer-events-none fixed left-0 top-0 z-10 flex h-full w-full items-center justify-between px-6 md:px-12"
+        style={{ opacity: projectsUiOpacity, transition: "opacity 160ms ease" }}
       >
         <div className="hidden w-[min(320px,26vw)] sm:block">
           <h2 className="mb-3 text-2xl font-bold sm:text-3xl" style={gradientTextStyle}>
@@ -243,8 +258,8 @@ export default function ProjectsSection() {
       </div>
 
       <div
-        className="fixed right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 md:right-6"
-        style={{ opacity: activeSection === "projects" ? 1 : 0, transition: "opacity 0.5s ease" }}
+        className="projects-side-nav fixed right-4 top-1/2 z-20 flex -translate-y-1/2 flex-col gap-3 md:right-6"
+        style={{ opacity: projectsUiOpacity, transition: "opacity 160ms ease" }}
       >
         {visibleProjects.map((project, index) => {
           const isActive = carouselActiveIndex === index;

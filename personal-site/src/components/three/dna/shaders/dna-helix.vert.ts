@@ -85,7 +85,8 @@ void main() {
   vec2 screenPos = probeClip.xy / max(probeClip.w, 0.0001);
 
   // Pointer scatter uses screen-space distance so it works with a fixed camera.
-  if (uMouseActive > 0.5 && gather > 0.2) {
+  float scatterActivation = smoothstep(0.02, 1.0, uMouseActive);
+  if (scatterActivation > 0.01 && gather > 0.2) {
     float pointerDist = distance(screenPos, uPointer);
     float falloff = 1.0 - smoothstep(0.0, uScatterRadius, pointerDist);
     if (falloff > 0.001) {
@@ -95,8 +96,8 @@ void main() {
         sin(aRandomSeed * 31.11)
       ));
       float spring = 0.86 + 0.18 * sin(uTime * 6.0 + aRandomSeed * 6.2831);
-      pos += scatterDir * falloff * uScatterStrength * spring;
-      vGlow += falloff * 0.55;
+      pos += scatterDir * falloff * uScatterStrength * spring * scatterActivation;
+      vGlow += falloff * 0.55 * scatterActivation;
     }
   }
 
